@@ -186,9 +186,10 @@ export interface HarvestedCookie {
  */
 export interface BrowserPort {
   /** Loads `url` until it holds every cookie in `cookieNames`, then returns that session. */
-  challenge(url: string, cookieNames: string[], forceRefresh: boolean): Promise<ChallengeSession>;
+  /** `sourceId` (RiuPlay M2): the extension asking - its own partition, and its URLs checked by the broker. */
+  challenge(url: string, cookieNames: string[], forceRefresh: boolean, sourceId?: string): Promise<ChallengeSession>;
   /** Runs a request from inside a loaded `pageUrl`, with that page's cookies and origin. */
-  browserFetch(pageUrl: string, targetUrl: string, options?: { method?: string; headers?: Record<string, string>; body?: string }): Promise<BrowserFetchResult>;
+  browserFetch(pageUrl: string, targetUrl: string, options?: { method?: string; headers?: Record<string, string>; body?: string }, sourceId?: string): Promise<BrowserFetchResult>;
   /** Runs a BROWSER resolver's script inside the embed page and reports the streams it found. */
   resolve(link: PlayerLink, script: string, timeoutMs?: number, parentUrl?: string | null, blockHosts?: string[]): Promise<ResolvedStream[]>;
   /** Shows `url` to the person until its anti-bot check is passed, and resolves with the session it

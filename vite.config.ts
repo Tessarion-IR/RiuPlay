@@ -12,6 +12,51 @@ const root = fileURLToPath(new URL(".", import.meta.url));
 // whoever registered it, so it stays out of the repository.
 const anilistClientId = buildSecret("ANILIST_CLIENT_ID", root);
 
+// RiuPlay M2: the code that runs inside each sandboxed extension host (a Web Worker in a sandboxed
+// window) - hibiki's host API bundled for the browser. Node built-ins it reached for become browser
+// equivalents: zlib -> fflate, createRequire -> a static cheerio (nothing else can be required).
+async function buildExtensionHostWorker(): Promise<void> {
+  const { build } = await import("esbuild");
+  const shims = {
+    name: "riuplay-sandbox-shims",
+    setup(b: import("esbuild").PluginBuild) {
+      b.onResolve({ filter: /^node:zlib$/ }, () => ({ path: "zlib", namespace: "shim" }));
+      b.onResolve({ filter: /^node:module$/ }, () => ({ path: "module", namespace: "shim" }));
+      b.onLoad({ filter: /^zlib$/, namespace: "shim" }, () => ({
+        contents: `import { gunzipSync as g, inflateSync as i } from "fflate";
+          export function gunzipSync(bytes) { return Buffer.from(g(new Uint8Array(bytes))); }
+          export function inflateSync(bytes) { return Buffer.from(i(new Uint8Array(bytes))); }
+          export default { gunzipSync, inflateSync };`,
+        resolveDir: root,
+      }));
+      b.onLoad({ filter: /^module$/, namespace: "shim" }, () => ({
+        contents: `import * as cheerio from "cheerio/slim";
+          export function createRequire() {
+            return (name) => {
+              if (name === "cheerio") return cheerio;
+              throw new Error("require(" + name + ") is not available in the extension sandbox");
+            };
+          }`,
+        resolveDir: root,
+      }));
+    },
+  };
+  await build({
+    entryPoints: [path.join(root, "src/main/extensions/sandbox/hostWorker.ts")],
+    outfile: path.join(root, "dist-electron/main/extension-host-worker.js"),
+    bundle: true,
+    platform: "browser",
+    format: "iife",
+    target: "chrome130",
+    minify: true,
+    legalComments: "eof",
+    plugins: [shims],
+    alias: { "@shared": path.join(root, "src/shared") },
+    define: { "import.meta.url": '"riuplay-ext-host://host/worker.js"', "process.env.NODE_ENV": '"production"' },
+    logLevel: "warning",
+  });
+}
+
 export default defineConfig({
   root: "src/renderer",
   resolve: {
@@ -21,6 +66,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    { name: "riuplay-extension-host-worker", buildStart: () => buildExtensionHostWorker() },
     TanStackRouterVite({
       routesDirectory: "src/routes",
       generatedRouteTree: "src/routeTree.gen.ts",

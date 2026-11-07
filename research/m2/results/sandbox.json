@@ -1,0 +1,228 @@
+{
+  "electron": "45.2.3",
+  "results": [
+    {
+      "name": "call answered through the sandboxed host",
+      "ok": true
+    },
+    {
+      "name": "no Node/Electron globals (require, process, module, electron, ipcRenderer)",
+      "ok": true,
+      "detail": {
+        "require": "undefined",
+        "process": "undefined",
+        "module": "undefined",
+        "electron": "undefined",
+        "ipcRenderer": "undefined"
+      }
+    },
+    {
+      "name": "Function-constructor escape finds no Node (refused by the CSP, or no Node behind it)",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "EvalError"
+      }
+    },
+    {
+      "name": "eval refused by the CSP",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "EvalError"
+      }
+    },
+    {
+      "name": "file:// read refused (secret not leaked)",
+      "ok": true,
+      "detail": {
+        "file": {
+          "threw": "NetworkError"
+        },
+        "win": {
+          "threw": "NetworkError"
+        }
+      }
+    },
+    {
+      "name": "direct loopback XHR refused",
+      "ok": true,
+      "detail": {
+        "threw": "NetworkError"
+      }
+    },
+    {
+      "name": "direct public-internet XHR refused",
+      "ok": true,
+      "detail": {
+        "threw": "NetworkError"
+      }
+    },
+    {
+      "name": "host path traversal / unknown broker routes give nothing",
+      "ok": true,
+      "detail": {
+        "t": {
+          "status": 404,
+          "leaked": false,
+          "len": 25
+        },
+        "u": {
+          "status": 404,
+          "leaked": false,
+          "len": 25
+        }
+      }
+    },
+    {
+      "name": "an extension can't read another extension's script",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "leaked": false,
+        "len": 2537
+      }
+    },
+    {
+      "name": "importScripts from network or file refused",
+      "ok": true,
+      "detail": {
+        "r": {
+          "ok": false,
+          "error": "NetworkError"
+        },
+        "f": {
+          "ok": false,
+          "error": "NetworkError"
+        }
+      }
+    },
+    {
+      "name": "fetch() goes only to the broker bridge (identity = calling extension)",
+      "ok": true,
+      "detail": {
+        "hostile": [
+          {
+            "kind": "netFetch",
+            "url": "http://169.254.169.254/latest/meta-data/"
+          }
+        ],
+        "quiet": []
+      }
+    },
+    {
+      "name": "a broker refusal reaches the script as an error",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "Error"
+      }
+    },
+    {
+      "name": "each extension is served only its own script",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "me": "quiet",
+          "other": false
+        },
+        "storageWrites": {}
+      }
+    },
+    {
+      "name": "storage is per extension and per call (snapshot in, writes out)",
+      "ok": true,
+      "detail": {
+        "a": {
+          "id": "1",
+          "title": "t",
+          "before": "a-value",
+          "sourceId": "hostile"
+        },
+        "aw": {
+          "k": "from-1"
+        },
+        "b": {
+          "id": "1",
+          "title": "q",
+          "seen": "b-value",
+          "sourceId": "quiet"
+        }
+      }
+    },
+    {
+      "name": "no attack reached the loopback canary (native fetch, WebSocket, nested worker, EventSource, XHR)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "memory limit: hosts were put in a Windows Job Object",
+      "ok": true,
+      "detail": [
+        {
+          "sourceId": "hostile",
+          "busy": false,
+          "memoryLimited": true,
+          "pid": 22776
+        },
+        {
+          "sourceId": "quiet",
+          "busy": false,
+          "memoryLimited": true,
+          "pid": 27552
+        }
+      ]
+    },
+    {
+      "name": "an infinite loop times out and its host is destroyed",
+      "ok": true,
+      "detail": {
+        "loop": "TimeoutError",
+        "ms": 1519
+      }
+    },
+    {
+      "name": "memory: an allocating extension is stopped at the OS limit",
+      "ok": true,
+      "detail": {
+        "oom": "Render frame was disposed before the request completed",
+        "ms": 699
+      }
+    },
+    {
+      "name": "other extensions keep working after a host was killed",
+      "ok": true
+    },
+    {
+      "name": "compat search: sandbox result identical to the node:vm result",
+      "ok": true,
+      "detail": {}
+    },
+    {
+      "name": "compat latest: sandbox result identical to the node:vm result",
+      "ok": true,
+      "detail": {}
+    },
+    {
+      "name": "compat getById: sandbox result identical to the node:vm result",
+      "ok": true,
+      "detail": {}
+    },
+    {
+      "name": "compat getPlaybackGroups: sandbox result identical to the node:vm result",
+      "ok": true,
+      "detail": {}
+    },
+    {
+      "name": "compat getPlayerLinks: sandbox result identical to the node:vm result",
+      "ok": true,
+      "detail": {}
+    },
+    {
+      "name": "compat getSettings: sandbox result identical to the node:vm result",
+      "ok": true,
+      "detail": {}
+    }
+  ]
+}

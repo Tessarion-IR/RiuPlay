@@ -458,6 +458,7 @@ export class ExtensionRuntime {
         payload.url as string,
         (payload.cookieNames as string[]) ?? [],
         Boolean(payload.forceRefresh),
+        sourceId,
       );
     } else if (kind === "netFetchAll") {
       return performNetFetchAll(
@@ -475,6 +476,7 @@ export class ExtensionRuntime {
       payload.pageUrl as string,
       payload.targetUrl as string,
       payload.options as { method?: string; headers?: Record<string, string>; body?: string } | undefined,
+      sourceId,
     );
   };
 

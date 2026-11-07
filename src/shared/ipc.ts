@@ -139,6 +139,8 @@ export const IPC = {
   networkTraffic: "network:traffic",
   networkSourceCacheSize: "network:sourceCacheSize",
   networkClearSourceCache: "network:clearSourceCache",
+  extensionsApkRuntimeGet: "extensions:apkRuntime:get",
+  extensionsApkRuntimeSet: "extensions:apkRuntime:set",
   networkSecureProxyStatus: "network:secureProxy:status",
   networkSecureProxySet: "network:secureProxy:set",
   networkSecureProxyClear: "network:secureProxy:clear",

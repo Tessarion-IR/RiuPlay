@@ -3,6 +3,8 @@
 // Electron's main thread, so this file must only ever be called from there (runtime.ts, in
 // response to a bridge request forwarded from the extension's worker_thread - see
 // syncHostBridge.ts for the worker side of that bridge).
+import { clearanceCookiesFor } from "../../core/extensions/cloudflare";
+import { assertBrowsable, hardenWindow, sessionForSource } from "./extensionWindows";
 import { BrowserWindow } from "electron";
 import type { BrowserFetchResult, ChallengeSession } from "./browserBridge";
 
@@ -91,7 +93,7 @@ function getPooledWindow(key: string): BrowserWindow | null {
   return entry.window;
 }
 
-async function acquireLoadedWindow(key: string, url: string, forceReload: boolean): Promise<BrowserWindow> {
+async function acquireLoadedWindow(key: string, url: string, forceReload: boolean, sourceId?: string): Promise<BrowserWindow> {
   const existing = !forceReload && getPooledWindow(key);
   if (existing) return existing;
 
@@ -102,7 +104,7 @@ async function acquireLoadedWindow(key: string, url: string, forceReload: boolea
   const pending = !forceReload ? pendingLoads.get(key) : null;
   if (pending) return pending;
 
-  const load = createLoadedWindow(key, url, forceReload);
+  const load = createLoadedWindow(key, url, forceReload, sourceId);
   pendingLoads.set(key, load);
   try {
     return await load;
@@ -111,17 +113,28 @@ async function acquireLoadedWindow(key: string, url: string, forceReload: boolea
   }
 }
 
-async function createLoadedWindow(key: string, url: string, forceReload: boolean): Promise<BrowserWindow> {
+async function createLoadedWindow(key: string, url: string, forceReload: boolean, sourceId?: string): Promise<BrowserWindow> {
   const previous = pool.get(key);
   if (previous && !previous.window.isDestroyed()) previous.window.destroy();
 
-  const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true, images: false } });
+  // RiuPlay M2: the source's own hardened partition (extensionWindows.ts), never the app's session.
+  const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true, images: false, session: sessionForSource(sourceId) } });
+  hardenWindow(win);
   win.webContents.setAudioMuted(true); // A challenge/fetch page is never meant to be heard.
   win.on("closed", () => {
     if (pool.get(key)?.window === win) pool.delete(key);
   });
   try {
     if (forceReload) await win.webContents.session.clearStorageData({ origin: new URL(url).origin });
+    // A check the user passed (visible window, app session) still counts here: its cookies are
+    // copied into this source's own partition, scoped to that site.
+    const earned = clearanceCookiesFor(url);
+    if (earned && !forceReload) {
+      win.webContents.setUserAgent(earned.userAgent);
+      for (const [name, value] of Object.entries(earned.cookies)) {
+        await win.webContents.session.cookies.set({ url: `https://${earned.host}/`, domain: `.${earned.host}`, name, value, secure: true }).catch(() => undefined);
+      }
+    }
     await withTimeout(win.loadURL(url), NAVIGATION_TIMEOUT_MS, `Browser page navigation timed out for ${url}`);
     await waitForChallengeSettle(win);
     pool.set(key, { window: win, loadedAt: Date.now() });
@@ -152,7 +165,12 @@ export async function performBrowserFetch(
   pageUrl: string,
   targetUrl: string,
   options?: { method?: string; headers?: Record<string, string>; body?: string },
+  sourceId?: string,
 ): Promise<BrowserFetchResult> {
+  // RiuPlay M2: both the page and the in-page request's target are checked by the broker first -
+  // an in-page fetch() must not become a route to the user's computer or network.
+  await assertBrowsable(pageUrl, sourceId);
+  await assertBrowsable(new URL(targetUrl, pageUrl).toString(), sourceId);
   const deadline = Date.now() + FETCH_TOTAL_TIMEOUT_MS;
   const requestInit = {
     method: options?.method ?? "GET",
@@ -161,7 +179,7 @@ export async function performBrowserFetch(
     credentials: "include" as const,
   };
   for (let attempt = 0; ; attempt++) {
-    const win = await acquireLoadedWindow(pageUrl, pageUrl, false);
+    const win = await acquireLoadedWindow(`${sourceId ?? ""}|${pageUrl}`, pageUrl, false, sourceId);
     const requestTimeoutMs = Math.min(FETCH_TIMEOUT_MS, deadline - Date.now());
     if (requestTimeoutMs <= 0) throw new Error(`browserFetch() timed out for ${targetUrl}`);
     const script = `
@@ -199,9 +217,10 @@ export async function performBrowserFetch(
   }
 }
 
-export async function performChallenge(url: string, cookieNames: string[], forceRefresh: boolean): Promise<ChallengeSession> {
+export async function performChallenge(url: string, cookieNames: string[], forceRefresh: boolean, sourceId?: string): Promise<ChallengeSession> {
+  await assertBrowsable(url, sourceId);
   const origin = new URL(url).origin;
-  const win = await acquireLoadedWindow(origin, url, forceRefresh);
+  const win = await acquireLoadedWindow(`${sourceId ?? ""}|${origin}`, url, forceRefresh, sourceId);
 
   const userAgent = win.webContents.getUserAgent();
   const allCookies = await win.webContents.session.cookies.get({ url });

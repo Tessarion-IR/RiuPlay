@@ -16,6 +16,7 @@ import { registerLibraryHandlers } from "./ipc/library";
 import { registerTrackingHandlers } from "./ipc/tracking";
 import { registerSyncHandlers, shutdownSync } from "./ipc/sync";
 import { registerNetworkHandlers } from "./ipc/network";
+import { EXTENSION_HOST_PRIVILEGES, EXTENSION_HOST_SCHEME } from "./extensions/sandbox/sandboxHost";
 import { disabledExtensionIds } from "../core/api/extensionState";
 import { setExtensionHostPermissions } from "./net/state";
 import { registerMediaHandlers } from "./ipc/media";
@@ -67,6 +68,8 @@ protocol.registerSchemesAsPrivileged([
   { scheme: APK_IMAGE_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } },
   // RiuPlay: files of titles imported from disk (main/mediaProtocol.ts).
   { scheme: MEDIA_SCHEME, privileges: MEDIA_SCHEME_PRIVILEGES },
+  // RiuPlay M2: the sandboxed extension hosts' own scheme (answered per host session only).
+  { scheme: EXTENSION_HOST_SCHEME, privileges: EXTENSION_HOST_PRIVILEGES },
 ]);
 
 

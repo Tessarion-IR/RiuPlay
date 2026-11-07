@@ -22,6 +22,7 @@ import { useAppUpdate, useUpdateFlow } from "@/lib/appUpdate";
 import { AniListLogo } from "@/components/AniListLogo";
 import { DeviceSyncSection } from "@/components/DeviceSync";
 import { SecureProxyPanel } from "@/features/network/SecureProxyPanel";
+import { ApkRuntimeRow } from "@/features/sources/ApkRuntimeRow";
 import { TRACKING_KEY, useTrackerAccount } from "@/lib/tracking";
 import type { TrackerImportProgress, TrackerImportReport } from "@shared/types";
 import type { MemorySnapshot } from "@shared/types";
@@ -1141,6 +1142,7 @@ function NetworkSection() {
       )}
       {!isMobile && <ProxyRow />}
       {!isMobile && <SecureProxyPanel />}
+      {!isMobile && <ApkRuntimeRow />}
       <CloudflareResetRow />
       <TrafficRow />
       <CacheRow />

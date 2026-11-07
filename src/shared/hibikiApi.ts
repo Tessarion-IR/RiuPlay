@@ -344,6 +344,8 @@ export interface HibikiApi {
     onMeteredChange?(callback: (metered: boolean) => void): () => void;
     /** Desktop only (RiuPlay M3): the proxy for main-process requests, password encrypted at rest.
      * No Settings screen uses it yet; the legacy proxy setting is untouched. */
+    /** Desktop only (RiuPlay M2): the opt-in Java runtime for APK (Aniyomi) sources. */
+    apkRuntime?: { get(): Promise<{ enabled: boolean; running: boolean }>; set(enabled: boolean): Promise<{ enabled: boolean; running: boolean }> };
     secureProxy?: {
       status(): Promise<SecureProxyStatus>;
       set(input: SecureProxyInput): Promise<SecureProxyStatus>;

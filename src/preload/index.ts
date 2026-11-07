@@ -352,6 +352,10 @@ const api: HibikiApi = {
     traffic: (): Promise<TrafficSnapshot> => ipcRenderer.invoke(IPC.networkTraffic),
     sourceCacheSize: (): Promise<number> => ipcRenderer.invoke(IPC.networkSourceCacheSize),
     clearSourceCache: (): Promise<void> => ipcRenderer.invoke(IPC.networkClearSourceCache),
+    apkRuntime: {
+      get: (): Promise<{ enabled: boolean; running: boolean }> => ipcRenderer.invoke(IPC.extensionsApkRuntimeGet),
+      set: (enabled: boolean): Promise<{ enabled: boolean; running: boolean }> => ipcRenderer.invoke(IPC.extensionsApkRuntimeSet, enabled),
+    },
     secureProxy: {
       status: (): Promise<SecureProxyStatus> => ipcRenderer.invoke(IPC.networkSecureProxyStatus),
       set: (input: SecureProxyInput): Promise<SecureProxyStatus> => ipcRenderer.invoke(IPC.networkSecureProxySet, input),

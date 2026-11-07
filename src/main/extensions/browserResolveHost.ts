@@ -5,6 +5,7 @@
 // exposes Provider.browserScript(linkJson), a plain-JS payload meant to run *inside* the loaded
 // embed page and report findings back through a `HibikiResolver.*` bridge - mirrors Android's
 // WebView + @JavascriptInterface bridge one-to-one, just backed by a hidden BrowserWindow instead.
+import { assertBrowsable } from "./extensionWindows";
 import { BrowserWindow } from "electron";
 import type { PlayerLink, SubtitleTrack } from "@shared/types";
 import { subtitleTracksFrom, type ReportedSubtitle } from "@shared/resolverSubtitles";
@@ -460,6 +461,10 @@ export async function performBrowserResolve(
   parentUrl?: string | null,
   blockHosts: string[] = [],
 ): Promise<ResolvedStream[]> {
+  // RiuPlay M2: the embed page (and its parent page) must pass the broker's destination rules
+  // before a resolver window is pointed at it.
+  await assertBrowsable(link.url, undefined);
+  if (parentUrl) await assertBrowsable(parentUrl, undefined);
   // Covers navigation, iframe setup, probing and validation. Previously the clock started only
   // after all navigation had completed, allowing a dead embed page to hang well beyond 25s.
   const deadline = Date.now() + Math.min(TIMEOUT_MS, timeoutMs);

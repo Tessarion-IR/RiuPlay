@@ -75,6 +75,14 @@ export function rememberClearance(url: string, session: ChallengeSession): void 
   logger.info("cloudflare", `clearance stored for ${host} (${Object.keys(session.cookies).join(", ")})`);
 }
 
+/** RiuPlay M2: the clearance the user earned for this site (or a parent domain), for seeding a
+ * source's own browser partition - hidden pages no longer share the app's session. */
+export function clearanceCookiesFor(url: string): { host: string; cookies: Record<string, string>; userAgent: string } | null {
+  const host = hostOf(url);
+  const found = host ? clearanceFor(host) : null;
+  return found ? { host: found.host, cookies: found.clearance.cookies, userAgent: found.clearance.userAgent } : null;
+}
+
 /** Settings > Network's "Reset Cloudflare": every site asks for its check again. */
 export function forgetAllClearances(): void {
   const count = clearances.size;

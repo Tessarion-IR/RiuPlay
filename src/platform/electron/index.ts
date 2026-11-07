@@ -11,6 +11,10 @@ import { electronBrowser } from "./browser";
 import { electronDb } from "./db";
 import { electronDownloadTransfer } from "./downloadTransfer";
 import { ElectronExtensionHost } from "./extensionHost";
+import { readApkOptIn } from "./apkOptIn";
+import { SandboxedExtensionHost } from "../../main/extensions/sandbox/sandboxHost";
+import { fileURLToPath } from "node:url";
+
 import { electronFiles } from "./files";
 import { electronHttp } from "./http";
 import { electronPaths } from "./paths";
@@ -23,7 +27,8 @@ export function createElectronPlatform(getWindow: () => BrowserWindow | null): P
   // APK sources run in a JVM process of their own (see apkHost.ts); an install without the jars or
   // a Java to run them simply has none, and the rest of the app does not know the difference.
   const apkLocation = locateApkHost(systemLocateOptions(app.getAppPath(), app.isPackaged ? process.resourcesPath : null));
-  const apkHost = apkLocation ? new ApkHostProcess(apkLocation, path.join(app.getPath("userData"), "apk-host")) : null;
+  // RiuPlay M2: off unless the user opted in (apkOptIn.ts) - it runs with the user's full rights.
+  const apkHost = apkLocation && readApkOptIn(app.getPath("userData")) ? new ApkHostProcess(apkLocation, path.join(app.getPath("userData"), "apk-host")) : null;
   setApkHost(apkHost);
   // The pages APK sources load (a player embed whose requests give away the video) run as hidden windows here.
   if (apkHost) new PageBridge(apkHost, createElectronPageDriver);
@@ -59,7 +64,12 @@ export function createElectronPlatform(getWindow: () => BrowserWindow | null): P
         app.exit();
       },
     },
-    extensionHost: new ElectronExtensionHost(),
+    // RiuPlay M2: extensions run in Chromium-sandboxed hosts (main/extensions/sandbox). The old
+    // in-process node:vm worker is NOT a sandbox; it is kept only as an explicit developer
+    // fallback (RIUPLAY_LEGACY_EXTENSION_RUNTIME=1) and is never selected otherwise.
+    extensionHost: process.env.RIUPLAY_LEGACY_EXTENSION_RUNTIME === "1"
+      ? new ElectronExtensionHost()
+      : new SandboxedExtensionHost({ workerBundlePath: path.join(path.dirname(fileURLToPath(import.meta.url)), "extension-host-worker.js") }),
     appInstaller: electronAppInstaller,
     // Reaching another computer for device sync; this one also listens (main/sync.ts).
     syncTransport: electronSyncTransport,
