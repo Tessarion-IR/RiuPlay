@@ -33,3 +33,12 @@ electron ^34, electron-builder ^25, better-sqlite3 ^11 (native, rebuilt by @elec
 - **Remaining production advisory:** `drizzle-orm` < 0.45.2 (high). Fixing it means upgrading 0.39 → 0.45.2, which can break the schema and migrations, so it is scheduled for Phase 5 with the migration tests.
 - The remaining advisories are in dev-only tooling (electron-builder, drizzle-kit, vite chain). They will be reviewed before the first release.
 - Test setup: the app uses better-sqlite3 (Electron ABI), and the core tests use Node's built-in `node:sqlite`. That is why system Node must be ≥ 22.5.
+
+## Phase 5 update (2026-11-07)
+- **GHSA-gpj5-g38j-94v9** (high): "Drizzle ORM has SQL injection via improperly escaped SQL identifiers", affecting `drizzle-orm < 0.45.2`. RiuPlay was on 0.39.3.
+- Upgraded to **drizzle-orm 0.45.4** (latest stable) and **drizzle-kit 0.31.11** (the matching line).
+- Breaking changes reviewed for 0.40–0.45:
+  - Query errors are now wrapped in `DrizzleQueryError`. No RiuPlay code inspects raw SQLite error codes or messages (checked with grep), so nothing depends on the old shape.
+  - The better-sqlite3 and sqlite-proxy drivers and the SQLite migrator keep the same API and the same `__drizzle_migrations` rule. They were verified by the full test suite and by upgrading two real databases with `scripts/verify-db-upgrade.ts`.
+  - drizzle-kit 0.31 read the existing v6 snapshots and generated only the new migration's diff.
+- `npm audit --omit=dev`: **0 vulnerabilities**.
