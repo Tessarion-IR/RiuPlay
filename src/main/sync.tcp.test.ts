@@ -87,21 +87,29 @@ describe("device sync over a real socket", () => {
     expect(await ids(pc)).toEqual(["from-pc", "from-phone"]);
   });
 
+  // RiuPlay: this test moves ~3 MB through real sockets. Alone it takes ~2 s, but with the whole main
+  // suite running in parallel it went past Vitest's 5 s default. A timed-out test is not cancelled:
+  // its still-running sync kept swapping the *global* platform (asComputer/asPhone) under the next
+  // test, which then failed with "no-transport". The setup inserts are batched now (780 awaited
+  // single-row inserts before), and the timeout is sized to the workload rather than the default.
   it("carries a few megabytes in one go, and many batches in a row", async () => {
     const thumbnail = `data:image/jpeg;base64,${"A".repeat(40_000)}`;
-    for (let i = 0; i < 80; i++) {
-      await phone
-        .insert(watchProgress)
-        .values({ sourceId: "s", titleId: `t${i}`, episodeId: "e1", episodeNumber: 1, groupId: "g", quality: null, translation: null, playerName: null, positionMs: i, durationMs: 1000, watched: false, updatedAt: 100 + i, thumbnailDataUrl: thumbnail })
-        .run();
-    }
-    for (let i = 0; i < 700; i++) await phone.insert(titleRatings).values({ sourceId: "s", animeId: `a${i}`, rating: 1 + (i % 10), ratedAt: 100 + i }).run();
+    await phone
+      .insert(watchProgress)
+      .values(
+        Array.from({ length: 80 }, (_, i) => ({ sourceId: "s", titleId: `t${i}`, episodeId: "e1", episodeNumber: 1, groupId: "g", quality: null, translation: null, playerName: null, positionMs: i, durationMs: 1000, watched: false, updatedAt: 100 + i, thumbnailDataUrl: thumbnail })),
+      )
+      .run();
+    await phone
+      .insert(titleRatings)
+      .values(Array.from({ length: 700 }, (_, i) => ({ sourceId: "s", animeId: `a${i}`, rating: 1 + (i % 10), ratedAt: 100 + i })))
+      .run();
     await pairPhone();
     asPhone();
     await syncNow();
     expect(await pc.select().from(watchProgress).all()).toHaveLength(80);
     expect(await pc.select().from(titleRatings).all()).toHaveLength(700);
-  });
+  }, 30_000);
 
   it("serves two phones, each paired and syncing through the same server", async () => {
     const phone1 = phone;
