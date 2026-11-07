@@ -3,6 +3,9 @@
 // implement the same surface without going through Electron IPC.
 import type {
   NetworkConfig,
+  SecureProxyInput,
+  SecureProxySummary,
+  SecureProxyTestResult,
   TrafficSnapshot,
   AnimeTitle,
   AppUpdate,
@@ -325,6 +328,15 @@ export interface HibikiApi {
     clearSourceCache(): Promise<void>;
     /** Phone only: whether the network is metered (mobile data), now and on every change. */
     onMeteredChange?(callback: (metered: boolean) => void): () => void;
+    /** Desktop only (RiuPlay M3): the proxy for main-process requests, password encrypted at rest.
+     * No Settings screen uses it yet; the legacy proxy setting is untouched. */
+    secureProxy?: {
+      get(): Promise<SecureProxySummary>;
+      set(input: SecureProxyInput): Promise<SecureProxySummary>;
+      clear(): Promise<void>;
+      /** One request through the effective path; reports success or the refusal code. */
+      test(): Promise<SecureProxyTestResult>;
+    };
   };
   logs: {
     /** Resolves the written path, or null if the save dialog was cancelled (Android: handed to the share sheet, always null). */

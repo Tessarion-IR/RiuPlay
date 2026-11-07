@@ -101,3 +101,38 @@ describe("performNetFetchAll", () => {
     expect(results[1]).toMatchObject({ status: 0, ok: false, error: "socket hang up" });
   });
 });
+
+describe("RiuPlay M3: caller and controlled-path errors", () => {
+  class NetError extends Error {
+    constructor(readonly code: string, message: string) {
+      super(`${message} (${code})`);
+      this.name = "NetError";
+    }
+  }
+
+  it("hands the host-set caller to the transport, for single and batched requests", async () => {
+    await performNetFetch("https://example.org/c1", {}, { caller: "extension:src-a" });
+    await performNetFetchAll([{ url: "https://example.org/c2" }, { url: "https://example.org/c3" }], { caller: "extension:src-b" });
+    expect(requests.map((r) => r.caller)).toEqual(["extension:src-a", "extension:src-b", "extension:src-b"]);
+  });
+
+  it("retries a transport failure once, but never a refusal by policy", async () => {
+    handler = async () => {
+      throw new NetError("blocked-address", "example.org resolves to a blocked address (private)");
+    };
+    await expect(performNetFetch("https://example.org/blocked")).rejects.toThrow(/blocked-address/);
+    expect(requests).toHaveLength(1);
+    requests.length = 0;
+    handler = async () => {
+      throw new NetError("proxy-failed", "proxy unreachable: ECONNREFUSED");
+    };
+    await expect(performNetFetch("https://example.org/proxy")).rejects.toThrow(/proxy-failed/);
+    expect(requests).toHaveLength(1);
+    requests.length = 0;
+    handler = async () => {
+      throw new NetError("timeout", "request timed out");
+    };
+    await expect(performNetFetch("https://example.org/slow")).rejects.toThrow(/timeout/);
+    expect(requests).toHaveLength(2);
+  });
+});

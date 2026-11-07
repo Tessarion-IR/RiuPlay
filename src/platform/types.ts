@@ -84,6 +84,9 @@ export interface HttpRequest {
   redirect?: "follow" | "manual";
   timeoutMs?: number;
   signal?: AbortSignal;
+  /** Who is asking ("extension:<sourceId>", "download", "app:<purpose>"). On desktop it selects the
+   * network policy and budget (main/net/policy.ts); a missing or unknown tag is an app request. */
+  caller?: string;
 }
 
 export interface HttpResponse {

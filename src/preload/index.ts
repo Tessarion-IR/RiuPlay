@@ -5,6 +5,9 @@ import type { MediaApi } from "@shared/media";
 import type {
   AnimeTitle,
   NetworkConfig,
+  SecureProxyInput,
+  SecureProxySummary,
+  SecureProxyTestResult,
   TrafficSnapshot,
   AppUpdate,
   CachedAnimeEntry,
@@ -341,6 +344,12 @@ const api: HibikiApi = {
     traffic: (): Promise<TrafficSnapshot> => ipcRenderer.invoke(IPC.networkTraffic),
     sourceCacheSize: (): Promise<number> => ipcRenderer.invoke(IPC.networkSourceCacheSize),
     clearSourceCache: (): Promise<void> => ipcRenderer.invoke(IPC.networkClearSourceCache),
+    secureProxy: {
+      get: (): Promise<SecureProxySummary> => ipcRenderer.invoke(IPC.networkSecureProxyGet),
+      set: (input: SecureProxyInput): Promise<SecureProxySummary> => ipcRenderer.invoke(IPC.networkSecureProxySet, input),
+      clear: (): Promise<void> => ipcRenderer.invoke(IPC.networkSecureProxyClear),
+      test: (): Promise<SecureProxyTestResult> => ipcRenderer.invoke(IPC.networkSecureProxyTest),
+    },
   },
   logs: {
     export: (): Promise<string | null> => ipcRenderer.invoke(IPC.logsExport),

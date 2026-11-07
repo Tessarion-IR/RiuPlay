@@ -1,40 +1,31 @@
-import { fetch as undiciFetch, type Dispatcher } from "undici";
 import type { HttpPort, HttpRequest, HttpResponse } from "../types";
-import { headerRecord } from "./headers";
+import type { NetClient } from "../../main/net/client";
+import { parseCaller, type Caller } from "../../main/net/policy";
+import { netClient } from "../../main/net/state";
 
-// Set by main/network.ts when Settings > Network asks for a proxy or DNS-over-HTTPS. undici's own
-// fetch takes it; without one, Node's built-in fetch is used exactly as before.
-let dispatcher: Dispatcher | null = null;
-
-export function setHttpDispatcher(next: Dispatcher | null): void {
-  dispatcher = next;
-}
-
-/** Node's fetch (undici): no CORS, no cookie jar, any header allowed - the transport
- * the extension fetch host has always used. */
-export const electronHttp: HttpPort = {
-  async request(request: HttpRequest): Promise<HttpResponse> {
-    const controller = new AbortController();
-    const abort = () => controller.abort();
-    if (request.signal?.aborted) abort();
-    request.signal?.addEventListener("abort", abort, { once: true });
-    const timer = request.timeoutMs ? setTimeout(abort, request.timeoutMs) : null;
-    try {
-      const init = {
-        method: (request.method ?? "GET").toUpperCase(),
+/**
+ * RiuPlay M3: every platform.http request (extension fetch(), playlists, repository indexes,
+ * updates, AniList, skip times) goes through the controlled request path (main/net/client.ts):
+ * public addresses only, DNS pinned, every redirect re-validated, the configured proxy - HTTP,
+ * HTTPS or SOCKS5 - applied or the request refused, bounded bodies and per-caller budgets.
+ * Behaviour extensions rely on is kept: no CORS, no cookie jar, any header, decompressed bodies.
+ */
+export function createElectronHttp(client: NetClient, options: { caller?: (request: HttpRequest) => Caller } = {}): HttpPort {
+  return {
+    async request(request: HttpRequest): Promise<HttpResponse> {
+      const response = await client.request({
+        url: request.url,
+        caller: options.caller?.(request) ?? parseCaller(request.caller),
+        method: request.method,
         headers: request.headers,
         body: request.body,
         redirect: request.redirect ?? "follow",
-        signal: controller.signal,
-      } as const;
-      const response = dispatcher
-        ? ((await undiciFetch(request.url, { ...init, dispatcher })) as unknown as Response)
-        : await fetch(request.url, init);
-      const body = await response.text();
-      return { status: response.status, url: response.url || request.url, headers: headerRecord(response.headers), body };
-    } finally {
-      if (timer) clearTimeout(timer);
-      request.signal?.removeEventListener("abort", abort);
-    }
-  },
-};
+        timeoutMs: request.timeoutMs,
+        signal: request.signal,
+      });
+      return { status: response.status, url: response.url, headers: response.headers, body: response.body.toString("utf8") };
+    },
+  };
+}
+
+export const electronHttp: HttpPort = createElectronHttp(netClient);

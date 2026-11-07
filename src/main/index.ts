@@ -15,6 +15,7 @@ import { registerSourceHandlers } from "./ipc/sources";
 import { registerLibraryHandlers } from "./ipc/library";
 import { registerTrackingHandlers } from "./ipc/tracking";
 import { registerSyncHandlers, shutdownSync } from "./ipc/sync";
+import { registerNetworkHandlers } from "./ipc/network";
 import { registerMediaHandlers } from "./ipc/media";
 import { handleMediaRequest, MEDIA_SCHEME, MEDIA_SCHEME_PRIVILEGES } from "./mediaProtocol";
 import { handleTrackingRedirect } from "../core/api/tracking";
@@ -373,6 +374,7 @@ app.whenReady().then(async () => {
   registerMarketplaceHandlers(runtime);
   registerLibraryHandlers(runtime);
   registerTrackingHandlers(runtime);
+  registerNetworkHandlers();
   registerSyncHandlers();
   registerMediaHandlers();
   registerXpEventHandlers();

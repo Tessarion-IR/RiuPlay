@@ -32,6 +32,25 @@ export interface NetFetchOptions {
   body?: string;
 }
 
+/** Who a request is for - "extension:<sourceId>" for a source's own fetch() (selects its network
+ * policy and budget on desktop, main/net). Set by the host, never by the extension. */
+export interface NetFetchContext {
+  caller?: string;
+}
+
+/** What may be logged of a URL: scheme, host and the start of the path - never credentials, the
+ * query string (tokens, signatures) or the fragment. */
+export function logUrl(raw: string): string {
+  try {
+    const url = new URL(raw);
+    const segments = url.pathname.split("/").filter(Boolean);
+    const shown = segments.slice(0, 3).map((s) => (s.length > 32 ? `${s.slice(0, 12)}…` : s));
+    return `${url.protocol}//${url.host}${segments.length ? `/${shown.join("/")}${segments.length > 3 ? "/…" : ""}` : "/"}${url.search ? "?…" : ""}`;
+  } catch {
+    return "<invalid-url>";
+  }
+}
+
 export interface NetFetchResult {
   status: number;
   ok: boolean;
@@ -130,12 +149,16 @@ function writeCache(key: string, result: NetFetchResult): void {
 function isRetryable(error: unknown): boolean {
   const name = error instanceof Error ? error.name : "";
   const message = error instanceof Error ? error.message : String(error);
+  // The desktop's controlled path (main/net) says exactly why: only transport failures are worth
+  // a retry - never a refusal by policy (blocked address, proxy refused, limits).
+  if (name === "NetError") return /\((timeout|connect-failed|dns-failed)\)$/.test(message);
   if (name === "TimeoutError" || name === "AbortError") return true;
   return /ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|socket hang up|fetch failed|network/i.test(message);
 }
 
-async function performOnce(url: string, options: NetFetchOptions, headers: Record<string, string>): Promise<NetFetchResult> {
+async function performOnce(url: string, options: NetFetchOptions, headers: Record<string, string>, context: NetFetchContext): Promise<NetFetchResult> {
   const response = await getPlatform().http.request({
+    caller: context.caller,
     url,
     method: (options.method ?? "GET").toUpperCase(),
     headers,
@@ -153,21 +176,21 @@ async function performOnce(url: string, options: NetFetchOptions, headers: Recor
   return { status: response.status, ok: response.status >= 200 && response.status < 300, body: response.body, headers: responseHeaders };
 }
 
-async function fetchUncached(url: string, options: NetFetchOptions, headers: Record<string, string>): Promise<NetFetchResult> {
+async function fetchUncached(url: string, options: NetFetchOptions, headers: Record<string, string>, context: NetFetchContext): Promise<NetFetchResult> {
   const method = (options.method ?? "GET").toUpperCase();
   let lastError: unknown;
   for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
     const startedAt = Date.now();
     try {
-      const result = await performOnce(url, options, headers);
+      const result = await performOnce(url, options, headers, context);
       countDataBytes(result.body.length, url);
-      logger.debug("net", `${method} ${url} -> ${result.status} in ${Date.now() - startedAt}ms (${result.body.length}b)${attempt > 1 ? ` [attempt ${attempt}]` : ""}`);
+      logger.debug("net", `${method} ${logUrl(url)} -> ${result.status} in ${Date.now() - startedAt}ms (${result.body.length}b)${attempt > 1 ? ` [attempt ${attempt}]` : ""}`);
       return result;
     } catch (error) {
       lastError = error;
       const reason = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
       const retrying = attempt < RETRY_ATTEMPTS && isRetryable(error);
-      logger.warn("net", `${method} ${url} failed after ${Date.now() - startedAt}ms - ${reason}${retrying ? " (retrying)" : ""}`);
+      logger.warn("net", `${method} ${logUrl(url)} failed after ${Date.now() - startedAt}ms - ${reason}${retrying ? " (retrying)" : ""}`);
       if (!retrying) break;
       await new Promise((resolve) => setTimeout(resolve, RETRY_BACKOFF_MS));
     }
@@ -184,16 +207,16 @@ function fromStored(stored: StoredResponse): NetFetchResult {
  * otherwise asked conditionally when a copy with a validator is there - a 304 then hands back that
  * copy instead of downloading it again - and a new answer worth keeping is kept.
  */
-async function fetchRevalidating(url: string, options: NetFetchOptions, headers: Record<string, string>, key: string): Promise<NetFetchResult> {
+async function fetchRevalidating(url: string, options: NetFetchOptions, headers: Record<string, string>, key: string, context: NetFetchContext): Promise<NetFetchResult> {
   const stored = await readStored(key);
   if (stored && isFresh(stored)) {
-    logger.debug("net", `GET ${url} -> served from disk (fresh)`);
+    logger.debug("net", `GET ${logUrl(url)} -> served from disk (fresh)`);
     countSavedBytes(stored.body.length, url);
     return fromStored(stored);
   }
-  const result = await fetchUncached(url, options, stored ? withValidators(headers, stored) : headers);
+  const result = await fetchUncached(url, options, stored ? withValidators(headers, stored) : headers, context);
   if (stored && result.status === 304) {
-    logger.debug("net", `GET ${url} -> 304, ${stored.body.length}b reused from disk`);
+    logger.debug("net", `GET ${logUrl(url)} -> 304, ${stored.body.length}b reused from disk`);
     countSavedBytes(stored.body.length, url);
     void refreshStored(key, stored, result.headers, headers);
     return fromStored(stored);
@@ -202,7 +225,7 @@ async function fetchRevalidating(url: string, options: NetFetchOptions, headers:
   return result;
 }
 
-export async function performNetFetch(url: string, options: NetFetchOptions = {}): Promise<NetFetchResult> {
+export async function performNetFetch(url: string, options: NetFetchOptions = {}, context: NetFetchContext = {}): Promise<NetFetchResult> {
   // A site whose Cloudflare check was passed in the app's window gets that clearance on every request.
   const requested = withDefaultHeaders(options.headers ?? {});
   const cleared = withClearance(url, requested);
@@ -214,17 +237,17 @@ export async function performNetFetch(url: string, options: NetFetchOptions = {}
   if (cacheable) {
     const cached = readCache(key);
     if (cached) {
-      logger.debug("net", `GET ${url} -> ${cached.status} (cached)`);
+      logger.debug("net", `GET ${logUrl(url)} -> ${cached.status} (cached)`);
       return cached;
     }
     const pending = inFlight.get(key);
     if (pending) {
-      logger.debug("net", `GET ${url} -> joining in-flight request`);
+      logger.debug("net", `GET ${logUrl(url)} -> joining in-flight request`);
       return pending;
     }
   }
 
-  const request = (cacheable ? fetchRevalidating(url, options, headers, key) : fetchUncached(url, options, headers)).then((result) => {
+  const request = (cacheable ? fetchRevalidating(url, options, headers, key, context) : fetchUncached(url, options, headers, context)).then((result) => {
     if (cleared && isCloudflareChallenge(result.status, result.headers, result.body)) forgetClearance(url);
     if (cacheable) writeCache(key, result);
     return result;
@@ -261,6 +284,7 @@ const MAX_BATCH_CONCURRENCY = 8;
  */
 export async function performNetFetchAll(
   requests: Array<{ url: string; options?: NetFetchOptions }>,
+  context: NetFetchContext = {},
 ): Promise<NetFetchResult[]> {
   const results = new Array<NetFetchResult>(requests.length);
   let next = 0;
@@ -271,7 +295,7 @@ export async function performNetFetchAll(
       if (index >= requests.length) return;
       const { url, options } = requests[index];
       try {
-        results[index] = await performNetFetch(url, options ?? {});
+        results[index] = await performNetFetch(url, options ?? {}, context);
       } catch (error) {
         // Shaped like a response so a script can branch on `.ok` without a second code path, with
         // status 0 for "never got an answer" - the same thing XHR reports for a failure below HTTP.

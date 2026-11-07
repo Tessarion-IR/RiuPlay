@@ -372,7 +372,14 @@ export class ExtensionRuntime {
   // Answers one challenge()/browserFetch()/fetch() request from a running extension script (see
   // syncHostBridge.ts) - the real, GUI-capable work runs here, outside the worker, while the script
   // waits for the answer.
-  private readonly bridge: BridgeHandler = (kind, payload) => {
+  /** The bridge for one source's call: its fetch() requests carry the source id as their caller,
+   * set here by the host - the script can't choose it. */
+  private bridgeFor(sourceId: string): BridgeHandler {
+    return (kind, payload) => this.bridge(kind, payload, sourceId);
+  }
+
+  private readonly bridge = (kind: Parameters<BridgeHandler>[0], payload: Record<string, unknown>, sourceId?: string): Promise<unknown> => {
+    const context = { caller: sourceId ? `extension:${sourceId}` : undefined };
     if (kind === "challenge") {
       return getPlatform().browser.challenge(
         payload.url as string,
@@ -382,11 +389,13 @@ export class ExtensionRuntime {
     } else if (kind === "netFetchAll") {
       return performNetFetchAll(
         (payload.requests as Array<{ url: string; options?: Record<string, unknown> }>) ?? [],
+        context,
       );
     } else if (kind === "netFetch") {
       return performNetFetch(
         payload.url as string,
         (payload.options as { method?: string; headers?: Record<string, string>; body?: string } | undefined) ?? {},
+        context,
       );
     }
     return getPlatform().browser.browserFetch(
@@ -425,8 +434,9 @@ export class ExtensionRuntime {
     // error offers to pass it. A call that got what it needed despite one blocked request (one of
     // several mirrors, say) is left alone.
     const challenged: string[] = [];
+    const sourceBridge = this.bridgeFor(sourceId);
     const forward: BridgeHandler = (kind, payload) =>
-      this.bridge(kind, payload).then((result) => {
+      sourceBridge(kind, payload).then((result) => {
         challenged.push(...challengedUrls(kind, payload, result));
         return result;
       });

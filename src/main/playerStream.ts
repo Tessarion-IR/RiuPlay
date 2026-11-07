@@ -14,6 +14,9 @@
 // removes the failure rather than retrying through it - and relative segment URLs resolve against
 // that final URL, so they follow the stream to the same host instead of bouncing per segment.
 import { logger } from "../core/logger";
+import { NetError } from "./net/errors";
+import { redactUrl } from "./net/redact";
+import { netClient } from "./net/state";
 
 const MAX_REDIRECT_HOPS = 5;
 const RESOLVE_TIMEOUT_MS = 15_000;
@@ -60,29 +63,33 @@ async function resolveFinalStreamUrlUncached(url: string, headers?: Record<strin
   try {
     for (let hop = 0; hop < MAX_REDIRECT_HOPS; hop++) {
       // GET rather than HEAD - a fair number of media CDNs answer HEAD with 405 or with a
-      // different redirect than they'd give the real request. `redirect: "manual"` stops undici
-      // from following it itself, so only the headers are needed and the body below is discarded
-      // unread: nothing of the manifest (or, for a direct MP4, the file) is actually downloaded.
-      const response = await fetch(current, {
-        method: "GET",
+      // different redirect than they'd give the real request. `redirect: "manual"` answers with
+      // the 3xx itself, so only the headers are needed and the body is discarded unread: nothing
+      // of the manifest (or, for a direct MP4, the file) is actually downloaded.
+      // RiuPlay M3: through the controlled request path - each hop's address validated and the
+      // configured proxy applied (this used to go direct, past the proxy).
+      const response = await netClient.stream({
+        url: current,
+        caller: { kind: "app", purpose: "player" },
         headers: headers ?? undefined,
         redirect: "manual",
+        timeoutMs: RESOLVE_TIMEOUT_MS,
         signal: controller.signal,
       });
-      void response.body?.cancel();
+      response.body.destroy();
 
       if (response.status < 300 || response.status >= 400) {
-        if (current !== url) logger.info("player", `stream URL resolved through ${hop} redirect(s) to ${current}`);
+        if (current !== url) logger.info("player", `stream URL resolved through ${hop} redirect(s) to ${redactUrl(current)}`);
         return current;
       }
-      const location = response.headers.get("location");
+      const location = response.headers.location?.[0];
       if (!location) return current;
       current = new URL(location, current).toString();
     }
-    logger.warn("player", `stream URL still redirecting after ${MAX_REDIRECT_HOPS} hops: ${url}`);
+    logger.warn("player", `stream URL still redirecting after ${MAX_REDIRECT_HOPS} hops: ${redactUrl(url)}`);
     return current;
   } catch (error) {
-    logger.warn("player", `could not pre-resolve stream URL ${url}: ${error instanceof Error ? error.message : String(error)}`);
+    logger.warn("player", `could not pre-resolve stream URL ${redactUrl(url)}: ${error instanceof NetError ? error.message : error instanceof Error ? error.name : "error"}`);
     // The original URL, not the partially-walked one: a chain that failed midway is not evidence
     // that the hop before it is a better address than the one the resolver actually gave us.
     return url;

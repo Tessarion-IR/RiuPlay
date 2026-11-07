@@ -79,7 +79,7 @@ interface DownloadState {
 }
 
 async function fetchText(url: string, headers: Record<string, string> | null | undefined, signal: AbortSignal): Promise<string> {
-  const res = await getPlatform().http.request({ url, headers: headers ?? undefined, signal });
+  const res = await getPlatform().http.request({ url, headers: headers ?? undefined, signal, caller: "download" });
   if (res.status < 200 || res.status >= 300) throw new Error(`HTTP ${res.status}`);
   return res.body;
 }

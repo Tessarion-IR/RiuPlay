@@ -9,9 +9,46 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Platform } from "../types";
-import { electronDownloadTransfer } from "./downloadTransfer";
+import { createWriteStream } from "node:fs";
+import type { DownloadTransferPort, HttpPort } from "../types";
 import { electronFiles } from "./files";
-import { electronHttp } from "./http";
+import { headerRecord } from "./headers";
+
+// RiuPlay M3: this suite tests the update flow (core/updates.ts) over a faked GitHub, served by
+// replacing globalThis.fetch. The desktop transports no longer use the global fetch - they go
+// through the controlled request path (main/net), covered by transports.test.ts and
+// main/net/client.test.ts - so the ports here are thin fetch-backed stand-ins with the same
+// HttpPort / DownloadTransferPort contract.
+const electronHttp: HttpPort = {
+  async request(request) {
+    const response = await globalThis.fetch(request.url, { method: request.method, headers: request.headers, body: request.body, redirect: request.redirect ?? "follow", signal: request.signal });
+    return { status: response.status, url: response.url || request.url, headers: headerRecord(response.headers), body: await response.text() };
+  },
+};
+const electronDownloadTransfer: DownloadTransferPort = {
+  async fetchToFile(request) {
+    const response = await globalThis.fetch(request.url, { headers: request.headers, signal: request.signal });
+    if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);
+    const headers = headerRecord(response.headers);
+    const append = typeof request.append === "function" ? request.append({ status: response.status, headers }) : request.append;
+    const total = Number(response.headers.get("content-length") ?? 0) || null;
+    const out = createWriteStream(request.filePath, { flags: append ? "a" : "w" });
+    const reader = response.body.getReader();
+    let bytesWritten = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        await new Promise<void>((resolve, reject) => out.write(value, (error) => (error ? reject(error) : resolve())));
+        bytesWritten += value.byteLength;
+        request.onProgress?.(bytesWritten, total);
+      }
+    } finally {
+      await new Promise<void>((resolve) => out.end(resolve));
+    }
+    return { status: response.status, headers, bytesWritten };
+  },
+};
 import { installPlatform } from "../../core/platform";
 import { checkForUpdate, cleanUpdateLeftovers, downloadAndInstall } from "../../core/updates";
 

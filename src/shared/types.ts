@@ -827,3 +827,37 @@ export interface TrackerImportProgress {
   done: number;
   total: number;
 }
+
+// RiuPlay M3: the encrypted proxy for main-process requests (main/net/secureProxyStore.ts). The
+// password goes in, never out: a summary only says whether one is stored.
+export type SecureProxyKind = "http" | "https" | "socks5";
+export type SecureProxyDnsMode = "doh-via-proxy" | "local";
+
+export interface SecureProxyInput {
+  kind: SecureProxyKind;
+  host: string;
+  port: number;
+  username?: string | null;
+  password?: string | null;
+  dnsMode?: SecureProxyDnsMode;
+  enabled?: boolean;
+}
+
+export interface SecureProxySummary {
+  configured: boolean;
+  enabled: boolean;
+  kind: SecureProxyKind | null;
+  host: string | null;
+  port: number | null;
+  username: string | null;
+  hasPassword: boolean;
+  dnsMode: SecureProxyDnsMode;
+}
+
+export interface SecureProxyTestResult {
+  ok: boolean;
+  /** NetError code when it failed ("proxy-failed", "dns-failed", ...). */
+  code: string | null;
+  elapsedMs: number;
+  path: string;
+}
