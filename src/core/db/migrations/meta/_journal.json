@@ -183,6 +183,13 @@
       "when": 1794093447532,
       "tag": "0025_riuplay_extension_trust",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1794095188229,
+      "tag": "0026_riuplay_server_connections",
+      "breakpoints": true
     }
   ]
 }

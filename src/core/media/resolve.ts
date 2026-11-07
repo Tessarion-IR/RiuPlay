@@ -9,7 +9,8 @@
 import { MEDIA_SCHEME, storedItem, storedUnit } from "./media";
 import { isHttpUrl } from "./validation";
 
-const isStoredPath = (value: string | null | undefined): value is string => typeof value === "string" && value !== "" && !value.startsWith(`${MEDIA_SCHEME}:`) && !isHttpUrl(value);
+const isStoredPath = (value: string | null | undefined): value is string =>
+  typeof value === "string" && value !== "" && !value.startsWith("remote:") && !value.startsWith(`${MEDIA_SCHEME}:`) && !isHttpUrl(value);
 
 function pagesOf(json: string): string[] {
   try {

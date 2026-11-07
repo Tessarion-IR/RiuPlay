@@ -425,3 +425,26 @@ export const localProgress = sqliteTable(
   },
   (t) => [index("local_progress_media_idx").on(t.mediaId, t.updatedAt), index("local_progress_updated_idx").on(t.updatedAt)],
 );
+
+// RiuPlay M4/M5 (migration 0026): the user's own media servers (Suwayomi for manga, Kikoeru for
+// audio). The password or token is stored only as safeStorage ciphertext. A server on the user's
+// computer or local network is reachable only after they confirmed it (local_approved_at): that
+// creates the exact scheme/host/port exception in the network broker for this connection alone.
+export const serverConnections = sqliteTable(
+  "server_connections",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    kind: text("kind", { enum: ["suwayomi", "kikoeru"] }).notNull(),
+    name: text("name").notNull(),
+    baseUrl: text("base_url").notNull(),
+    authMode: text("auth_mode", { enum: ["none", "basic", "ui_login", "token"] }).notNull().default("none"),
+    username: text("username"),
+    secretCiphertext: text("secret_ciphertext"),
+    localApprovedAt: integer("local_approved_at"),
+    lastOkAt: integer("last_ok_at"),
+    lastError: text("last_error"),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [uniqueIndex("server_connections_kind_url_idx").on(t.kind, t.baseUrl)],
+);

@@ -13,8 +13,8 @@ import { KEEP_BACKUPS, backupBeforeMigrating, pendingMigrations } from "./preMig
 
 const MERGED = "0023_riuplay_merged_schema";
 /** Every migration RiuPlay itself added on top of hibiki's, oldest first. All must be additive. */
-const RIUPLAY_MIGRATIONS = [MERGED, "0024_riuplay_local_library", "0025_riuplay_extension_trust"];
-const NEW_TABLES = ["app_settings", "collection_items", "collections", "extension_state", "local_library", "local_media", "local_media_units", "local_progress", "repository_state"];
+const RIUPLAY_MIGRATIONS = [MERGED, "0024_riuplay_local_library", "0025_riuplay_extension_trust", "0026_riuplay_server_connections"];
+const NEW_TABLES = ["app_settings", "collection_items", "collections", "extension_state", "local_library", "local_media", "local_media_units", "local_progress", "repository_state", "server_connections"];
 
 function upTo(tag: string): MigrationJournal {
   const index = journal.entries.findIndex((entry) => entry.tag === tag);

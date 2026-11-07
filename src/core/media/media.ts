@@ -54,7 +54,10 @@ export class MediaError extends Error {
 // ---------------------------------------------------------------------------------------------
 
 export const MEDIA_SCHEME = "riuplay-media";
-const isLocalPath = (value: string): boolean => value !== "" && !value.startsWith(`${MEDIA_SCHEME}:`) && !isHttpUrl(value);
+// RiuPlay M4/M5: "remote:..." marks something on the user's media server - served by the main
+// process (main/connections/service.ts) through riuplay-media://remote..., never read as a file.
+const isRemote = (value: string): boolean => value.startsWith("remote:");
+const isLocalPath = (value: string): boolean => value !== "" && !isRemote(value) && !value.startsWith(`${MEDIA_SCHEME}:`) && !isHttpUrl(value);
 
 function parseJsonArray(text: string): string[] {
   try {
@@ -77,7 +80,7 @@ export function toItem(row: MediaRow): MediaItem {
     title: row.title,
     altTitles: parseJsonArray(row.altTitlesJson),
     description: row.description,
-    cover: isLocalPath(row.cover) ? `${MEDIA_SCHEME}://cover/${row.id}` : row.cover,
+    cover: isRemote(row.cover) ? `${MEDIA_SCHEME}://remote-cover/${row.id}` : isLocalPath(row.cover) ? `${MEDIA_SCHEME}://cover/${row.id}` : row.cover,
     genres: parseJsonArray(row.genresJson),
     releaseInfo: row.releaseInfo,
     origin: row.origin as MediaOrigin,
@@ -94,9 +97,9 @@ export function toUnit(row: UnitRow): MediaUnit {
     kind: row.kind as UnitKind,
     number: row.number,
     title: row.title,
-    url: isLocalPath(row.url) ? `${MEDIA_SCHEME}://unit/${row.id}` : row.url,
+    url: isRemote(row.url) ? `${MEDIA_SCHEME}://remote/${row.id}` : isLocalPath(row.url) ? `${MEDIA_SCHEME}://unit/${row.id}` : row.url,
     subtitleUrl: row.subtitleUrl && isLocalPath(row.subtitleUrl) ? `${MEDIA_SCHEME}://subtitle/${row.id}` : row.subtitleUrl,
-    pages: parseJsonArray(row.pagesJson).map((page, index) => (isLocalPath(page) ? `${MEDIA_SCHEME}://page/${row.id}/${index}` : page)),
+    pages: parseJsonArray(row.pagesJson).map((page, index) => (isRemote(page) ? `${MEDIA_SCHEME}://remote/${row.id}/page/${index}` : isLocalPath(page) ? `${MEDIA_SCHEME}://page/${row.id}/${index}` : page)),
     durationMs: row.durationMs,
   };
 }

@@ -931,3 +931,63 @@ export type LegacyProxyMigrationResult =
   | { outcome: "nothing" | "refused" | "already-migrated" | "busy"; reason: string }
   | { outcome: "migrated"; display: string; legacyStillPresent: true }
   | { outcome: "failed"; reason: string; legacyStillPresent: true };
+
+// RiuPlay M4/M5: the user's own media servers.
+export type ServerKind = "suwayomi" | "kikoeru";
+/** none; basic (HTTP Basic); ui_login (Suwayomi login mutation -> bearer token); token (Kikoeru /api/auth/me -> token). */
+export type ServerAuthMode = "none" | "basic" | "ui_login" | "token";
+
+export interface ServerConnection {
+  id: number;
+  kind: ServerKind;
+  name: string;
+  baseUrl: string;
+  authMode: ServerAuthMode;
+  username: string | null;
+  /** Whether a password/token is stored (never the value). */
+  hasSecret: boolean;
+  /** On this computer or the local network, confirmed by the user. */
+  local: boolean;
+  lastOkAt: number | null;
+  lastError: string | null;
+}
+
+export interface ServerConnectionInput {
+  kind: ServerKind;
+  name?: string;
+  baseUrl: string;
+  authMode?: ServerAuthMode;
+  username?: string | null;
+  password?: string | null;
+  /** The user confirmed the server is theirs on this computer / local network. */
+  localConfirmed?: boolean;
+}
+
+export interface ServerTestResult {
+  ok: boolean;
+  /** e.g. "Suwayomi v2.1.1867" or "Kikoeru". */
+  version: string | null;
+  error: string | null;
+}
+
+/** A title on a server, before it is added to the library. */
+export interface RemoteTitle {
+  /** Server-side id (Suwayomi manga id, Kikoeru work id). */
+  ref: string;
+  title: string;
+  /** riuplay-media://remote-thumb/<connectionId>/<ref> - fetched by main with the credentials. */
+  cover: string;
+  subtitle?: string | null;
+}
+
+export interface RemoteSource {
+  id: string;
+  name: string;
+  lang: string;
+  isNsfw: boolean;
+}
+
+export interface RemotePage {
+  items: RemoteTitle[];
+  hasNextPage: boolean;
+}

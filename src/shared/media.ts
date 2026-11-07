@@ -16,7 +16,8 @@ export type UnitKind = (typeof UNIT_KINDS)[number];
 export const UNIT_KIND_FOR: Record<MediaType, UnitKind> = { video: "episode", manga: "chapter", audio: "track" };
 
 /** Where a locally added title came from. */
-export const MEDIA_ORIGINS = ["direct", "file", "manual"] as const;
+// "server": a title on the user's Suwayomi/Kikoeru server (RiuPlay M4/M5); originRef "<kind>:<connectionId>:<ref>".
+export const MEDIA_ORIGINS = ["direct", "file", "manual", "server"] as const;
 export type MediaOrigin = (typeof MEDIA_ORIGINS)[number];
 
 /** Library statuses, shared by every type; the words differ per type (Watching / Reading / Listening). */
