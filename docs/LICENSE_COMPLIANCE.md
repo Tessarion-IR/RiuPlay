@@ -15,6 +15,22 @@ Adopting Hibiki code **makes RiuPlay GPL-3.0-only, permanently and for all contr
 If GPL is not acceptable, the fallback is option C (clean-room Electron app inspired by the references, any license). It would take several times the effort.
 
 ## Rules applied
-- Every copied file keeps upstream attribution in a header comment, plus a `Modified by RiuPlay` note.
+- Upstream attribution and the GPL §5a modification notice for the whole imported hibiki tree are kept centrally in `THIRD_PARTY_NOTICES.md`, because hibiki's own files carry no per-file headers. Git history records each change. A file ported from *another* project (for example a KikoFlu algorithm) gets a header naming its source.
 - `THIRD_PARTY_NOTICES.md` lists every upstream project, commit and license.
 - npm dependencies are audited for license (`license-checker`) before each release.
+
+---
+
+## Resolution and checks (2026-11-07)
+
+**Decision:** the owner approved **GPL-3.0-only** for RiuPlay and the use of hibiki as the foundation.
+
+| Check | Result |
+|---|---|
+| Existing RiuPlay code (`legacy/next-app/`) | Written for this project and never published under any license, so the owner can license it as GPL-3.0. |
+| Original template (`nextjs-postgresql-template`) | It contributed only trivial configuration boilerplate: `next.config.ts`, `postcss.config.mjs`, the ESLint flat config, the tsconfig and a `pg` pool singleton. No license header or LICENSE file came with it, and nothing it contains is copyrightable expression worth worrying about. **Assumption:** the owner obtained it from a generator with no restrictive terms. It is kept only under `legacy/` and will not ship in the app. |
+| hibiki @132a71e | GPL-3.0-only, with the full, unmodified GPLv3 text in `LICENSE`. Attribution and a §5a modification notice are in `THIRD_PARTY_NOTICES.md`. |
+| Apache-2.0 parts in hibiki (`apk-host/`, Anikku/yuzono) | Compatible with GPLv3. Credited. |
+| npm production dependencies | MIT 145, Apache-2.0 19, BSD-2 11, ISC 10, BSD-3 3, 0BSD 1, Unlicense 1, MIT/WTFPL 1, BSD-2/MIT/Apache 1. **All are GPLv3-compatible.** (The one "UNLICENSED" entry is RiuPlay itself, reported that way because `private: true`.) |
+| Branding | Hibiki's logos were removed. RiuPlay has its own logo (`electron-builder-resources/riuplay.svg`). |
+| Distribution duty | Every binary release must link to the exact source commit. Releases come from this public repository. |

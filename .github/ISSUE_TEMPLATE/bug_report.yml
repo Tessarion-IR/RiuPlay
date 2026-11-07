@@ -1,0 +1,39 @@
+name: Bug report
+description: Something in RiuPlay doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open ...\n2. Click ...\n3. See error"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: RiuPlay version
+      description: Settings → About, or the commit hash if built from source
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 24H2
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines
+      description: From %APPDATA%\RiuPlay\logs\riuplay.log. Remove any personal data first.
+      render: text
+  - type: markdown
+    attributes:
+      value: "Security problem? Do **not** file it here: see SECURITY.md."

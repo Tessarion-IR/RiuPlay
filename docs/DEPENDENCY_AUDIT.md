@@ -24,3 +24,12 @@ electron ^34, electron-builder ^25, better-sqlite3 ^11 (native, rebuilt by @elec
 
 ## To add
 `socks-proxy-agent` (SOCKS5 fetch), `ipaddr.js` (CIDR checks for the SSRF guard), `license-checker` (dev).
+
+---
+
+## Post-import status (2026-11-07)
+- `npm ci` installed 839 packages on Node 22.23.4, and better-sqlite3 was rebuilt for Electron 34 (`postinstall`).
+- `npm audit fix` (semver-safe) cleared the undici DoS advisory.
+- **Remaining production advisory:** `drizzle-orm` < 0.45.2 (high). Fixing it means upgrading 0.39 → 0.45.2, which can break the schema and migrations, so it is scheduled for Phase 5 with the migration tests.
+- The remaining advisories are in dev-only tooling (electron-builder, drizzle-kit, vite chain). They will be reviewed before the first release.
+- Test setup: the app uses better-sqlite3 (Electron ABI), and the core tests use Node's built-in `node:sqlite`. That is why system Node must be ≥ 22.5.
