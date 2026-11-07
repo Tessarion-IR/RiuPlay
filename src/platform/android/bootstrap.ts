@@ -19,6 +19,7 @@ import { log, recentEntries, renderLog } from "../../core/logger";
 import { installPlatform } from "../../core/platform";
 import { checkForUpdate, cleanUpdateLeftovers, downloadAndInstall } from "../../core/updates";
 import { createSyncServerApi } from "../../core/api/sync";
+import { createMediaApi } from "../../core/media";
 import { deviceId } from "../../core/sync/changes";
 import { syncNow } from "../../core/sync/client";
 import { DISCOVERY_PORT, DISCOVERY_PROBE, LOCATE_PROBE_PREFIX, PROTOCOL_VERSION, SYNC_PORT, type DiscoveryAnswer } from "../../core/sync/protocol";
@@ -119,6 +120,15 @@ export async function installAndroidHibiki(): Promise<void> {
       openBatterySettings: () => HibikiApp.openBatterySettings(),
     },
     sources: { ...core.sources, onChanged: (callback) => events.on(IPC.sourcesChanged, () => callback()) },
+    // RiuPlay: the unified media model. The Android build is not shipped (Windows first); importing
+    // local files needs the desktop file picker, so it is reported as unsupported here.
+    media: {
+      ...createMediaApi(),
+      pickFiles: async () => [],
+      addFiles: async () => {
+        throw new Error("Importing local files is only available on desktop (unsupported)");
+      },
+    },
     sync: {
       ...createSyncServerApi(),
       onChanged: (callback) => events.on(IPC.syncChanged, (payload) => callback((payload as { what: "devices" | "data" | "pairing" }).what)),

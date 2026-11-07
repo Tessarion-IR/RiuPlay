@@ -15,6 +15,8 @@ import { registerSourceHandlers } from "./ipc/sources";
 import { registerLibraryHandlers } from "./ipc/library";
 import { registerTrackingHandlers } from "./ipc/tracking";
 import { registerSyncHandlers, shutdownSync } from "./ipc/sync";
+import { registerMediaHandlers } from "./ipc/media";
+import { handleMediaRequest, MEDIA_SCHEME, MEDIA_SCHEME_PRIVILEGES } from "./mediaProtocol";
 import { handleTrackingRedirect } from "../core/api/tracking";
 import { registerXpEventHandlers } from "./ipc/xpEvents";
 import { registerMarketplaceHandlers } from "./ipc/marketplace";
@@ -60,6 +62,8 @@ protocol.registerSchemesAsPrivileged([
   { scheme: DOWNLOAD_FILE_SCHEME, privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true, corsEnabled: true } },
   { scheme: PROFILE_FILE_SCHEME, privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true, corsEnabled: true } },
   { scheme: APK_IMAGE_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } },
+  // RiuPlay: files of titles imported from disk (main/mediaProtocol.ts).
+  { scheme: MEDIA_SCHEME, privileges: MEDIA_SCHEME_PRIVILEGES },
 ]);
 
 
@@ -264,6 +268,9 @@ app.whenReady().then(async () => {
   // pointing at some other quirk in how net.fetch's own file:// handling packages up the response
   // for a large file rather than anything about Range specifically. Building the Response
   // ourselves removes that layer entirely instead of chasing exactly what about it was wrong.
+  // RiuPlay: only files recorded in the database for imported titles (see mediaProtocol.ts).
+  protocol.handle(MEDIA_SCHEME, (request) => handleMediaRequest(request));
+
   protocol.handle(DOWNLOAD_FILE_SCHEME, async (request) => {
     const url = new URL(request.url);
     const requestedPath = decodeURIComponent(url.pathname.startsWith("/") ? url.pathname.slice(1) : url.pathname);
@@ -367,6 +374,7 @@ app.whenReady().then(async () => {
   registerLibraryHandlers(runtime);
   registerTrackingHandlers(runtime);
   registerSyncHandlers();
+  registerMediaHandlers();
   registerXpEventHandlers();
   // Progress goes out through platform.events, whose window getter is read at send-time: a download
   // can still be running long after the window is recreated (e.g. closed and reopened via the

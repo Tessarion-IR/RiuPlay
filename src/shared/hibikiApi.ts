@@ -55,6 +55,8 @@ import type {
   MemorySnapshot,
 } from "@shared/types";
 
+import type { MediaApi } from "./media";
+
 export interface LogEntry {
   time: number;
   level: "debug" | "info" | "warn" | "error";
@@ -252,6 +254,9 @@ export interface HibikiApi {
     /** RiuPlay (desktop): turn LAN sync on or off. Resolves with the new state. */
     setEnabled?(enabled: boolean): Promise<boolean>;
   };
+  /** RiuPlay: the unified media model - local video, manga and audio titles, their units, library,
+   * progress and collections (shared/media.ts). */
+  media: MediaApi;
   updates: {
     check(): Promise<AppUpdate | null>;
     downloadAndInstall(update: AppUpdate): Promise<void>;

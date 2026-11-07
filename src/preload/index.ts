@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, webFrame } from "electron";
 import { IPC } from "@shared/ipc";
 import type { HibikiApi, LogEntry } from "@shared/hibikiApi";
+import type { MediaApi } from "@shared/media";
 import type {
   AnimeTitle,
   NetworkConfig,
@@ -272,6 +273,34 @@ const api: HibikiApi = {
   // Not IPC: zoom belongs to this frame, and webFrame is only reachable from a preload script -
   // the renderer can't import electron, and routing it through the main process would add a round
   // trip to something that is a local, synchronous property of the window.
+  // RiuPlay: unified media and collections (shared/media.ts MediaApi).
+  media: {
+    list: (filter) => ipcRenderer.invoke(IPC.mediaList, filter),
+    get: (id) => ipcRenderer.invoke(IPC.mediaGet, id),
+    add: (input) => ipcRenderer.invoke(IPC.mediaAdd, input),
+    addFiles: (input) => ipcRenderer.invoke(IPC.mediaAddFiles, input),
+    pickFiles: (type, mode) => ipcRenderer.invoke(IPC.mediaPickFiles, type, mode),
+    update: (id, patch) => ipcRenderer.invoke(IPC.mediaUpdate, id, patch),
+    remove: (id) => ipcRenderer.invoke(IPC.mediaRemove, id),
+    addUnit: (mediaId, unit) => ipcRenderer.invoke(IPC.mediaAddUnit, mediaId, unit),
+    removeUnit: (unitId) => ipcRenderer.invoke(IPC.mediaRemoveUnit, unitId),
+    setLibrary: (mediaId, state) => ipcRenderer.invoke(IPC.mediaSetLibrary, mediaId, state),
+    setFavorite: (mediaId, favorite) => ipcRenderer.invoke(IPC.mediaSetFavorite, mediaId, favorite),
+    saveProgress: (unitId, position, duration) => ipcRenderer.invoke(IPC.mediaSaveProgress, unitId, position, duration),
+    setUnitCompleted: (unitId, completed) => ipcRenderer.invoke(IPC.mediaSetUnitCompleted, unitId, completed),
+    continueList: (type, limit) => ipcRenderer.invoke(IPC.mediaContinue, type, limit),
+    recentlyAdded: (limit) => ipcRenderer.invoke(IPC.mediaRecent, limit),
+    collections: {
+      list: () => ipcRenderer.invoke(IPC.collectionsList),
+      create: (name, description) => ipcRenderer.invoke(IPC.collectionsCreate, name, description),
+      update: (id, patch) => ipcRenderer.invoke(IPC.collectionsUpdate, id, patch),
+      remove: (id) => ipcRenderer.invoke(IPC.collectionsRemove, id),
+      items: (id) => ipcRenderer.invoke(IPC.collectionsItems, id),
+      addItem: (id, ref) => ipcRenderer.invoke(IPC.collectionsAddItem, id, ref),
+      removeItem: (id, ref) => ipcRenderer.invoke(IPC.collectionsRemoveItem, id, ref),
+      of: (ref) => ipcRenderer.invoke(IPC.collectionsOf, ref),
+    },
+  } satisfies MediaApi,
   updates: {
     check: (): Promise<AppUpdate | null> => ipcRenderer.invoke(IPC.updatesCheck),
     // Resolves only if the update failed: on success the app is quitting to let the installer run.
