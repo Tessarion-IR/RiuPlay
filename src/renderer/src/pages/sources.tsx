@@ -39,6 +39,7 @@ import { Modal } from "@/components/Modal";
 import { BottomSheet, SheetOption } from "@/components/BottomSheet";
 import type { MarketplaceExtension, RepositoryFetchResult, SourceCapability } from "@shared/types";
 import { isRepositoryAlreadyAdded } from "@shared/repositoryErrors";
+import { DisableExtensionButton, InstalledExtensionsPanel, PermissionConsentDialog, RepositoryTrustBar, useRepositoryDetails } from "@/features/sources/ExtensionTrust";
 
 type Tab = "extensions" | "repositories";
 
@@ -223,6 +224,12 @@ export function SourcesPage({ embedded = false }: { embedded?: boolean } = {}) {
     () => new Map(Object.entries(installed.data?.sources ?? {})),
     [installed.data],
   );
+  // Names for the disabled-extensions panel (disabled extensions are not in the sources list).
+  const marketplaceNames = useMemo(() => {
+    const names: Array<[string, string]> = [];
+    for (const result of marketplace.data ?? []) if (result.ok) for (const e of result.extensions) names.push([e.id, e.name]);
+    return names;
+  }, [marketplace.data]);
 
   // The Extensions tab lists only what is installed; everything a repository offers is under that
   // repository, so many repositories don't pile into one list.
@@ -290,7 +297,16 @@ export function SourcesPage({ embedded = false }: { embedded?: boolean } = {}) {
   // The phone's Back leaves an open repository the way the header arrow does.
   useBackHandler(openRepository !== null, () => showRepository(null));
 
-  const installExtension = useCallback(async (extension: MarketplaceExtension) => {
+  // RiuPlay M1: an install (or an update asking for new permissions) waits for the user's consent.
+  const [pendingConsent, setPendingConsent] = useState<{ extension: MarketplaceExtension; isUpdate: boolean } | null>(null);
+  const repositoryDetails = useRepositoryDetails();
+
+  const installExtension = useCallback(async (extension: MarketplaceExtension, consent?: { acceptedPermissions: string[] }) => {
+    const alreadyInstalled = installedVersions.has(extension.id);
+    if (!consent && !alreadyInstalled) {
+      setPendingConsent({ extension, isUpdate: false });
+      return;
+    }
     // State updates do not become visible until React renders again, so `installingIds` alone
     // cannot stop two fast clicks (or two "Update all" presses) from starting the same download.
     // The ref is updated synchronously and is the actual per-source mutex.
@@ -302,16 +318,19 @@ export function SourcesPage({ embedded = false }: { embedded?: boolean } = {}) {
     try {
       // From the repository it was picked in, else the first one to list it.
       const origin = openRepository && openRepositoryResult?.ok && openRepositoryResult.extensions.some((e) => e.id === extension.id) ? openRepository : originByExtensionId.get(extension.id) ?? "";
-      const updated = await hibiki.sources.install(extension, origin);
+      const updated = await hibiki.sources.install(extension, origin, consent);
       queryClient.setQueryData(["sources"], updated);
       if (hadNoSources) setActiveSourceId(extension.id);
     } catch (error) {
-      setInstallErrors((prev) => ({ ...prev, [extension.id]: error instanceof Error ? error.message : String(error) }));
+      const message = error instanceof Error ? error.message : String(error);
+      // An update whose permissions changed: ask, instead of failing quietly.
+      if (!consent && /different permissions|confirmation of its permissions/.test(message)) setPendingConsent({ extension, isUpdate: alreadyInstalled });
+      else setInstallErrors((prev) => ({ ...prev, [extension.id]: message.replace(/^Error invoking remote method '[^']+': (Error: )?/, "") }));
     } finally {
       installingIdsRef.current.delete(extension.id);
       setInstallingIds((prev) => { const next = new Set(prev); next.delete(extension.id); return next; });
     }
-  }, [installedSources.data, originByExtensionId, openRepository, openRepositoryResult, queryClient, setActiveSourceId]);
+  }, [installedSources.data, installedVersions, originByExtensionId, openRepository, openRepositoryResult, queryClient, setActiveSourceId]);
 
   const updateAll = useCallback(async () => {
     if (updateAllInProgressRef.current) return;
@@ -492,6 +511,7 @@ export function SourcesPage({ embedded = false }: { embedded?: boolean } = {}) {
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
             >
+              {!openRepository && <InstalledExtensionsPanel installedIds={[...installedVersions.keys()]} names={new Map(marketplaceNames)} />}
               <ExtensionsTab
                 state={listState}
                 errorMessage={openRepositoryResult && !openRepositoryResult.ok ? openRepositoryResult.error : ""}
@@ -546,6 +566,19 @@ export function SourcesPage({ embedded = false }: { embedded?: boolean } = {}) {
         )}
         {settingsSource && (
           <SourceSettingsDialog source={settingsSource} onClose={() => setSettingsSourceId(null)} />
+        )}
+        {pendingConsent && (
+          <PermissionConsentDialog
+            extension={pendingConsent.extension}
+            isUpdate={pendingConsent.isUpdate}
+            repository={repositoryDetails.data?.find((r) => r.url === (originByExtensionId.get(pendingConsent.extension.id) ?? openRepository))}
+            onCancel={() => setPendingConsent(null)}
+            onAccept={(acceptedPermissions) => {
+              const { extension } = pendingConsent;
+              setPendingConsent(null);
+              void installExtension(extension, { acceptedPermissions });
+            }}
+          />
         )}
       </AnimatePresence>
     </div>
@@ -933,6 +966,7 @@ function ExtensionCard({
                     {hasSettings && (
                       <button onClick={() => { setMenuOpen(false); onOpenSettings(); }} className="block w-full px-3 py-2 text-left text-sm text-text hover:bg-text/[.06]">{t("sources.settings")}</button>
                     )}
+                    <div className="px-3 py-2"><DisableExtensionButton id={extension.id} /></div>
                     <button onClick={() => { setMenuOpen(false); onUninstall(); }} className="block w-full px-3 py-2 text-left text-sm text-rose-400 hover:bg-text/[.06]">{t("sources.uninstall")}</button>
                   </motion.div>
                 </>
@@ -1003,6 +1037,7 @@ function RepositoryCard({ url, result, onOpen, onRemove }: { url: string; result
         <ChevronRight className="mt-0.5 h-5 w-5 shrink-0 text-muted" strokeWidth={1.75} />
       </div>
       <div onClick={(e) => e.stopPropagation()} className="mt-3 flex items-center justify-end gap-1">
+        <RepositoryTrustBar url={url} />
         <a href={url} target="_blank" rel="noreferrer" title={t("sources.openInBrowser")} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-text/[.06] hover:text-text">
           <Globe className="h-4 w-4" strokeWidth={2} />
         </a>

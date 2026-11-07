@@ -19,7 +19,8 @@ import { createRepositoriesApi } from "./repositories";
  * preinstalled Aniyomi repository. One entry per APK package, which installs all of its sources.
  */
 export async function findMissingSources(runtime: ExtensionRuntime, sourceIds: Iterable<string>, options: { apkFromDefaultOnly: boolean }): Promise<MissingSources> {
-  const installed = new Set(runtime.list().map((source) => source.id));
+  // Disabled extensions are installed too: they must not be offered again.
+  const installed = new Set(runtime.installedIds());
   const runsApk = !!getPlatform().apkSources;
   const missing = [...new Set(sourceIds)].filter((id) => !installed.has(id) && (runsApk || !id.startsWith("apk:")));
   if (missing.length === 0) return { available: [], unavailable: [] };

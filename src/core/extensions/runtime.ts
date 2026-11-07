@@ -6,6 +6,8 @@
 // browserFetch) come back to `bridge` below.
 import { HOST_API, requiredHostApi, supportsHostApi } from "@shared/hostApi";
 import type {
+  ExtensionPermissions,
+  MarketplaceExtension,
   AnimeTitle,
   PlaybackGroup,
   PlayerLink,
@@ -23,6 +25,7 @@ import type {
 import type { ExtensionMethod } from "./methods";
 import type { BridgeHandler } from "../../platform/types";
 import { getPlatform } from "../platform";
+import { effectivePermissions } from "./lifecycle";
 import { performNetFetch, performNetFetchAll, type NetFetchResult } from "./netFetch";
 import { challengeUrlInError, isCloudflareChallenge } from "./cloudflare";
 import { cloudflareCheckError } from "@shared/cloudflare";
@@ -125,6 +128,12 @@ const RESOLVER_FAILURE_DECAY_MS = 10 * 60_000;
 const RETIRED_RESOLVER_IDS = new Set(["cvh", "sibnet"]);
 const RETIRED_PLAYER_NAMES = new Set(["cvh", "sibnet"]);
 const RETIRED_PLAYER_HOSTS = ["yummyani.me", "sibnet.ru"];
+
+function replaceSet<T>(target: Set<T>, source: Iterable<T>): void {
+  const next = [...source];
+  target.clear();
+  for (const value of next) target.add(value);
+}
 
 function replaceMap<K, V>(target: Map<K, V>, source: Map<K, V>): void {
   target.clear();
@@ -383,7 +392,35 @@ export class ExtensionRuntime {
   }
 
   list(): SourceInfo[] {
-    return [...this.jsSources(), ...this.apkSources];
+    // RiuPlay M1: a disabled extension stays installed (files, settings, origin) but is not offered
+    // anywhere and does not run.
+    return [...this.jsSources(), ...this.apkSources].filter((source) => !this.disabled.has(source.id));
+  }
+
+  // --- RiuPlay M1: enabled state and permissions --------------------------------------------------
+
+  private readonly disabled = new Set<string>();
+
+  /** The extensions the user disabled (from extension_state). */
+  setDisabled(ids: Iterable<string>): void {
+    replaceSet(this.disabled, ids);
+  }
+
+  isDisabled(id: string): boolean {
+    return this.disabled.has(id);
+  }
+
+  /** Every installed id, enabled or not (for the Sources screen). */
+  installedIds(): string[] {
+    return [...this.extensions.keys(), ...this.apkSources.map((s) => s.id)];
+  }
+
+  /** What an installed extension may do: its manifest's declaration, or the legacy grant
+   * (core/extensions/lifecycle.ts). Unknown ids (resolvers, removed sources) get the legacy grant. */
+  permissionsOf(id: string): ExtensionPermissions {
+    if (isApkSource(id)) return effectivePermissions({ apkPackage: "apk" });
+    const manifest = this.extensions.get(id)?.manifest as (Manifest & { permissions?: unknown }) | undefined;
+    return effectivePermissions({ permissions: manifest?.permissions as MarketplaceExtension["permissions"] });
   }
 
   private jsSources(): SourceInfo[] {
@@ -412,6 +449,10 @@ export class ExtensionRuntime {
 
   private readonly bridge = (kind: Parameters<BridgeHandler>[0], payload: Record<string, unknown>, sourceId?: string): Promise<unknown> => {
     const context = { caller: sourceId ? `extension:${sourceId}` : undefined };
+    // RiuPlay M1: an extension that declared "browser": false gets no hidden browser pages.
+    if ((kind === "challenge" || kind === "browserFetch") && sourceId && !this.permissionsOf(sourceId).browser) {
+      return Promise.reject(new Error(`${sourceId} did not declare the browser-pages permission`));
+    }
     if (kind === "challenge") {
       return getPlatform().browser.challenge(
         payload.url as string,
@@ -453,6 +494,7 @@ export class ExtensionRuntime {
     args: unknown[],
     options?: { extensionsDir?: string; requestId?: string; timeoutMs?: number; snapshot?: SnapshotSession },
   ): Promise<T> {
+    if (this.disabled.has(sourceId)) return Promise.reject(new Error(`Source "${sourceId}" is disabled`));
     if (isApkSource(sourceId)) return this.runApk<T>(method, sourceId, args);
     const extensionsDir = options?.extensionsDir ?? this.extensionsDir;
     const timeoutMs = options?.timeoutMs ?? WORKER_TIMEOUT_MS;

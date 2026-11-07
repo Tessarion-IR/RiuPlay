@@ -65,12 +65,12 @@ export const LIMITS = {
   download: { maxBodyBytes: null, maxDecodedBytes: null },
 } as const;
 
-export function policyFor(caller: Caller, options: { timeoutMs: number; allowances?: LocalServerAllowance[] }): NetPolicy {
+export function policyFor(caller: Caller, options: { timeoutMs: number; allowances?: LocalServerAllowance[]; hostsFor?: (caller: Caller) => string[] | "any-public" }): NetPolicy {
   const limits = LIMITS[caller.kind];
   return {
-    // Extensions declare no hosts yet (manifest permissions arrive with M1): until then they get
-    // "any public host" - the legacy grant - and the address rules still apply to every request.
-    hosts: "any-public",
+    // RiuPlay M1: an extension that declared hosts in its manifest is held to them; one that
+    // declared nothing gets "any public host" (the legacy grant). The address rules apply either way.
+    hosts: caller.kind === "extension" ? (options.hostsFor?.(caller) ?? "any-public") : "any-public",
     allowHttp: true,
     maxRedirects: 5,
     timeoutMs: options.timeoutMs,

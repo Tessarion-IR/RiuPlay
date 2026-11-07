@@ -2,6 +2,8 @@ import type { HibikiApi } from "@shared/hibikiApi";
 import { IPC } from "@shared/ipc";
 import type { InstalledVersions, MarketplaceExtension, SourceInfo } from "@shared/types";
 import { fetchExtensionFiles, fetchRepositoryIndex } from "../marketplace";
+import { compatibilityOf, consentCheck, type InstallConsent } from "../extensions/lifecycle";
+import { extensionStates, forgetExtensionState, grantedPermissionsOf, isRepositoryEnabled, recordGrant, setExtensionEnabled } from "./extensionState";
 import { isApkSource, isRetiredResolver, type ExtensionRuntime } from "../extensions/runtime";
 import { logger } from "../logger";
 import { getPlatform } from "../platform";
@@ -97,13 +99,20 @@ const errorText = (error: unknown) => (error instanceof Error ? error.message : 
 
 /** Installing, updating and removing sources: the parts of `window.hibiki.sources` that change
  * what is installed. */
-export function createExtensionsApi(runtime: ExtensionRuntime): Pick<HibikiApi["sources"], "install" | "uninstall" | "installedVersions"> {
+export function createExtensionsApi(runtime: ExtensionRuntime): Pick<HibikiApi["sources"], "install" | "uninstall" | "installedVersions" | "extensionStates" | "setExtensionEnabled"> {
   return {
-    async install(extension: MarketplaceExtension, originUrl: string): Promise<SourceInfo[]> {
+    async install(extension: MarketplaceExtension, originUrl: string, consent?: InstallConsent): Promise<SourceInfo[]> {
       const previous = runtime.installedVersions().get(extension.id);
       const what = `${extension.id} ${previous ? `${previous} -> ` : ""}${extension.version}${extension.apkPackage ? " (APK)" : ""}`;
       try {
+        // RiuPlay M1: decided from metadata before anything is downloaded.
+        if (!(await isRepositoryEnabled(originUrl))) throw new Error("this repository is disabled; enable it to install from it");
+        const compatibility = compatibilityOf(extension, { apkSources: Boolean(getPlatform().apkSources) });
+        if (!compatibility.compatible) throw new Error(`not compatible: ${compatibility.reason}`);
+        const verdict = consentCheck(extension, await grantedPermissionsOf(extension.id), consent);
+        if (!verdict.ok) throw new Error(verdict.reason);
         const sources = await installExtension(extension, originUrl);
+        await recordGrant(extension.id, verdict.permissions);
         logger.info("sources", `${previous ? "updated" : "installed"} ${what}`);
         return sources;
       } catch (error) {
@@ -118,8 +127,22 @@ export function createExtensionsApi(runtime: ExtensionRuntime): Pick<HibikiApi["
       resolvers: runtime.installedResolverVersions(),
     }),
 
+    extensionStates: () => extensionStates(),
+
+    async setExtensionEnabled(id: string, enabled: boolean): Promise<SourceInfo[]> {
+      if (typeof enabled !== "boolean") throw new TypeError("enabled must be a boolean");
+      await setExtensionEnabled(id, enabled);
+      runtime.setDisabled((await extensionStates()).filter((s) => !s.enabled).map((s) => s.id));
+      logger.info("sources", `${enabled ? "enabled" : "disabled"} ${id}`);
+      notifyChanged();
+      return runtime.list();
+    },
+
     async uninstall(id: string): Promise<SourceInfo[]> {
       const sources = await uninstallExtension(id);
+      // Its own state row only; the library, history and media stay as they are.
+      await forgetExtensionState(id);
+      runtime.setDisabled((await extensionStates()).filter((s) => !s.enabled).map((s) => s.id));
       logger.info("sources", `removed ${id}`);
       return sources;
     },

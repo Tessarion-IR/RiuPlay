@@ -5,6 +5,8 @@ import type { MediaApi } from "@shared/media";
 import type {
   AnimeTitle,
   NetworkConfig,
+  ExtensionStateInfo,
+  RepositoryInfo,
   LegacyProxyMigrationResult,
   SecureProxyInput,
   SecureProxyStatus,
@@ -129,11 +131,16 @@ const api: HibikiApi = {
       list: (): Promise<string[]> => ipcRenderer.invoke(IPC.sourcesRepositoriesList),
       add: (url: string): Promise<string[]> => ipcRenderer.invoke(IPC.sourcesRepositoriesAdd, url),
       remove: (url: string): Promise<string[]> => ipcRenderer.invoke(IPC.sourcesRepositoriesRemove, url),
+      details: (): Promise<RepositoryInfo[]> => ipcRenderer.invoke(IPC.sourcesRepositoriesDetails),
+      setEnabled: (url: string, enabled: boolean): Promise<RepositoryInfo[]> => ipcRenderer.invoke(IPC.sourcesRepositoriesSetEnabled, url, enabled),
+      setTrust: (url: string, trust: "untrusted" | "trusted"): Promise<RepositoryInfo[]> => ipcRenderer.invoke(IPC.sourcesRepositoriesSetTrust, url, trust),
     },
+    extensionStates: (): Promise<ExtensionStateInfo[]> => ipcRenderer.invoke(IPC.sourcesExtensionStates),
+    setExtensionEnabled: (id: string, enabled: boolean): Promise<SourceInfo[]> => ipcRenderer.invoke(IPC.sourcesSetExtensionEnabled, id, enabled),
     marketplace: (urls: string[]): Promise<RepositoryFetchResult[]> =>
       ipcRenderer.invoke(IPC.sourcesMarketplaceFetch, urls),
-    install: (extension: MarketplaceExtension, originUrl: string): Promise<SourceInfo[]> =>
-      ipcRenderer.invoke(IPC.sourcesInstall, extension, originUrl),
+    install: (extension: MarketplaceExtension, originUrl: string, consent?: { acceptedPermissions: string[] }): Promise<SourceInfo[]> =>
+      ipcRenderer.invoke(IPC.sourcesInstall, extension, originUrl, consent),
     uninstall: (id: string): Promise<SourceInfo[]> => ipcRenderer.invoke(IPC.sourcesUninstall, id),
     // Installed player-resolver versions, keyed by id. Resolvers are hidden dependencies and
     // never appear in list(), but the Sources screen needs them to spot a resolver update.

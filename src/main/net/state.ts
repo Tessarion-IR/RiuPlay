@@ -16,7 +16,7 @@ import { NetError } from "./errors";
 import { CHROMIUM_BLACKHOLE_RULES, chromiumProxyPlan, parseLegacyProxyString, type ChromiumProxyPlan, type ProxyConfig, type ProxyDnsMode } from "./proxy";
 import { DIRECT_DOH_ENDPOINTS, dohResolver, PROXY_DOH_ENDPOINTS, systemResolver, type Resolver } from "./resolve";
 import type { LoadedProxy } from "./secureProxyStore";
-import type { LocalServerAllowance } from "./policy";
+import type { Caller, LocalServerAllowance } from "./policy";
 
 let legacyProxy = "";
 let doh: DohProvider = "off";
@@ -73,8 +73,16 @@ function currentResolver(): Resolver {
 
 let ready: Promise<void> = Promise.resolve();
 
+let hostPermissions: (caller: Caller) => string[] | "any-public" = () => "any-public";
+
+/** RiuPlay M1: the runtime tells the broker which hosts each extension declared. */
+export function setExtensionHostPermissions(resolver: (sourceId: string) => string[] | "any-public"): void {
+  hostPermissions = (caller) => (caller.kind === "extension" ? resolver(caller.sourceId) : "any-public");
+}
+
 export const netClient = new NetClient({
   ready: () => ready,
+  hostsFor: (caller) => hostPermissions(caller),
   resolver: currentResolver,
   proxy: () => effectiveProxy().state,
   allowances: () => allowances,

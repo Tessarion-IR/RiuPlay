@@ -33,7 +33,7 @@ describe("sources the synced data needs", () => {
     await db.insert(watchProgress).values({ sourceId: "apk:42", titleId: "1", episodeId: "e", episodeNumber: 1, positionMs: 1, durationMs: 2, updatedAt: 1 }).run();
 
     expect((await sourcesInData()).sort()).toEqual(["apk:42", "gone", "installed", "yummy-anime"]);
-    const runtime = { list: () => [{ id: "installed" }] } as unknown as ExtensionRuntime;
+    const runtime = { list: () => [{ id: "installed" }], installedIds: () => ["installed"] } as unknown as ExtensionRuntime;
     const missing = await findMissingSources(runtime, await sourcesInData(), { apkFromDefaultOnly: false });
     // No APK sources on this platform: apk:42 is neither offered nor counted.
     expect(missing.available.map((item) => item.extension.id)).toEqual(["yummy-anime"]);

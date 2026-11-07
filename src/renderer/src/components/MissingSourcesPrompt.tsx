@@ -70,7 +70,8 @@ function MissingSourcesDialog({ missing, onClose }: { missing: MissingSources; o
   const queryClient = useQueryClient();
   const install = useMutation({
     mutationFn: async (items: MissingSources["available"]) => {
-      for (const { extension, repositoryUrl } of items) await hibiki.sources.install(extension, repositoryUrl);
+      // RiuPlay M1: each item's permissions are listed in this dialog; installing is the consent.
+      for (const { extension, repositoryUrl } of items) await hibiki.sources.install(extension, repositoryUrl, { acceptedPermissions: (extension.permissionList ?? []).map((p) => p.id) });
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: MISSING_KEY }),
   });
@@ -96,6 +97,9 @@ function MissingSourcesDialog({ missing, onClose }: { missing: MissingSources; o
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-text">{item.extension.name}</p>
                 <p className="text-xs uppercase text-muted">{item.extension.lang}</p>
+                {(item.extension.permissionList ?? []).filter((p) => p.level !== "info").map((p) => (
+                  <p key={p.id} className={p.level === "danger" ? "text-xs text-rose-400" : "text-xs text-amber-500"}>{p.text}</p>
+                ))}
               </div>
               <button type="button" onClick={() => install.mutate([item])} disabled={install.isPending} className="flex h-8 min-w-[5.5rem] shrink-0 items-center justify-center rounded-lg bg-text/[.08] px-3 text-xs font-semibold text-text transition-colors hover:bg-text/[.14] disabled:opacity-60 mobile:rounded-full">
                 {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} /> : t("deviceSync.missing.install")}

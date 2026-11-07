@@ -485,6 +485,46 @@ export interface MarketplaceExtension {
   /** Set for an APK source (an Aniyomi extension, Android only): the package it comes in. One
    * package can hold several sources, each its own entry; they install and uninstall together. */
   apkPackage?: string;
+  /** RiuPlay M1: what the manifest asks for (validated by core/extensions/lifecycle.ts); absent = the legacy grant. */
+  permissions?: { hosts?: string[]; browser?: boolean };
+  /** RiuPlay M1, filled in by the main process when listing: can this build install it, and if not, why. */
+  compatibility?: { compatible: boolean; reason: string | null };
+  /** RiuPlay M1, filled in by the main process: what the install dialog shows (and consent is checked against). */
+  permissionList?: ExtensionPermission[];
+}
+
+/** RiuPlay M1: an extension's effective permissions. */
+export interface ExtensionPermissions {
+  hosts: string[] | "any-public";
+  browser: boolean;
+  /** An APK (JVM) extension: native code with the user's rights. */
+  native?: boolean;
+}
+
+export interface ExtensionPermission {
+  id: string;
+  level: "info" | "warning" | "danger";
+  text: string;
+}
+
+/** RiuPlay M1: a repository as the Sources screen shows it. */
+export interface RepositoryInfo {
+  url: string;
+  addedAt: number;
+  enabled: boolean;
+  /** "untrusted": added by you, reviewed by nobody. "trusted": you said you trust its maintainer. */
+  trust: "untrusted" | "trusted";
+  trustedAt: number | null;
+  name: string | null;
+  lastCheckedAt: number | null;
+  lastError: string | null;
+}
+
+/** RiuPlay M1: per-extension state beyond its files. */
+export interface ExtensionStateInfo {
+  id: string;
+  enabled: boolean;
+  grantedPermissions: string[] | null;
 }
 
 export type RepositoryFetchResult =

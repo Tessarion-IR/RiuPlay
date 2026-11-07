@@ -1,6 +1,8 @@
 import { eq } from "drizzle-orm";
 import type { HibikiApi } from "@shared/hibikiApi";
-import type { RepositoryFetchResult } from "@shared/types";
+import type { MarketplaceExtension, RepositoryFetchResult } from "@shared/types";
+import { compatibilityOf, describePermissions } from "../extensions/lifecycle";
+import { forgetRepositoryState, isRepositoryEnabled, recordRepositoryCheck, repositoryInfos, setRepositoryEnabled, setRepositoryTrust } from "./extensionState";
 import { sourceRepositories } from "../db/schema";
 import { repositoryAlreadyAddedError } from "@shared/repositoryErrors";
 import { fetchRepositoryResult, repositoryIndexCandidates, repositoryKey, resolveRepositoryUrl } from "../marketplace";
@@ -45,6 +47,16 @@ async function assertNotListed(url: string): Promise<void> {
 }
 
 /** The repository list and marketplace browsing parts of `window.hibiki.sources`. */
+/** RiuPlay M1: what the Sources screen needs per entry - computed from metadata only, no code run. */
+export function annotateEntry(extension: MarketplaceExtension): MarketplaceExtension {
+  const compatibility = compatibilityOf(extension, { apkSources: Boolean(getPlatform().apkSources) });
+  return {
+    ...extension,
+    compatibility: compatibility.compatible ? { compatible: true, reason: null } : { compatible: false, reason: compatibility.reason },
+    permissionList: describePermissions(extension),
+  };
+}
+
 export function createRepositoriesApi(): Pick<HibikiApi["sources"], "repositories" | "marketplace"> {
   return {
     repositories: {
@@ -70,18 +82,43 @@ export function createRepositoriesApi(): Pick<HibikiApi["sources"], "repositorie
       },
 
       async remove(url: string): Promise<string[]> {
+        // Only the repository entry and its state go: installed extensions stay installed (and
+        // keep working) - removing them is a separate choice. No media, library or history row
+        // refers to a repository.
         await getDb().delete(sourceRepositories).where(eq(sourceRepositories.url, url)).run();
+        await forgetRepositoryState(url);
         logger.info("sources", `repository removed: ${url}`);
         return listRepositoryUrls();
+      },
+
+      details: async () => {
+        await listRepositoryUrls(); // drops duplicate spellings first
+        return repositoryInfos();
+      },
+      async setEnabled(url: string, enabled: boolean) {
+        if (typeof enabled !== "boolean") throw new TypeError("enabled must be a boolean");
+        await setRepositoryEnabled(url, enabled);
+        logger.info("sources", `repository ${enabled ? "enabled" : "disabled"}: ${url}`);
+        return repositoryInfos();
+      },
+      async setTrust(url: string, trust: "untrusted" | "trusted") {
+        if (trust !== "trusted" && trust !== "untrusted") throw new TypeError("trust must be trusted or untrusted");
+        await setRepositoryTrust(url, trust);
+        logger.info("sources", `repository marked ${trust}: ${url}`);
+        return repositoryInfos();
       },
     },
 
     marketplace: async (urls: string[]): Promise<RepositoryFetchResult[]> => {
-      const results = await Promise.all(urls.map(fetchRepositoryResult));
+      // RiuPlay M1: a disabled repository is not fetched at all.
+      const enabled: string[] = [];
+      for (const url of urls) if (await isRepositoryEnabled(url)) enabled.push(url);
+      const results = await Promise.all(enabled.map(fetchRepositoryResult));
       for (const result of results) {
         if (!result.ok) logger.warn("sources", `repository unavailable, ${result.url}: ${result.error ?? "?"}`);
+        await recordRepositoryCheck(result.url, result.ok ? { ok: true } : { ok: false, error: result.error }).catch(() => undefined);
       }
-      return results;
+      return results.map((result) => (result.ok ? { ...result, extensions: result.extensions.map(annotateEntry) } : result));
     },
   };
 }

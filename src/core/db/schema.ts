@@ -69,6 +69,33 @@ export const sourceRepositories = sqliteTable("source_repositories", {
   addedAt: integer("added_at").notNull(),
 });
 
+// RiuPlay M1 (migration 0025): what RiuPlay knows about a repository beyond its address, in a table
+// of its own so the existing source_repositories rows stay exactly as they were. Adding a
+// repository is discovery, not trust: it starts "untrusted" (added by the user, reviewed by
+// nobody). Marking it trusted changes what installs from it are told, never what an extension may
+// do. A disabled repository is not fetched and nothing installs from it.
+export const repositoryState = sqliteTable("repository_state", {
+  url: text("url").primaryKey(),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+  trust: text("trust", { enum: ["untrusted", "trusted"] }).notNull().default("untrusted"),
+  trustedAt: integer("trusted_at"),
+  name: text("name"),
+  lastCheckedAt: integer("last_checked_at"),
+  lastError: text("last_error"),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+// RiuPlay M1 (migration 0025): per-extension state the files on disk don't hold - whether it is
+// enabled, and which permissions the user saw and accepted when installing it (JSON). Removing an
+// extension removes its row; nothing in the library, history or media tables refers to it.
+export const extensionState = sqliteTable("extension_state", {
+  id: text("id").primaryKey(),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+  grantedPermissions: text("granted_permissions"),
+  grantedAt: integer("granted_at"),
+  updatedAt: integer("updated_at").notNull(),
+});
+
 // One row per achievement tier actually cleared (see achievements.ts's tiersClearedInRange) - the
 // only genuinely discrete "+N XP" moments in the whole system. The steady per-hour-watched trickle
 // (levelProgress.ts) isn't logged here at all - it's a continuous total, not a series of events,

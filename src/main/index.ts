@@ -16,6 +16,8 @@ import { registerLibraryHandlers } from "./ipc/library";
 import { registerTrackingHandlers } from "./ipc/tracking";
 import { registerSyncHandlers, shutdownSync } from "./ipc/sync";
 import { registerNetworkHandlers } from "./ipc/network";
+import { disabledExtensionIds } from "../core/api/extensionState";
+import { setExtensionHostPermissions } from "./net/state";
 import { registerMediaHandlers } from "./ipc/media";
 import { handleMediaRequest, MEDIA_SCHEME, MEDIA_SCHEME_PRIVILEGES } from "./mediaProtocol";
 import { handleTrackingRedirect } from "../core/api/tracking";
@@ -368,6 +370,9 @@ app.whenReady().then(async () => {
   // Before any handler exists: a renderer call must never see an empty source list just because
   // the manifests were still being read.
   await runtime.reload();
+  // RiuPlay M1: disabled extensions don't run; declared host permissions are enforced by the broker.
+  runtime.setDisabled(await disabledExtensionIds().catch(() => []));
+  setExtensionHostPermissions((sourceId) => runtime.permissionsOf(sourceId).hosts);
   extensionRuntime = runtime;
 
   registerSourceHandlers(runtime);

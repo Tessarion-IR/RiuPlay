@@ -66,6 +66,8 @@ export interface NetClientOptions {
   ready?: () => Promise<void>;
   budgets?: Budgets;
   allowances?: () => LocalServerAllowance[];
+  /** RiuPlay M1: the hosts an extension caller declared (manifest permissions), or "any-public". */
+  hostsFor?: (caller: Caller) => string[] | "any-public";
   defaultTimeoutMs?: number;
   connectTimeoutMs?: number;
   /** Idle timeout between body chunks of a streamed response. */
@@ -212,7 +214,7 @@ export class NetClient {
     if (state.status === "invalid") throw new NetError("proxy-invalid", `the configured proxy can't be used: ${state.reason}`);
     if (state.status === "unavailable") throw new NetError("proxy-unavailable", `the configured proxy is unavailable: ${state.reason}`);
     const proxy = state.status === "ok" ? state.config : null;
-    const policy = policyFor(req.caller, { timeoutMs: req.timeoutMs ?? this.options.defaultTimeoutMs ?? 25_000, allowances: this.options.allowances?.() });
+    const policy = policyFor(req.caller, { timeoutMs: req.timeoutMs ?? this.options.defaultTimeoutMs ?? 25_000, allowances: this.options.allowances?.(), hostsFor: this.options.hostsFor });
 
     let current = req.url;
     let method = (req.method ?? "GET").toUpperCase();
@@ -298,7 +300,7 @@ export class NetClient {
       const state = this.proxyState();
       if (state.status === "invalid") return { ok: false, code: "proxy-invalid" };
       if (state.status === "unavailable") return { ok: false, code: "proxy-unavailable" };
-      const policy = policyFor(caller, { timeoutMs: this.options.defaultTimeoutMs ?? 25_000, allowances: this.options.allowances?.() });
+      const policy = policyFor(caller, { timeoutMs: this.options.defaultTimeoutMs ?? 25_000, allowances: this.options.allowances?.(), hostsFor: this.options.hostsFor });
       await this.validate(url, policy, signal ?? AbortSignal.timeout(policy.timeoutMs));
       return { ok: true };
     } catch (error) {

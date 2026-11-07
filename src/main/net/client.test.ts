@@ -621,3 +621,18 @@ describe("preflight: destination check without a request (stream URLs before Chr
     expect(await client.preflight(`http://public.test:${site.port}/`, ext)).toEqual({ ok: false, code: "proxy-invalid" });
   });
 });
+
+describe("RiuPlay M1: declared extension hosts are enforced by the broker", () => {
+  it("an extension that declared hosts reaches only those; other callers are unaffected", async () => {
+    const client = labClient({ hostsFor: (caller) => (caller.kind === "extension" && caller.sourceId === "narrow" ? ["public.test"] : "any-public") });
+    const narrow: Caller = { kind: "extension", sourceId: "narrow" };
+    expect((await client.request({ url: `http://public.test:${site.port}/`, caller: narrow })).status).toBe(200);
+    const before = other.hits.length;
+    expect(await code(client.request({ url: `http://other.test:${other.port}/`, caller: narrow }))).toBe("host-not-permitted");
+    // A redirect off the declared hosts is refused too.
+    expect(await code(client.request({ url: `http://public.test:${site.port}/redirect?to=${encodeURIComponent(`http://other.test:${other.port}/`)}`, caller: narrow }))).toBe("host-not-permitted");
+    expect(other.hits.length).toBe(before);
+    expect((await client.request({ url: `http://other.test:${other.port}/`, caller: ext })).status).toBe(200);
+    await client.resetConnections();
+  });
+});

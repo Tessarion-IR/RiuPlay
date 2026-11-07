@@ -3,6 +3,8 @@
 // implement the same surface without going through Electron IPC.
 import type {
   NetworkConfig,
+  ExtensionStateInfo,
+  RepositoryInfo,
   LegacyProxyMigrationResult,
   SecureProxyInput,
   SecureProxyStatus,
@@ -155,9 +157,20 @@ export interface HibikiApi {
       list(): Promise<string[]>;
       add(url: string): Promise<string[]>;
       remove(url: string): Promise<string[]>;
+      /** RiuPlay M1: trust, enabled state and last check of every repository. */
+      details?(): Promise<RepositoryInfo[]>;
+      setEnabled?(url: string, enabled: boolean): Promise<RepositoryInfo[]>;
+      setTrust?(url: string, trust: "untrusted" | "trusted"): Promise<RepositoryInfo[]>;
     };
+    /** Disabled repositories are skipped. Entries carry `compatibility` and `permissionList` (desktop). */
     marketplace(urls: string[]): Promise<RepositoryFetchResult[]>;
-    install(extension: MarketplaceExtension, originUrl: string): Promise<SourceInfo[]>;
+    /** RiuPlay M1: a new install - or an update asking for different permissions - needs `consent`
+     * listing exactly the permission ids that were shown (entry.permissionList). */
+    install(extension: MarketplaceExtension, originUrl: string, consent?: { acceptedPermissions: string[] }): Promise<SourceInfo[]>;
+    /** RiuPlay M1: enabled state and granted permissions of installed extensions. */
+    extensionStates?(): Promise<ExtensionStateInfo[]>;
+    /** RiuPlay M1: a disabled extension stays installed but is not listed and does not run. */
+    setExtensionEnabled?(id: string, enabled: boolean): Promise<SourceInfo[]>;
     uninstall(id: string): Promise<SourceInfo[]>;
     installedVersions(): Promise<InstalledVersions>;
     onChanged(callback: () => void): () => void;

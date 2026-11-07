@@ -36,6 +36,11 @@ export const IPC = {
   sourceSettingsRead: "source:settings:read",
   sourceSettingsWrite: "source:settings:write",
 
+  sourcesRepositoriesDetails: "sources:repositories:details",
+  sourcesRepositoriesSetEnabled: "sources:repositories:setEnabled",
+  sourcesRepositoriesSetTrust: "sources:repositories:setTrust",
+  sourcesExtensionStates: "sources:extensionStates",
+  sourcesSetExtensionEnabled: "sources:setExtensionEnabled",
   sourcesRepositoriesList: "sources:repositories:list",
   sourcesRepositoriesAdd: "sources:repositories:add",
   sourcesRepositoriesRemove: "sources:repositories:remove",
