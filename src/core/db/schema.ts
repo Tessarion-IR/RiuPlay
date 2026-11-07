@@ -1,4 +1,5 @@
-import { sqliteTable, text, integer, real, primaryKey, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { sqliteTable, text, integer, real, primaryKey, index, uniqueIndex, check } from "drizzle-orm/sqlite-core";
 
 export const library = sqliteTable(
   "library",
@@ -252,4 +253,103 @@ export const episodeWatch = sqliteTable(
     checkedAt: integer("checked_at"),
   },
   (t) => [primaryKey({ columns: [t.sourceId, t.animeId] }), index("episode_watch_next_check").on(t.nextCheckAt)],
+);
+
+// ---------------------------------------------------------------------------------------------
+// RiuPlay additions (migration 0023_riuplay_merged_schema). Additive only: no hibiki table or
+// column is changed, so existing data and device sync are untouched. These carry over the model of
+// the original RiuPlay prototype (legacy/next-app/src/db/schema.ts): app settings readable by the
+// main process, locally added media of every content type, and user collections. None of these
+// tables take part in device sync (core/sync), which only knows the hibiki tables it lists.
+// ---------------------------------------------------------------------------------------------
+
+/** Key/value settings the main process needs before any window exists (e.g. LAN sync opt-in).
+ * `value` is JSON. Renderer-only preferences stay in the renderer's own stores. */
+export const appSettings = sqliteTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+export const MEDIA_CONTENT_TYPES = ["video", "manga", "audio"] as const;
+export type MediaContentType = (typeof MEDIA_CONTENT_TYPES)[number];
+
+/** Media the user added themselves (direct URL, local file, manual entry, Suwayomi import) rather
+ * than browsed from an installed source. One row per title; (origin, originRef) prevents duplicates,
+ * as the prototype's media_items_source_idx did. */
+export const localMedia = sqliteTable(
+  "local_media",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    contentType: text("content_type").notNull(),
+    title: text("title").notNull(),
+    altTitlesJson: text("alt_titles_json").notNull().default("[]"),
+    description: text("description").notNull().default(""),
+    cover: text("cover").notNull().default(""),
+    genresJson: text("genres_json").notNull().default("[]"),
+    releaseInfo: text("release_info").notNull().default(""),
+    // direct | file | manual | suwayomi
+    origin: text("origin").notNull(),
+    // What identifies the title within its origin (a URL, a file path, a Suwayomi manga id...).
+    originRef: text("origin_ref").notNull(),
+    extraJson: text("extra_json").notNull().default("{}"),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("local_media_origin_idx").on(t.origin, t.originRef),
+    index("local_media_type_idx").on(t.contentType),
+    check("local_media_content_type_check", sql`${t.contentType} in ('video', 'manga', 'audio')`),
+  ],
+);
+
+/** Episodes, chapters and tracks of a local_media title (the prototype's three tables, unified). */
+export const localMediaUnits = sqliteTable(
+  "local_media_units",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    mediaId: integer("media_id")
+      .notNull()
+      .references(() => localMedia.id, { onDelete: "cascade" }),
+    // episode | chapter | track
+    kind: text("kind").notNull(),
+    number: real("number").notNull(),
+    title: text("title").notNull().default(""),
+    // Video/audio location for episodes and tracks; empty for chapters.
+    url: text("url").notNull().default(""),
+    subtitleUrl: text("subtitle_url"),
+    // JSON array of page image URLs, for chapters.
+    pagesJson: text("pages_json").notNull().default("[]"),
+    durationMs: integer("duration_ms"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("local_media_units_media_idx").on(t.mediaId, t.number),
+    check("local_media_units_kind_check", sql`${t.kind} in ('episode', 'chapter', 'track')`),
+  ],
+);
+
+/** User-made collections ("Rewatch list", "Summer 2026"...), across sources. */
+export const collections = sqliteTable("collections", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+/** A title in a collection, identified the way the library identifies titles (sourceId + titleId;
+ * local media use sourceId "local" and their local_media id). */
+export const collectionItems = sqliteTable(
+  "collection_items",
+  {
+    collectionId: integer("collection_id")
+      .notNull()
+      .references(() => collections.id, { onDelete: "cascade" }),
+    sourceId: text("source_id").notNull(),
+    titleId: text("title_id").notNull(),
+    addedAt: integer("added_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.collectionId, t.sourceId, t.titleId] }), index("collection_items_title_idx").on(t.sourceId, t.titleId)],
 );
