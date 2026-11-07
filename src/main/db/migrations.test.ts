@@ -12,7 +12,9 @@ import { journal, sqlByTag } from "../../core/sync/syncDevices.testkit";
 import { KEEP_BACKUPS, backupBeforeMigrating, pendingMigrations } from "./preMigrationBackup";
 
 const MERGED = "0023_riuplay_merged_schema";
-const NEW_TABLES = ["app_settings", "collection_items", "collections", "local_media", "local_media_units"];
+/** Every migration RiuPlay itself added on top of hibiki's, oldest first. All must be additive. */
+const RIUPLAY_MIGRATIONS = [MERGED, "0024_riuplay_local_library"];
+const NEW_TABLES = ["app_settings", "collection_items", "collections", "local_library", "local_media", "local_media_units", "local_progress"];
 
 function upTo(tag: string): MigrationJournal {
   const index = journal.entries.findIndex((entry) => entry.tag === tag);
@@ -41,11 +43,13 @@ function dump(db: DatabaseSync, names: string[]) {
   return Object.fromEntries(names.map((name) => [name, db.prepare(`SELECT * FROM "${name}" ORDER BY rowid`).all()]));
 }
 
-describe("migration 0023 (merged RiuPlay schema)", () => {
-  it("is the newest migration and only creates tables and indexes", () => {
-    expect(journal.entries.at(-1)?.tag).toBe(MERGED);
-    const statements = sqlByTag[MERGED].split("--> statement-breakpoint").map((s) => s.trim()).filter(Boolean);
-    for (const statement of statements) expect(statement).toMatch(/^CREATE (TABLE|UNIQUE INDEX|INDEX) /);
+describe("RiuPlay migrations (0023 onwards)", () => {
+  it("are the newest migrations, in order, and only create tables and indexes", () => {
+    expect(journal.entries.slice(-RIUPLAY_MIGRATIONS.length).map((entry) => entry.tag)).toEqual(RIUPLAY_MIGRATIONS);
+    for (const tag of RIUPLAY_MIGRATIONS) {
+      const statements = sqlByTag[tag].split("--> statement-breakpoint").map((s) => s.trim()).filter(Boolean);
+      for (const statement of statements) expect(statement).toMatch(/^CREATE (TABLE|UNIQUE INDEX|INDEX) /);
+    }
   });
 
   it("upgrades a database at the previous schema without changing any existing row", async () => {
@@ -61,7 +65,7 @@ describe("migration 0023 (merged RiuPlay schema)", () => {
     run(db, "INSERT INTO source_repositories (url, added_at) VALUES ('https://example.org/index.json', 1)");
     const snapshot = dump(db, oldTables.filter((name) => name !== "__drizzle_migrations"));
 
-    expect(await migrate(db, journal)).toBe(1);
+    expect(await migrate(db, journal)).toBe(RIUPLAY_MIGRATIONS.length);
 
     expect(tables(db)).toEqual([...oldTables, ...NEW_TABLES].sort());
     expect(dump(db, Object.keys(snapshot))).toEqual(snapshot);
@@ -150,10 +154,10 @@ describe("pre-migration backup", () => {
     db.exec("PRAGMA journal_mode = WAL");
     await migrate(db, upTo(before(MERGED)));
     run(db, "INSERT INTO library (anime_id, source_id, category, added_at, anime_json) VALUES ('kept', 's', 'watching', 1, '{}')");
-    expect(pendingMigrations(db, journal)).toEqual([MERGED]);
+    expect(pendingMigrations(db, journal)).toEqual(RIUPLAY_MIGRATIONS);
 
     const backup = backupBeforeMigrating(db, journal, path.join(dir, "backups"), new Date("2026-11-07T12:00:00Z"));
-    expect(backup).toBe(path.join(dir, "backups", `riuplay-2026-11-07T12-00-00-000Z-before-${MERGED}.db`));
+    expect(backup).toBe(path.join(dir, "backups", `riuplay-2026-11-07T12-00-00-000Z-before-${RIUPLAY_MIGRATIONS.at(-1)}.db`));
 
     const copy = new DatabaseSync(backup!);
     expect(copy.prepare("SELECT anime_id FROM library").all()).toEqual([{ anime_id: "kept" }]);

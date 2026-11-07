@@ -169,6 +169,13 @@
       "when": 1794080113680,
       "tag": "0023_riuplay_merged_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1794081670850,
+      "tag": "0024_riuplay_local_library",
+      "breakpoints": true
     }
   ]
 }

@@ -353,3 +353,48 @@ export const collectionItems = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.collectionId, t.sourceId, t.titleId] }), index("collection_items_title_idx").on(t.sourceId, t.titleId)],
 );
+
+// ---------------------------------------------------------------------------------------------
+// RiuPlay Phase 6 (migration 0024_riuplay_local_library): the personal-library and progress side of
+// local_media - the prototype's library_entries and per-unit progress (legacy/next-app schema),
+// kept in tables of their own rather than hibiki's library/watch_progress: those two take part in
+// device sync and are keyed by an extension source, and a local title's id means nothing on another
+// device. Additive only.
+// ---------------------------------------------------------------------------------------------
+
+/** A local_media title in the user's library. Absent row = not in the library. */
+export const localLibrary = sqliteTable(
+  "local_library",
+  {
+    mediaId: integer("media_id")
+      .primaryKey()
+      .references(() => localMedia.id, { onDelete: "cascade" }),
+    // active | planned | completed | on_hold | dropped - shown per type as Watching/Reading/Listening...
+    status: text("status").notNull(),
+    favorite: integer("favorite", { mode: "boolean" }).notNull().default(false),
+    addedAt: integer("added_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [
+    index("local_library_status_idx").on(t.status),
+    check("local_library_status_check", sql`${t.status} in ('active', 'planned', 'completed', 'on_hold', 'dropped')`),
+  ],
+);
+
+/** Where the user is in one unit: milliseconds for episodes and tracks, a page index for chapters. */
+export const localProgress = sqliteTable(
+  "local_progress",
+  {
+    unitId: integer("unit_id")
+      .primaryKey()
+      .references(() => localMediaUnits.id, { onDelete: "cascade" }),
+    mediaId: integer("media_id")
+      .notNull()
+      .references(() => localMedia.id, { onDelete: "cascade" }),
+    position: real("position").notNull().default(0),
+    duration: real("duration").notNull().default(0),
+    completed: integer("completed", { mode: "boolean" }).notNull().default(false),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [index("local_progress_media_idx").on(t.mediaId, t.updatedAt), index("local_progress_updated_idx").on(t.updatedAt)],
+);
