@@ -12,7 +12,13 @@
 
 </div>
 
-> **Status: early alpha.** RiuPlay is built on the mature [hibiki](https://github.com/akkirrai1337/hibiki) desktop codebase and is being extended phase by phase (see the [roadmap](docs/INTEGRATION_PLAN.md)). This README separates features that work today from features that are planned.
+> **Status: early alpha.** RiuPlay brings four projects together in one application:
+> - **the original RiuPlay**: one media model for anime, video, manga and audio, and its own features;
+> - **[hibiki](https://github.com/akkirrai1337/hibiki)**: desktop infrastructure, video playback and the extension runtime;
+> - **[KikoFlu](https://github.com/pa-jesusf/KikoFlu)**: the audio experience (queue, synced lyrics, session restore);
+> - **[Suwayomi](https://github.com/Suwayomi/Suwayomi-Server)**: source lifecycle and update management.
+>
+> Today the running app is mostly the hibiki foundation. The integration work is planned phase by phase in the [roadmap](docs/INTEGRATION_PLAN.md) and tracked feature by feature in the [integration matrix](docs/FEATURE_INTEGRATION_MATRIX.md). This README separates what works today from what is planned.
 
 ## What RiuPlay is
 

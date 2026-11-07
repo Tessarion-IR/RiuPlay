@@ -4,6 +4,9 @@ All notable changes to RiuPlay are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Product direction
+- Documented the integration vision: RiuPlay combines the original RiuPlay, hibiki, KikoFlu and Suwayomi into one product, and is not a hibiki rebrand. Added `docs/FEATURE_INTEGRATION_MATRIX.md` (every feature, its origin, reuse mode, unified design and status, plus the origin and license ledger). `docs/INTEGRATION_PLAN.md` is reordered so the integration phases (unified media core, source lifecycle and servers, audio experience, manga reader, unified library and updates) come before polish and release.
+
 ### Phase 5: database, security, test reliability
 
 #### Added
