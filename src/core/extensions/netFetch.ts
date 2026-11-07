@@ -117,7 +117,17 @@ const cache = new Map<string, CacheEntry>();
  * would open its own connection for a body the others are already downloading. */
 const inFlight = new Map<string, Promise<NetFetchResult>>();
 
-function cacheKey(url: string, headers: Record<string, string>): string {
+/**
+ * RiuPlay M2/M3: the cache is partitioned by caller. Two sources asking for the identical URL with
+ * identical headers no longer share an answer (cached, in flight, or on disk): one source's
+ * response - possibly shaped by its cookies, tokens or a login - can never be served to another,
+ * and every source's requests count against its own budget.
+ */
+function cacheKey(caller: string | undefined, url: string, headers: Record<string, string>): string {
+  return `${caller ?? "app"}\n${headerKey(url, headers)}`;
+}
+
+function headerKey(url: string, headers: Record<string, string>): string {
   // Any request header may participate in Vary or application-level routing. In particular,
   // Authorization and Lang distinguish accounts/locales in current sources; keying only on
   // Referer/Cookie could serve a cached profile or translated payload to the wrong call.
@@ -232,7 +242,7 @@ export async function performNetFetch(url: string, options: NetFetchOptions = {}
   const headers = cleared ?? requested;
   const method = (options.method ?? "GET").toUpperCase();
   const cacheable = method === "GET";
-  const key = cacheKey(url, headers);
+  const key = cacheKey(context.caller, url, headers);
 
   if (cacheable) {
     const cached = readCache(key);

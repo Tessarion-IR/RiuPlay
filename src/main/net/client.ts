@@ -286,6 +286,26 @@ export class NetClient {
     return { signal, deadline: AbortSignal.any([signal, timeout]) };
   }
 
+  /**
+   * Validates a destination without requesting it - the same parse, scheme, host, DNS (through the
+   * active resolver, so behind a proxy through the proxy) and address rules as a real request. For
+   * URLs Chromium will load itself (extension stream URLs before they reach the player). A
+   * configured but unusable proxy refuses too.
+   */
+  async preflight(url: string, caller: Caller, signal?: AbortSignal): Promise<{ ok: true } | { ok: false; code: string }> {
+    try {
+      if (this.options.ready) await this.options.ready();
+      const state = this.proxyState();
+      if (state.status === "invalid") return { ok: false, code: "proxy-invalid" };
+      if (state.status === "unavailable") return { ok: false, code: "proxy-unavailable" };
+      const policy = policyFor(caller, { timeoutMs: this.options.defaultTimeoutMs ?? 25_000, allowances: this.options.allowances?.() });
+      await this.validate(url, policy, signal ?? AbortSignal.timeout(policy.timeoutMs));
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, code: error instanceof NetError ? error.code : "error" };
+    }
+  }
+
   /** A request whose whole (decoded) body is read into memory, within the caller's caps. */
   async request(req: ControlledRequest): Promise<BufferedResponse> {
     const { signal, deadline } = this.signals(req);

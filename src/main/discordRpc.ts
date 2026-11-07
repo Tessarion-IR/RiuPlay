@@ -1,3 +1,4 @@
+import { netClient } from "./net/state";
 import { Client } from "@xhayper/discord-rpc";
 import { ActivityType } from "discord-api-types/v10";
 import type { DiscordPresence } from "@shared/types";
@@ -61,11 +62,13 @@ const posterChecksInFlight = new Set<string>();
 
 async function isReachableForDiscord(url: string): Promise<boolean> {
   try {
-    const response = await fetch(url, { method: "GET", signal: AbortSignal.timeout(5000) });
+    // RiuPlay M3: through the controlled request path as "app:discord" - the poster URL comes from
+    // a source, so it gets the same address rules and the configured proxy as everything else.
+    const response = await netClient.stream({ url, caller: { kind: "app", purpose: "discord" }, timeoutMs: 5000 });
     // Only the response's existence matters here - draining the body would download the whole
     // poster image for a check that only needs the status code.
-    void response.body?.cancel();
-    return response.ok;
+    response.body.destroy();
+    return response.status >= 200 && response.status < 300;
   } catch {
     return false;
   }

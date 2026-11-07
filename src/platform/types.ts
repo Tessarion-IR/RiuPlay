@@ -106,6 +106,9 @@ export interface HttpResponse {
  */
 export interface HttpPort {
   request(request: HttpRequest): Promise<HttpResponse>;
+  /** RiuPlay M2: validates a destination Chromium will load itself (a source's stream URL) with the
+   * same address and DNS rules as a request, without requesting it. Desktop only. */
+  checkDestination?(url: string, caller?: string): Promise<{ ok: boolean; code: string | null }>;
 }
 
 export interface FetchToFileRequest {

@@ -25,6 +25,10 @@ export function createElectronHttp(client: NetClient, options: { caller?: (reque
       });
       return { status: response.status, url: response.url, headers: response.headers, body: response.body.toString("utf8") };
     },
+    async checkDestination(url: string, caller?: string) {
+      const result = await client.preflight(url, parseCaller(caller));
+      return result.ok ? { ok: true, code: null } : { ok: false, code: result.code };
+    },
   };
 }
 

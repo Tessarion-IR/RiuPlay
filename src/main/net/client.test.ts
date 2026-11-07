@@ -601,3 +601,23 @@ describe("errors never carry secrets or full URLs", () => {
     expect(String((error as Error).message)).not.toContain("/private/path");
   });
 });
+
+describe("preflight: destination check without a request (stream URLs before Chromium loads them)", () => {
+  it("applies the same address, scheme and DNS rules, and never connects", async () => {
+    const connects: string[] = [];
+    const before = site.hits.length;
+    const client = labClient({ onConnect: (i) => connects.push(i.address) });
+    expect(await client.preflight(`http://public.test:${site.port}/a.m3u8`, ext)).toEqual({ ok: true });
+    for (const url of ["http://169.254.169.254/", "http://private.test/x", "http://mixed.test/", "http://localhost/x", "file:///C:/x", `http://u:p@public.test:${site.port}/`]) {
+      expect((await client.preflight(url, ext)).ok).toBe(false);
+    }
+    expect(await client.preflight("http://metadata.test/", ext)).toEqual({ ok: false, code: "blocked-address" });
+    expect(connects).toEqual([]);
+    expect(site.hits.length).toBe(before);
+  });
+
+  it("refuses when the configured proxy is unusable", async () => {
+    const client = labClient({ proxy: () => ({ status: "invalid", reason: "x" }) });
+    expect(await client.preflight(`http://public.test:${site.port}/`, ext)).toEqual({ ok: false, code: "proxy-invalid" });
+  });
+});

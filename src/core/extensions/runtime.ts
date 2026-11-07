@@ -174,6 +174,38 @@ function isRetiredPlayerLink(link: PlayerLink): boolean {
   }
 }
 
+/**
+ * RiuPlay M2: a source's stream URLs are loaded by Chromium (the player), not by the controlled
+ * request path - so before they reach the player, every URL a link carries (stream, separate
+ * audio, subtitles) is checked with the same scheme, DNS and address rules (platform
+ * http.checkDestination, attributed to the source). A link pointing at a private, loopback,
+ * link-local or metadata address, or at a non-web scheme, is dropped and logged. Without the
+ * capability (Android, tests) links pass unchanged.
+ */
+export async function withoutBlockedDestinations(sourceId: string | null, links: PlayerLink[]): Promise<PlayerLink[]> {
+  const http = getPlatform().http;
+  if (!http.checkDestination || links.length === 0) return links;
+  const caller = sourceId ? `extension:${sourceId}` : undefined;
+  const verdicts = await Promise.all(
+    links.map(async (link) => {
+      const urls = [link.url, link.audioUrl, ...(link.subtitles ?? []).map((track) => track.url)].filter((u): u is string => typeof u === "string" && u.length > 0);
+      for (const url of urls) {
+        if (/^(data|blob):/i.test(url)) continue;
+        if (!/^https?:\/\//i.test(url)) return "scheme-not-allowed";
+        const verdict = await http.checkDestination!(url, caller);
+        if (!verdict.ok) return verdict.code ?? "refused";
+      }
+      return null;
+    }),
+  );
+  const kept = links.filter((_, i) => verdicts[i] === null);
+  if (kept.length !== links.length) {
+    const codes = [...new Set(verdicts.filter((v): v is string => v !== null))].join(", ");
+    logger.warn("resolve", `${sourceId ?? "resolver"}: refused ${links.length - kept.length} stream link(s) before playback (${codes})`);
+  }
+  return kept;
+}
+
 /** Ids of the platform's native sources (ApkSourcesPort) - never a JS source's. */
 function isChallengeAnswer(result: unknown): boolean {
   const answer = result as Partial<NetFetchResult> | null;
@@ -767,12 +799,16 @@ export class ExtensionRuntime {
       const links = await this.sourceLinks(sourceId, titleId, groupId, episodeId, preference?.fresh === true);
       // The list alone, for a menu that should not wait for a stream to resolve.
       if (preference?.listOnly) return this.withoutUnplayableEmbeds(links);
-      const preferredIndex = this.preferredLinkIndex(links, preference);
-      // A source-provided direct link needs no resolver at all. Let the renderer adopt the saved
-      // choice from the returned list instead of resolving an unrelated EMBED first.
-      if (preferredIndex >= 0 && links[preferredIndex].type !== "EMBED") return links;
-      return this.withoutUnplayableEmbeds(await this.resolveEmbedLinks(links, preferredIndex, preference?.dataSaver === true));
+      return withoutBlockedDestinations(sourceId, await this.playableLinks(links, preference));
     });
+  }
+
+  private async playableLinks(links: PlayerLink[], preference?: PlayerLinkPreference): Promise<PlayerLink[]> {
+    const preferredIndex = this.preferredLinkIndex(links, preference);
+    // A source-provided direct link needs no resolver at all. Let the renderer adopt the saved
+    // choice from the returned list instead of resolving an unrelated EMBED first.
+    if (preferredIndex >= 0 && links[preferredIndex].type !== "EMBED") return links;
+    return this.withoutUnplayableEmbeds(await this.resolveEmbedLinks(links, preferredIndex, preference?.dataSaver === true));
   }
 
   /**
@@ -789,7 +825,7 @@ export class ExtensionRuntime {
 
   async resolvePlayerLink(link: PlayerLink, options?: { dataSaver?: boolean }): Promise<PlayerLink[]> {
     if (isRetiredPlayerLink(link)) return [];
-    return this.withoutUnplayableEmbeds(await this.resolveEmbedLinks([link], -1, options?.dataSaver === true));
+    return withoutBlockedDestinations(null, this.withoutUnplayableEmbeds(await this.resolveEmbedLinks([link], -1, options?.dataSaver === true)));
   }
 
   // The app plays only in its own player: a third-party page is never shown in an iframe. An EMBED

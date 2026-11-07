@@ -136,3 +136,18 @@ describe("RiuPlay M3: caller and controlled-path errors", () => {
     expect(requests).toHaveLength(2);
   });
 });
+
+describe("RiuPlay M2/M3: the GET cache is partitioned by caller", () => {
+  it("never serves one source's cached or in-flight answer to another source", async () => {
+    handler = async (request) => respond(`for ${request.caller}`);
+    const [a1, b1] = await Promise.all([
+      performNetFetch("https://example.org/shared", {}, { caller: "extension:a" }),
+      performNetFetch("https://example.org/shared", {}, { caller: "extension:b" }),
+    ]);
+    const a2 = await performNetFetch("https://example.org/shared", {}, { caller: "extension:a" });
+    expect(a1.body).toBe("for extension:a");
+    expect(b1.body).toBe("for extension:b");
+    expect(a2.body).toBe("for extension:a"); // a's own cache
+    expect(requests).toHaveLength(2);
+  });
+});

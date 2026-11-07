@@ -1,10 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Platform } from "../../platform/types";
+import { installPlatform } from "../platform";
 
 vi.mock("./netFetch", () => ({ performNetFetch: vi.fn(), performNetFetchAll: vi.fn() }));
 vi.mock("../logger", () => ({ logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 
 import { ExtensionRuntime } from "./runtime";
 import type { PlayerLink, PlayerLinkPreference } from "@shared/types";
+
+// RiuPlay M2: getPlayerLinks now asks the platform to check stream destinations; this platform has
+// no checker (as on Android), so links pass unchanged and these tests keep testing what they did.
+beforeEach(() => installPlatform({ http: { request: async () => ({}) } } as unknown as Platform));
 
 type Internals = {
   resolvers: Map<string, { id: string; version: string; hosts: string[] }>;
