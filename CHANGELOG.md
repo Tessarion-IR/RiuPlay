@@ -4,6 +4,21 @@ All notable changes to RiuPlay are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### P0: Electron upgrade
+
+#### Changed
+- **Electron 34.5.8 → 45.2.3** (Chromium 132 → 156, Node 20 → 24). Electron 34 was out of security support. See `docs/P0_ELECTRON_UPGRADE.md`.
+- **better-sqlite3 11.10.0 → 13.0.3**: N-API prebuilt binary, so no per-Electron rebuild and no C++ toolchain needed. SQLite 3.53.4. The existing database is verified unchanged: no migration re-run.
+- Install flow: the `postinstall`/`rebuild:electron` native rebuild is removed. Electron downloads its own binary on first use (`npm run electron:install` to prefetch). The new `.npmrc` sets `ignore-scripts=true` (npm otherwise tries to compile better-sqlite3), and `electron-builder.yml` sets `npmRebuild: false`.
+
+#### Verified
+- Type-check clean; 481 + 319 tests (3 runs); production build; 25/25 end-to-end checks and 11/11 protocol and window checks on Electron 45; Windows NSIS + portable packaging; packaged-app smoke test 10/10.
+
+#### Known
+- File dialogs now open in Downloads (Electron 43 behaviour).
+- The synchronous `safeStorage` API is deprecated (to migrate before Electron 46).
+- `console-message` positional arguments are deprecated.
+
 ### Product direction
 - Documented the integration vision: RiuPlay combines the original RiuPlay, hibiki, KikoFlu and Suwayomi into one product, and is not a hibiki rebrand. Added `docs/FEATURE_INTEGRATION_MATRIX.md` (every feature, its origin, reuse mode, unified design and status, plus the origin and license ledger). `docs/INTEGRATION_PLAN.md` is reordered so the integration phases (unified media core, source lifecycle and servers, audio experience, manga reader, unified library and updates) come before polish and release.
 

@@ -59,13 +59,13 @@ There are no published releases yet. To try RiuPlay now, build it from source (b
 
 ## Build from source (Windows)
 
-Requirements: **Windows 10/11 x64**, **Node.js 22 LTS** and **Git**.
+Requirements: **Windows 10/11 x64**, **Node.js 22 LTS** and **Git**. No C++ toolchain is needed: the only native module (better-sqlite3) ships a prebuilt N-API binary, and Electron (45) downloads its own binary on first use (`npm run electron:install` fetches it up front).
 
 ```bat
 git clone https://github.com/Tessarion-IR/RiuPlay.git
 cd RiuPlay
-npm ci          :: also rebuilds better-sqlite3 for Electron
-npm run dev     :: starts the app with hot reload
+npm ci          :: no install scripts run (see .npmrc); nothing needs compiling
+npm run dev     :: starts the app with hot reload (Electron downloads itself on first use)
 ```
 
 | Command | What it does |
@@ -74,7 +74,8 @@ npm run dev     :: starts the app with hot reload
 | `npm test` | Renderer unit tests (Vitest) |
 | `npm run test:main` | Core and main-process tests (Vitest, Node 22) |
 | `npm run typecheck` | TypeScript project check |
-| `npm run build:win` | Build the NSIS installer and portable `.exe` into `release/` |
+| `npm run electron:install` | Download the Electron binary now (otherwise it happens on first use) |
+| `npm run build:win` | Build the NSIS installer and portable `.exe` into `release/` (see `docs/P0_ELECTRON_UPGRADE.md` for a Windows packaging note) |
 
 Your data lives in `%APPDATA%\RiuPlay\` (database `riuplay.db`, `logs\`, `extensions\`).
 

@@ -42,3 +42,9 @@ electron ^34, electron-builder ^25, better-sqlite3 ^11 (native, rebuilt by @elec
   - The better-sqlite3 and sqlite-proxy drivers and the SQLite migrator keep the same API and the same `__drizzle_migrations` rule. They were verified by the full test suite and by upgrading two real databases with `scripts/verify-db-upgrade.ts`.
   - drizzle-kit 0.31 read the existing v6 snapshots and generated only the new migration's diff.
 - `npm audit --omit=dev`: **0 vulnerabilities**.
+
+## P0 Electron upgrade (2026-11-08)
+- electron 34.5.8 → **45.2.3** (exact pin); better-sqlite3 11.10.0 → **13.0.3** (N-API prebuilt); @electron/get 2.0.3 → 5.1.0 (transitive).
+- 37 transitive packages removed (the prebuild-install / tar-fs / global-agent chain), 1 added (@electron-internal/extract-zip).
+- `npm audit --omit=dev`: 0. Full audit: 23 (dev tooling), down from 39.
+- `.npmrc` `ignore-scripts=true`: no third-party install scripts run. None are needed; see `docs/P0_ELECTRON_UPGRADE.md`.
