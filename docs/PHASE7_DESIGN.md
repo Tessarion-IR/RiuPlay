@@ -152,6 +152,8 @@ A RiuPlay extension manifest gains these fields:
 
 ## 5. Networking threat model (M3)
 
+> **Implemented in M3.** See `docs/M3_NETWORKING.md`, §8, for where the implementation differs from this draft: proxies get IP literals, DNS goes through the proxy, and the plaintext migration waits for approval.
+
 ### 5.1 Assets
 - Files on the PC.
 - Services on `localhost` and the LAN (router admin, NAS, dev servers, the user's own Suwayomi and Kikoeru).

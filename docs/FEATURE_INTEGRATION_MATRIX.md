@@ -38,10 +38,10 @@ The **Unified as** column says how each row fits RiuPlay's single model, so noth
 | Pre-migration backups | – | – | – | – | RiuPlay original | `backups/pre-migration` | ✅ |
 | App settings readable by main process | `settings` table | renderer localStorage | SharedPreferences | server config | **Port** RiuPlay concept | `app_settings` table | 🟡 (LAN sync only) |
 | Logging + export | console | ✅ file log + export | ✅ in-app log + export | file log | **Reuse** Hibiki, **reimplement** KikoFlu's in-app log viewer | One log, viewable in Settings | 🟡 |
-| HTTP client with timeouts and size caps | ✅ `safeFetch` | ✅ `netFetch` | dio | OkHttp | **Port** RiuPlay caps into Hibiki netFetch | `core/net` | 🟡 |
-| SSRF protection (private IP, DNS, redirects) | – | – | – | – | RiuPlay original (new) | `core/net/guardedFetch` | 🔴 |
-| Proxy HTTP/HTTPS | ✅ | ✅ (string) | ✅ `proxy_config` | ✅ | **Port** RiuPlay model | Global + per-source | 🟡 (Hibiki string only) |
-| Proxy SOCKS5 + auth, encrypted password | ✅ (handshake test) | – | – | ✅ SOCKS | **Port** RiuPlay + real SOCKS dispatch | Same settings screen | 🔴 |
+| HTTP client with timeouts and size caps | ✅ `safeFetch` | ✅ `netFetch` | dio | OkHttp | **Port** RiuPlay caps into Hibiki netFetch | `main/net/client.ts` (M3): body/decoded caps, deadlines, per-caller budgets | ✅ |
+| SSRF protection (private IP, DNS, redirects) | – | – | – | – | RiuPlay original (new) | `main/net/client.ts` (M3): all main-process requests; Chromium-side requests are M2 | ✅ |
+| Proxy HTTP/HTTPS | ✅ | ✅ (string) | ✅ `proxy_config` | ✅ | **Port** RiuPlay model | One pinned connector, fail closed (M3); downloads and the player probe now honour it | 🟡 (transport done; settings UI with the approved migration) |
+| Proxy SOCKS5 + auth, encrypted password | ✅ (handshake test) | – | – | ✅ SOCKS | **Port** RiuPlay + real SOCKS dispatch | SOCKS5 + auth in the connector, DNS via DoH through the proxy, async-`safeStorage` store (M3) | 🟡 (no UI; legacy migration awaits approval) |
 | Credential storage | AES with hard-coded fallback key | `safeStorage` | – | – | **Reuse** Hibiki `safeStorage` | `secureStore` | 🟡 |
 | Cloudflare challenge handling | – | ✅ challenge windows | – | FlareSolverr | **Reuse** Hibiki, **Exclude** FlareSolverr (needs an external service) | Per-source challenge window | ✅ |
 | In-app updater | – | ✅ (repointed to RiuPlay) | ✅ checker | WebUI updater | **Reuse** Hibiki | GitHub releases of RiuPlay | 🟡 (no releases yet) |

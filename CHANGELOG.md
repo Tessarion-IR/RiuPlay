@@ -4,6 +4,27 @@ All notable changes to RiuPlay are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### M3: Networking
+
+#### Added
+- **One controlled request path** for main-process HTTP(S) (`src/main/net/`, see `docs/M3_NETWORKING.md`). It covers extension `fetch()`, downloads, HLS playlists, updates, repositories, AniList, skip times and the player's redirect probe:
+  - private, loopback, link-local and metadata addresses are refused, in every IPv4 and IPv6 spelling;
+  - every resolved address is validated and pinned, and every redirect is re-validated;
+  - HTTPS → HTTP downgrades are refused, and credentials are stripped across origins;
+  - bodies, decompressed bodies and time are capped; every caller has in-flight, queue, rate and hourly-byte budgets.
+- **HTTP, HTTPS and SOCKS5 proxies (with authentication)** for main-process requests, through one connector that hands the proxy an IP literal. Behind a proxy, names are resolved by DNS-over-HTTPS *through* the proxy to IP-literal resolvers, so no DNS query leaves outside it.
+- **Encrypted proxy store** (`app_settings` `network.proxy`), using Electron 45's asynchronous `safeStorage`, with IPC to get, set, clear and test it. No Settings screen uses it yet.
+- Design for a user-approved local-server exception (one connection, one exact scheme, host and port; never for extensions), with tests.
+- 200 new network tests. The M0 suite still passes unchanged.
+
+#### Changed
+- **A configured proxy is never bypassed.** Before, a SOCKS proxy or a proxy rule list made Node go direct, and downloads and the player probe always went direct. Now requests fail (`proxy-failed`, `proxy-invalid`, `proxy-unavailable`) instead.
+- Network log lines no longer contain query strings, credentials or full paths.
+- `socks` 2.8.9 (MIT, already in the lockfile) is now a direct dependency.
+
+#### Not changed (awaiting approval)
+- The existing plaintext Settings > Network proxy is still used at runtime exactly as before. It has not been read, migrated or deleted. The migration is designed and tested but not invoked (`docs/M3_NETWORKING.md` §6).
+
 ### P0: Electron upgrade
 
 #### Changed
