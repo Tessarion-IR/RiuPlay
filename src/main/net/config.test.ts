@@ -52,7 +52,7 @@ describe("policy", () => {
 describe("legacy proxy string (in memory only)", () => {
   it.each([
     ["", "none"], ["  ", "none"], ["direct://", "none"],
-    ["http://proxy.example:3128", "ok"], ["proxy.example:3128", "ok"], ["https://proxy.example", "ok"], ["socks5://127.0.0.1:1080", "ok"], ["socks://127.0.0.1", "ok"],
+    ["http://proxy.example:3128", "ok"], ["proxy.example:3128", "ok"], ["https://proxy.example", "ok"], ["socks5://127.0.0.1:1080", "ok"], ["socks://127.0.0.1", "invalid"], ["socks4a://x:1", "invalid"], ["socks5h://x:1", "invalid"],
     ["socks5://user:p%40ss@[::1]:1080", "ok"],
     ["http=a:1;https=b:2", "invalid"], ["socks4://x:1", "invalid"], ["pac+https://x/proxy.pac", "invalid"], ["http://x:99999", "invalid"], ["http://x:8080/path", "invalid"], ["http:// space:1", "invalid"],
   ])("%j -> %s", (raw, status) => {

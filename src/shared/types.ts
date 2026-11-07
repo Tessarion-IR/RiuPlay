@@ -845,6 +845,8 @@ export interface SecureProxyInput {
 
 export interface SecureProxySummary {
   configured: boolean;
+  /** A record exists but can't be read (damaged). */
+  damaged?: boolean;
   enabled: boolean;
   kind: SecureProxyKind | null;
   host: string | null;
@@ -852,12 +854,40 @@ export interface SecureProxySummary {
   username: string | null;
   hasPassword: boolean;
   dnsMode: SecureProxyDnsMode;
+  origin?: "settings" | "legacy-migration";
 }
 
-export interface SecureProxyTestResult {
+export interface SecureProxyPathResult {
   ok: boolean;
-  /** NetError code when it failed ("proxy-failed", "dns-failed", ...). */
+  /** NetError code / HTTP status / error name when it failed. */
   code: string | null;
-  elapsedMs: number;
-  path: string;
 }
+
+export interface SecureProxyVerification {
+  /** The configuration it ran against ("secure:http://user@host:port"; never a password). */
+  subject: string;
+  main: SecureProxyPathResult;
+  chromium: SecureProxyPathResult;
+  at: number;
+  plaintextRemovalAllowed?: boolean;
+}
+
+export interface SecureProxyStatus {
+  stored: SecureProxySummary;
+  effectiveSource: "secure" | "legacy" | "none";
+  effectiveState: "none" | "ok" | "invalid" | "unavailable";
+  effectiveReason: string | null;
+  /** Human-readable path, e.g. "proxy socks5 (secure), DNS DoH through proxy". */
+  path: string;
+  chromium: { mode: "direct" | "proxy" | "blocked"; reason: string | null };
+  /** The legacy plaintext setting as the migration sees it - a preview, never the password. */
+  legacy: { action: "nothing" | "refuse" | "migrate"; display: string | null; hasPassword: boolean; reason: string | null };
+  verification: SecureProxyVerification | null;
+  /** True only when the encrypted proxy is in force and passed on both paths. */
+  plaintextRemovalAllowed: boolean;
+}
+
+export type LegacyProxyMigrationResult =
+  | { outcome: "nothing" | "refused" | "already-migrated" | "busy"; reason: string }
+  | { outcome: "migrated"; display: string; legacyStillPresent: true }
+  | { outcome: "failed"; reason: string; legacyStillPresent: true };

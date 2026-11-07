@@ -21,6 +21,7 @@ import { hibiki, type LogEntry } from "@/lib/hibiki";
 import { useAppUpdate, useUpdateFlow } from "@/lib/appUpdate";
 import { AniListLogo } from "@/components/AniListLogo";
 import { DeviceSyncSection } from "@/components/DeviceSync";
+import { SecureProxyPanel } from "@/features/network/SecureProxyPanel";
 import { TRACKING_KEY, useTrackerAccount } from "@/lib/tracking";
 import type { TrackerImportProgress, TrackerImportReport } from "@shared/types";
 import type { MemorySnapshot } from "@shared/types";
@@ -1006,7 +1007,8 @@ function ProxyRow() {
   const setProxy = useNetworkPrefsStore((s) => s.setProxy);
   const [draft, setDraft] = useState(proxy);
   useEffect(() => setDraft(proxy), [proxy]);
-  const valid = draft.trim() === "" || /^(https?|socks5?):\/\/[^\s/]+:\d+\/?$/i.test(draft.trim());
+  // RiuPlay M3: socks:// is refused (ambiguous: SOCKS4 or SOCKS5?), as main/net/proxy.ts does.
+  const valid = draft.trim() === "" || /^(https?|socks5):\/\/[^\s/]+:\d+\/?$/i.test(draft.trim());
   const commit = () => { if (valid) setProxy(draft); };
   return (
     <SettingsRow icon={<Globe className="h-[18px] w-[18px]" strokeWidth={2} />}>
@@ -1138,6 +1140,7 @@ function NetworkSection() {
         </SettingsGroup>
       )}
       {!isMobile && <ProxyRow />}
+      {!isMobile && <SecureProxyPanel />}
       <CloudflareResetRow />
       <TrafficRow />
       <CacheRow />

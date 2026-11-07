@@ -5,9 +5,10 @@ import type { MediaApi } from "@shared/media";
 import type {
   AnimeTitle,
   NetworkConfig,
+  LegacyProxyMigrationResult,
   SecureProxyInput,
-  SecureProxySummary,
-  SecureProxyTestResult,
+  SecureProxyStatus,
+  SecureProxyVerification,
   TrafficSnapshot,
   AppUpdate,
   CachedAnimeEntry,
@@ -345,10 +346,11 @@ const api: HibikiApi = {
     sourceCacheSize: (): Promise<number> => ipcRenderer.invoke(IPC.networkSourceCacheSize),
     clearSourceCache: (): Promise<void> => ipcRenderer.invoke(IPC.networkClearSourceCache),
     secureProxy: {
-      get: (): Promise<SecureProxySummary> => ipcRenderer.invoke(IPC.networkSecureProxyGet),
-      set: (input: SecureProxyInput): Promise<SecureProxySummary> => ipcRenderer.invoke(IPC.networkSecureProxySet, input),
-      clear: (): Promise<void> => ipcRenderer.invoke(IPC.networkSecureProxyClear),
-      test: (): Promise<SecureProxyTestResult> => ipcRenderer.invoke(IPC.networkSecureProxyTest),
+      status: (): Promise<SecureProxyStatus> => ipcRenderer.invoke(IPC.networkSecureProxyStatus),
+      set: (input: SecureProxyInput): Promise<SecureProxyStatus> => ipcRenderer.invoke(IPC.networkSecureProxySet, input),
+      clear: (): Promise<SecureProxyStatus> => ipcRenderer.invoke(IPC.networkSecureProxyClear),
+      verify: (): Promise<SecureProxyVerification> => ipcRenderer.invoke(IPC.networkSecureProxyVerify),
+      migrateLegacy: (confirmedDisplay: string): Promise<LegacyProxyMigrationResult> => ipcRenderer.invoke(IPC.networkLegacyProxyMigrate, confirmedDisplay),
     },
   },
   logs: {

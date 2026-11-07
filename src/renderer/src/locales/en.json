@@ -868,8 +868,8 @@
         "adguard": "AdGuard"
       },
       "proxy": "Proxy",
-      "proxyHint": "For example http://127.0.0.1:8080. Leave empty for a direct connection. SOCKS works for the player and pictures only; source requests then go direct.",
-      "proxyInvalid": "Expected http://host:port, https://, or socks5://",
+      "proxyHint": "For example http://127.0.0.1:8080 or socks5://127.0.0.1:1080. Leave empty for a direct connection. Used for everything: sources, downloads, the player and pictures. If the proxy can't be reached, requests fail instead of going direct. Write socks5:// (socks:// is ambiguous and is refused).",
+      "proxyInvalid": "Expected http://host:port, https://host:port or socks5://host:port (socks:// is ambiguous: write socks5://)",
       "cloudflareReset": "Reset Cloudflare",
       "cloudflareResetHint": "Forget passed Cloudflare checks. Use it if a source keeps asking for the check or fails after it.",
       "cloudflareResetDone": "Done: sources will ask for the check again.",

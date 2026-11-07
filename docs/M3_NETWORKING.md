@@ -1,6 +1,6 @@
 # M3 Networking: the controlled request path
 
-Status: **implemented and tested; the legacy proxy migration is designed, tested and waiting for approval (not invoked).**
+Status: **implemented and tested.** The follow-up (Chromium parity, a user-started migration, backup redaction, stream checks, Discord, a partitioned cache) is described in §6 and §9.
 Scope: M3 only. There is no extension sandbox, no hidden extension windows, no Suwayomi/Kikoeru and no Settings UI change.
 
 ## 1. What changed, in one paragraph
@@ -149,45 +149,112 @@ How the password is protected:
 - **Verified before it is written.** Every save decrypts the ciphertext again and compares it with the input before writing, so a record that can't be read back never replaces a working one.
 - **Never sent to the renderer.** The renderer only sees a summary with `hasPassword`. Errors and logs are redacted: the password and its Basic-auth base64 are scrubbed, as are `user:pass@` and `token=` query parameters.
 
-IPC for the store is `network:secureProxy:get`, `:set`, `:clear` and `:test`, exposed as an optional `window.hibiki.network.secureProxy`:
-- **No Settings screen uses it yet.** That UI belongs with the migration in §6.
-- **What `test` does.** It makes one request to `https://1.1.1.1/cdn-cgi/trace`, an IP literal, through the effective path, and reports `ok`, the NetError code and the path description. It runs only when called.
+IPC: `network:secureProxy:status`, `:set`, `:clear` and `:verify`, plus `network:legacyProxy:migrate`. The renderer reaches them through `window.hibiki.network.secureProxy`, and the Settings > Network "Encrypted proxy" panel uses them.
+- **`verify`** checks both paths against `https://1.1.1.1/cdn-cgi/trace`, an IP literal:
+  - one request on the controlled path;
+  - one page load in a hidden, sandboxed window of the default session (Chromium).
 
-## 6. Legacy proxy migration: plan, awaiting your approval
+  It runs only when the user presses Verify.
+- **Writes are serialized.** All writes go through one in-process queue (the store is a singleton). The writes that must not race are single conditional SQL statements (`settingsStore.ts`: insert-if-absent and compare-and-swap, each reporting success through `RETURNING`).
 
-**Nothing below has been run against your data.** `legacyProxyMigration.ts` is imported by no production code; a test enforces this. Your existing proxy setting has not been read, migrated, overwritten or deleted.
+## 6. Legacy proxy migration: implemented, user-started only
 
-**What exists today.** The Settings > Network proxy is a plaintext string in the renderer's persisted store (`localStorage`). The renderer sends it to the main process at startup and on every change.
+**Status:** implemented and tested with synthetic data in temporary stores. It **never runs by itself**, and it has not been run against any real profile. The only entry point is Settings > Network > Encrypted proxy > "Move it to encrypted storage…", followed by a confirmation. A test enforces that `legacyProxyMigration.ts` is imported only by that IPC handler.
 
-**Proposed migration, one step at a time:**
-1. **Plan (read-only).** When you open the Settings > Network screen, the renderer passes the legacy string once to `planLegacyProxyMigration`. It returns:
-   - "nothing" when no proxy is set;
-   - "refuse" with a reason for rule lists, PAC or unsupported schemes (you then re-enter the proxy by hand);
-   - "migrate" with a preview (`kind://user@host:port`, and whether a password is present; never the password itself).
+### 6.1 Where the legacy proxy lives (from the code, no profile read)
 
-   This step reads only that one string, already in memory.
-2. **You confirm** in a dialog showing that preview. Nothing happens without the confirmation.
-3. **Apply** (`applyLegacyProxyMigration`):
-   - it writes the encrypted record **only if none exists** (it never overwrites);
-   - it decrypts the record back and compares every field with the legacy values;
-   - on any mismatch or encryption failure, it removes the new record again and reports "failed", so the legacy string stays in force.
-4. **Run with both present.** The encrypted record takes precedence (§3.2); the legacy string stays as a fallback. The Settings screen shows the stored proxy and offers **Test**.
-5. **Delete the plaintext: a separate, explicit action.** After a successful test, the screen offers "Remove the old unencrypted copy". Only that action clears the string from `localStorage`. It is never automatic, and never part of step 3.
+- **Renderer store:** zustand `useNetworkPrefsStore`, persisted under the localStorage key `hibiki-network-prefs` as `{"state":{…,"proxy":"<string>","doh":…},"version":0}`. That is plaintext, in Chromium's Local Storage inside the RiuPlay profile.
+  - The key keeps its Hibiki-era name so existing data still loads.
+- **Accepted format:** the Settings field accepts `http(s)://[user[:password]@]host:port` and `socks5://…`.
+  - `socks://` is now refused as ambiguous (6.5).
+  - Rule lists can't be typed in, but may still arrive from an old backup.
+- **Main process:** the string is held in memory only. The renderer hands it over through `network:configure`, and it ends up in `main/net/state.ts` (`legacyProxyString()`). It is never written to the database.
+- **Backups:** every `.hibikibackup` / `.riuplaybackup` file contains the whole localStorage, so **existing backups contain the plaintext proxy, password included** (6.4). LAN sync does not carry either the setting or `app_settings`.
 
-**Recovery:**
-- **Undecryptable record** (for example, a profile copied to another Windows account): requests fail closed with `proxy-unavailable`, and the screen says why. "Clear stored proxy" falls back to the legacy string if it still exists, or to direct. You can also re-enter the proxy.
-- **Rollback:** "Clear stored proxy" deletes `network.proxy`. The legacy string has not been touched until step 5, so behaviour returns to what it was before.
+### 6.2 The sequence
 
-**Tested without your data**, in `secureProxy.test.ts`:
-- planning never shows the password;
-- migrate and verify;
-- no overwrite of an existing record;
-- encryption unavailable, and a corrupt round-trip;
-- damaged and undecryptable records fail closed;
-- the legacy value is unchanged;
-- no production import.
+1. **Preview.** `network:secureProxy:status` returns `legacy: { action, display, hasPassword, reason }`, computed from the string the main process already holds. It never contains the password.
+   - **Refused:** rule lists, PAC, `socks://` (ambiguous), `socks4://` and `socks5h://`, each with the reason shown.
+2. **Explicit confirmation.** The dialog shows `kind://user@host:port` and whether a password is present. The renderer sends back the exact preview it showed (`migrateLegacy(display)`), and the main process refuses if the legacy string has changed since.
+3. **Encrypt and insert atomically.** One migration runs at a time (module lock). The record is encrypted, round-trip checked, and then written with **`INSERT … ON CONFLICT DO NOTHING RETURNING`**, one statement. A record saved through Settings in the meantime is never overwritten, and the result is then "already-migrated".
+4. **Verify.** The record is decrypted again and every field is compared (kind, host, port, user name, password).
+   - On a mismatch it is removed with a **compare-and-swap delete**, which only deletes the row if it is still exactly what this migration wrote.
+   - The plaintext stays in force.
+5. **Effective only after verification.** The record is loaded into `state.ts` only after step 4 succeeds. From then on it is the effective proxy for **both** the controlled path and Chromium (6.3).
+6. **Test both paths.** "Verify" makes:
+   - one request through the controlled path;
+   - one page load in a hidden, sandboxed window of the default session, which is Chromium's real network stack, so proxy authentication is exercised.
+7. **Remove the plaintext: separate and explicit.** It is offered only when **all** of these hold, checked in the main process (`plaintextRemovalAllowed`) and again in the renderer:
+   - the encrypted record is the one in force;
+   - its last verification passed on **both** paths;
+   - that verification was for the current configuration (any change resets it).
 
-**To approve:** say so, and the next step is the Settings screen work (steps 1–5).
+   Removal clears `state.proxy` in `hibiki-network-prefs`. Nothing else is touched.
+
+### 6.3 Chromium proxy parity
+
+- **One configuration.** Every Chromium session (the default session: player streams, posters; each challenge, login and browser-resolver partition) gets the same effective proxy (`chromiumNetworkPlan`). Sessions are re-applied on every change, and old connections are closed.
+- **No credentials in rules.** A Chromium proxy rule never contains credentials.
+- **HTTP/HTTPS proxy authentication** is answered from memory through `app.on("login")`, and only when:
+  - the challenge is a proxy challenge (`isProxy`);
+  - the host and port are exactly those of the configured proxy;
+  - it hasn't already been answered twice within a minute, so wrong credentials fail instead of looping.
+
+  A website's own login challenge is never answered.
+- **Auth cache.** Chromium's proxy auth cache is cleared whenever the configuration changes. The isolated test found that, without this, a changed password kept working from Chromium's cache.
+- **SOCKS5 with credentials.** Chromium has no SOCKS5 username/password support, so such a proxy is **blocked** for Chromium rather than sent direct, and the Settings screen says so. SOCKS5 without credentials works.
+- **Unusable proxy.** A proxy that is invalid or undecryptable gives Chromium a black-hole rule (`http://127.0.0.1:9`), so Chromium requests fail instead of going direct.
+- **Loopback.** Chromium's implicit loopback bypass is kept. Loopback traffic never leaves the machine, and media the user added from localhost must keep playing.
+- **DNS.** With a proxy, Chromium lets the proxy resolve names (CONNECT host / SOCKS5 remote). There is no local DNS leak, but Chromium cannot pin addresses the way the controlled path does. Source stream URLs are therefore checked before they reach the player (§9).
+- **Verified in a real Electron 45.2.3** by `research/m3/verify-chromium-proxy.mjs`, with a throwaway profile, loopback fixture proxies and synthetic credentials. Result: **9/9**.
+
+### 6.4 Backups
+
+- **Existing backups are never modified.** Restoring an old backup restores what it contains, including the plaintext proxy.
+- **New backups (`.riuplaybackup`)** keep all of localStorage except the proxy **password**: the proxy keeps its scheme, user name, host and port, and only the password is dropped (`main/backupRedaction.ts`). A value that can't be parsed has `user:password@` scrubbed rather than being copied as is. The backup lists what was left out (`redactions`: key and field, never a value), and restore reports it.
+- **The database inside a backup** still holds the encrypted record. It decrypts only for the same Windows user and RiuPlay profile; restored on another account or computer it loads as **unavailable**:
+  - every proxied request fails closed (`proxy-unavailable`), and Chromium is blocked;
+  - Settings shows that the stored proxy can't be read, and offers "Clear stored proxy" and re-entering it.
+- **Restore still accepts `.hibikibackup` files.**
+
+### 6.5 SOCKS scheme
+
+| Scheme | Result |
+|---|---|
+| `socks5://` | Supported |
+| `socks://` | Refused as ambiguous (Chromium reads it as SOCKS4, other tools as SOCKS5); never reinterpreted |
+| `socks4://`, `socks4a://` | Refused (not supported) |
+| `socks5h://` | Refused (proxy-side DNS defeats address validation) |
+
+The Settings field and the parser agree on this. The proxy hint (en, ru, uk) now describes the real behaviour: one proxy for everything, and fail-closed.
+
+### 6.6 Re-encryption
+
+- **When it happens.** `decryptStringAsync` reports `shouldReEncrypt` when the key or scheme is outdated. The store then encrypts again, round-trips the result, and replaces the row with a **compare-and-swap** (only if it still holds the ciphertext that was read).
+- **On failure.** The old, still-decryptable record is kept and the proxy keeps working. No credential is logged.
+
+### 6.7 Recovery
+
+| Situation | What happens | Recovery |
+|---|---|---|
+| Encryption unavailable when saving or migrating | Nothing is stored; no plaintext fallback | The plain setting stays in force |
+| Record damaged | `unavailable` → fail closed (both paths) | Clear stored proxy, then re-enter |
+| Another Windows account or profile, lost DPAPI key or `Local State` | Decrypt fails → `unavailable` | Clear, then re-enter (the plain copy, if not removed, takes over again after Clear) |
+| Chromium proxy authentication fails | Bounded retries, then the request fails; Verify shows "player and pictures: failed" | Fix the credentials; plaintext removal stays disabled |
+| SOCKS5 with credentials | Chromium blocked, with the reason shown | Use an HTTP/HTTPS proxy, or SOCKS5 without a password |
+| Interrupted migration | The single-row insert is atomic: either nothing was stored, or a complete, pre-verified record | Next attempt says "already-migrated"; Verify or Clear it; the plain copy is untouched |
+| Rollback | "Clear stored proxy" deletes `network.proxy` | Behaviour returns to the plain setting |
+
+### 6.8 Exact data changes
+
+| Action | Change |
+|---|---|
+| Migrate or save | One row in `app_settings`, key `network.proxy`. No schema change: the table exists since migration 0023 |
+| Clear | That row is deleted |
+| Remove plaintext | `state.proxy` in localStorage `hibiki-network-prefs` becomes `""` |
+| New backup | No proxy password in localStorage |
+
+Nothing else changes.
 
 ## 7. Local-server exception (designed; used by M4/M5)
 
@@ -219,16 +286,20 @@ New threats considered in M3:
 - **Env-var proxy bypass:** ignored.
 - **Credential echo in errors:** scrubbed.
 
-## 9. What is NOT covered (known limitations)
+## 9. Network-path tracking (updated after the M3 follow-up)
 
-- **Chromium-side requests**: the player (hls.js, `<video>`), posters, the renderer, and the hidden or challenge windows. They use the Chromium session proxy and Chromium's resolver, not the controlled path. A SOCKS proxy works there, but DNS-through-proxy and private-range blocking do not apply. Isolating extension pages is M2.
-- **APK sources (`apk-host/`)**: their traffic leaves from the separate JVM helper process, which RiuPlay reaches on loopback. It is not controlled yet (M2: brokered network for out-of-process hosts).
-- **`discordRpc.ts`**: its own small fetch to Discord's public API is unchanged.
-- **netFetch's short in-memory and disk GET cache is keyed by URL and headers, not by caller.** Two sources asking for the identical public URL with identical headers can share a cached answer. The cached response was already fetched under the policy, so this can't reach a private address; it only skips the second source's budget charge.
-- **No per-extension host allow-lists yet.** Every extension gets "any public host" until manifest permissions arrive (M1/M2). The address rules apply regardless.
-- **Proxy host names** are resolved by the system resolver: the proxy's own address, which you chose, is not secret from your network. Use an IP literal to avoid even that lookup.
-- **The proxy itself is trusted** to connect to the IP it was given. An HTTPS target's certificate is still verified end to end; a plain-HTTP target is visible to the proxy, as with any proxy.
-- **The legacy proxy migration and its Settings UI are pending approval** (§6).
+| Path | Status | Where |
+|---|---|---|
+| Extension `fetch()`, downloads, HLS playlists, app requests (updates, repositories, AniList, skip times) | **Controlled path** | `main/net/client.ts` |
+| Player redirect probe | **Controlled path** (`app:player`) | `main/playerStream.ts` |
+| Discord poster reachability check | **Controlled path** (`app:discord`) | `main/discordRpc.ts`. Discord RPC itself is a local named pipe, not network |
+| Source stream URLs (stream, separate audio, subtitles) before Chromium plays them | **Preflight-checked**: scheme, DNS (through the proxy when one is set), address rules, attributed to the source; refused links are dropped and logged | `core/extensions/runtime.ts` `withoutBlockedDestinations`, `NetClient.preflight` |
+| Chromium traffic (player, posters, challenge, login and resolver windows) | **Same effective proxy**, fail-closed, proxy authentication from memory, auth cache cleared on change | §6.3 |
+| Chromium address pinning (segments, later redirects, a DNS answer changing after the preflight) | **Not covered.** Chromium resolves and connects itself; only the preflight runs. Fixing this needs a desktop stream proxy (a custom protocol that pipes through the controlled client, like Android's) | Deferred: a residual risk |
+| Shared GET cache (`netFetch`) | **Partitioned by caller**: no answer, in-flight request or disk entry is shared between sources | `core/extensions/netFetch.ts` |
+| APK sources (JVM `apk-host/`) | **Outside the controlled path.** Off by default; runs only after the user installs an APK source with Java present | Phase 7 R4; see `docs/M2_SANDBOX.md` |
+| Proxy host names | Resolved by the system resolver (the proxy you chose) | Use an IP literal to avoid even that lookup |
+| No per-extension host lists yet | Every extension gets "any public host" | Manifest permissions (M1/M2) |
 
 ## 10. Tests and results
 

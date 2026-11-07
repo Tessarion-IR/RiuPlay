@@ -1,0 +1,76 @@
+{
+  "electron": "45.2.3",
+  "results": [
+    {
+      "name": "plan never puts credentials in the Chromium rule",
+      "ok": true,
+      "detail": "http://127.0.0.1:3044"
+    },
+    {
+      "name": "HTTP proxy with credentials: Chromium authenticates through the login handler",
+      "ok": true,
+      "detail": {
+        "r1": {
+          "status": 200,
+          "body": "target ok"
+        },
+        "proxy": {
+          "requests": 7,
+          "authorized": 2,
+          "challenged": 5
+        },
+        "answered": 1
+      }
+    },
+    {
+      "name": "the target never receives the proxy credentials",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "name": "wrong proxy password: the request fails, bounded retries, no direct fallback",
+      "ok": true,
+      "detail": {
+        "r2": {
+          "status": 407,
+          "body": ""
+        },
+        "answered": 2,
+        "newProxyRequests": 3
+      }
+    },
+    {
+      "name": "unusable proxy (blocked plan): Chromium fails instead of going direct",
+      "ok": true,
+      "detail": {
+        "r3": {
+          "status": null,
+          "error": "ERR_PROXY_CONNECTION_FAILED"
+        }
+      }
+    },
+    {
+      "name": "blocked plan: the target saw nothing",
+      "ok": true
+    },
+    {
+      "name": "a website's own login challenge is never answered with the proxy credentials",
+      "ok": true,
+      "detail": {
+        "r4": {
+          "status": 401,
+          "body": "login"
+        },
+        "siteAnswers": 0
+      }
+    },
+    {
+      "name": "SOCKS5 with credentials is blocked for Chromium (unsupported), never sent direct",
+      "ok": true
+    },
+    {
+      "name": "direct mode: no proxy involved",
+      "ok": true
+    }
+  ]
+}

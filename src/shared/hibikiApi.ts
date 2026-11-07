@@ -3,9 +3,10 @@
 // implement the same surface without going through Electron IPC.
 import type {
   NetworkConfig,
+  LegacyProxyMigrationResult,
   SecureProxyInput,
-  SecureProxySummary,
-  SecureProxyTestResult,
+  SecureProxyStatus,
+  SecureProxyVerification,
   TrafficSnapshot,
   AnimeTitle,
   AppUpdate,
@@ -331,11 +332,14 @@ export interface HibikiApi {
     /** Desktop only (RiuPlay M3): the proxy for main-process requests, password encrypted at rest.
      * No Settings screen uses it yet; the legacy proxy setting is untouched. */
     secureProxy?: {
-      get(): Promise<SecureProxySummary>;
-      set(input: SecureProxyInput): Promise<SecureProxySummary>;
-      clear(): Promise<void>;
-      /** One request through the effective path; reports success or the refusal code. */
-      test(): Promise<SecureProxyTestResult>;
+      status(): Promise<SecureProxyStatus>;
+      set(input: SecureProxyInput): Promise<SecureProxyStatus>;
+      clear(): Promise<SecureProxyStatus>;
+      /** One request on the controlled path and one through Chromium, with the effective proxy. */
+      verify(): Promise<SecureProxyVerification>;
+      /** Moves the legacy plaintext proxy into the encrypted store; `confirmedDisplay` is the
+       * preview the user confirmed (status().legacy.display). Never deletes the plaintext. */
+      migrateLegacy(confirmedDisplay: string): Promise<LegacyProxyMigrationResult>;
     };
   };
   logs: {
@@ -349,7 +353,8 @@ export interface HibikiApi {
   };
   backup: {
     create(localStorageEntries: Record<string, string>): Promise<string | null>;
-    restore(): Promise<{ localStorage: Record<string, string> } | null>;
+    /** `redactions`: what a RiuPlay backup left out (e.g. the proxy password), key/field only. */
+    restore(): Promise<{ localStorage: Record<string, string>; redactions?: Array<{ key: string; field: string; what: string }> } | null>;
   };
   /**
    * List sites the library is mirrored to (AniList). Once signed in it runs by itself: a finished

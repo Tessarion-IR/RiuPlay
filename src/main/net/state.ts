@@ -13,7 +13,7 @@
 import type { DohProvider } from "@shared/types";
 import { NetClient, type ProxyState } from "./client";
 import { NetError } from "./errors";
-import { parseLegacyProxyString, type ProxyConfig, type ProxyDnsMode } from "./proxy";
+import { CHROMIUM_BLACKHOLE_RULES, chromiumProxyPlan, parseLegacyProxyString, type ChromiumProxyPlan, type ProxyConfig, type ProxyDnsMode } from "./proxy";
 import { DIRECT_DOH_ENDPOINTS, dohResolver, PROXY_DOH_ENDPOINTS, systemResolver, type Resolver } from "./resolve";
 import type { LoadedProxy } from "./secureProxyStore";
 import type { LocalServerAllowance } from "./policy";
@@ -80,9 +80,72 @@ export const netClient = new NetClient({
   allowances: () => allowances,
 });
 
+const listeners = new Set<() => void | Promise<void>>();
+
+/** Called after every change of the effective proxy or DNS (main/network.ts re-applies Chromium's). */
+export function onNetworkPathChange(listener: () => void | Promise<void>): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
 async function changed(): Promise<void> {
   resolverCache = null;
+  verification = null; // any earlier "both paths verified" no longer describes this configuration
   await Promise.all([netClient.resetConnections(), proxiedDnsClient.resetConnections(), directDnsClient.resetConnections()]);
+  await Promise.all([...listeners].map(async (listener) => listener()));
+}
+
+/**
+ * What Chromium's sessions must use. The SAME effective proxy as the controlled path: the encrypted
+ * record when present, else the legacy string. A proxy that can't be used (invalid, unavailable,
+ * or SOCKS5 with credentials, which Chromium can't speak) makes Chromium fail too - through a
+ * black-hole rule - instead of going direct.
+ */
+export function chromiumNetworkPlan(): ChromiumProxyPlan & { rules: string | null } {
+  const { state } = effectiveProxy();
+  if (state.status === "none") return { mode: "direct", rules: null };
+  if (state.status !== "ok") return { mode: "blocked", reason: state.reason, rules: CHROMIUM_BLACKHOLE_RULES };
+  const plan = chromiumProxyPlan(state.config);
+  return { ...plan, rules: plan.mode === "proxy" ? plan.proxyRules : plan.mode === "blocked" ? CHROMIUM_BLACKHOLE_RULES : null } as ChromiumProxyPlan & { rules: string | null };
+}
+
+/** The legacy string the renderer handed over at runtime - for the user-started migration only. */
+export function legacyProxyString(): string {
+  return legacyProxy;
+}
+
+// --- verification of the effective configuration on both paths ---------------------------------
+
+export interface PathVerification {
+  /** The configuration it was run against ("secure:<kind>://user@host:port" - never a password). */
+  subject: string;
+  main: { ok: boolean; code: string | null };
+  chromium: { ok: boolean; code: string | null };
+  at: number;
+}
+
+let verification: PathVerification | null = null;
+
+export function verificationSubject(): string {
+  const { state, source } = effectiveProxy();
+  if (state.status !== "ok") return `${source}:${state.status}`;
+  const c = state.config;
+  return `${source}:${c.kind}://${c.username ? `${c.username}@` : ""}${c.host}:${c.port}`;
+}
+
+export function recordVerification(result: PathVerification): void {
+  // Only kept if it still describes the current configuration.
+  verification = result.subject === verificationSubject() ? result : null;
+}
+
+/** True only when the ENCRYPTED proxy is in force and passed on both the controlled path and Chromium. */
+export function plaintextRemovalAllowed(): boolean {
+  const { source, state } = effectiveProxy();
+  return source === "secure" && state.status === "ok" && verification !== null && verification.subject === verificationSubject() && verification.main.ok && verification.chromium.ok;
+}
+
+export function lastVerification(): PathVerification | null {
+  return verification;
 }
 
 /** From Settings > Network (renderer, at start and on every change). In memory only. */

@@ -53,7 +53,12 @@ export function parseLegacyProxyString(raw: string | null | undefined): ParsedPr
     return { status: "invalid", reason: "not a valid proxy address" };
   }
   const scheme = url.protocol.slice(0, -1).toLowerCase();
-  const kind: ProxyKind | null = scheme === "http" ? "http" : scheme === "https" ? "https" : scheme === "socks5" || scheme === "socks" ? "socks5" : null;
+  // "socks://" is ambiguous: Chromium reads it as SOCKS4, other tools as SOCKS5. It is never
+  // guessed - the user picks socks5:// (SOCKS4 is not supported by the controlled path).
+  if (scheme === "socks") return { status: "invalid", reason: "socks:// is ambiguous (SOCKS4 or SOCKS5?); write socks5:// - SOCKS4 is not supported" };
+  if (scheme === "socks4" || scheme === "socks4a") return { status: "invalid", reason: "SOCKS4 is not supported; use socks5://, http:// or https://" };
+  if (scheme === "socks5h") return { status: "invalid", reason: "socks5h:// (proxy-side DNS) is not supported: RiuPlay validates every address itself; use socks5://" };
+  const kind: ProxyKind | null = scheme === "http" ? "http" : scheme === "https" ? "https" : scheme === "socks5" ? "socks5" : null;
   if (!kind) return { status: "invalid", reason: `unsupported proxy scheme ${scheme}` };
   if (url.pathname && url.pathname !== "/") return { status: "invalid", reason: "a proxy address has no path" };
   let host = url.hostname;
@@ -71,4 +76,29 @@ export function parseLegacyProxyString(raw: string | null | undefined): ParsedPr
 export function describeProxy(config: ProxyConfig): string {
   const host = net.isIPv6(config.host) ? `[${config.host}]` : config.host;
   return `${config.kind}://${config.username ? `${config.username}@` : ""}${host}:${config.port}`;
+}
+
+/**
+ * What Chromium's session.setProxy() gets for a proxy: the rule WITHOUT credentials (Chromium
+ * never takes them from the rule; HTTP/HTTPS proxy credentials are answered from the app's
+ * "login" handler instead, main/network.ts). Chromium cannot authenticate to a SOCKS5 proxy at all
+ * (it implements no SOCKS username/password auth), so a SOCKS5 proxy with credentials has no
+ * Chromium rule: Chromium traffic is then blocked rather than sent direct (see chromiumProxyPlan).
+ */
+export type ChromiumProxyPlan =
+  | { mode: "direct" }
+  | { mode: "proxy"; proxyRules: string; auth: { host: string; port: number; username: string; password: string } | null }
+  | { mode: "blocked"; reason: string };
+
+/** An address no proxy listens on: Chromium requests then fail instead of going direct. */
+export const CHROMIUM_BLACKHOLE_RULES = "http://127.0.0.1:9";
+
+export function chromiumProxyPlan(config: ProxyConfig | null): ChromiumProxyPlan {
+  if (!config) return { mode: "direct" };
+  const host = net.isIPv6(config.host) ? `[${config.host}]` : config.host;
+  if (config.kind === "socks5" && (config.username || config.password)) {
+    return { mode: "blocked", reason: "Chromium (player, pictures, sign-in windows) cannot authenticate to a SOCKS5 proxy; use a SOCKS5 proxy without a password, or an HTTP/HTTPS proxy" };
+  }
+  const auth = config.username ? { host: config.host, port: config.port, username: config.username, password: config.password ?? "" } : null;
+  return { mode: "proxy", proxyRules: `${config.kind}://${host}:${config.port}`, auth };
 }

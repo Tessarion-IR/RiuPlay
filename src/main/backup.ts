@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { app, BrowserWindow, dialog } from "electron";
 import { checkpointDb, closeDb, DB_PATH } from "./db";
+import { redactLocalStorageForBackup, type Redaction } from "./backupRedaction";
 
 // Deliberately NOT included: downloaded episode files (ipc/downloads.ts's DOWNLOADS_DIR) - those
 // can be many GB, and are re-downloadable from the source at any time, unlike everything below.
@@ -20,7 +21,13 @@ interface BackupFile {
   /** The renderer's whole localStorage (zustand's persisted settings stores) - see backup:create's
    * IPC signature, since only the renderer can actually read its own localStorage. */
   localStorage: Record<string, string>;
+  /** RiuPlay M3: what was left out of localStorage (key/field only). Absent in older backups. */
+  redactions?: Redaction[];
 }
+
+// RiuPlay: new backups are ".riuplaybackup"; ".hibikibackup" files made before the rebrand are
+// still restored (same format).
+const BACKUP_FILTERS = [{ name: "RiuPlay backup", extensions: ["riuplaybackup", "hibikibackup"] }];
 
 async function listFilesRecursive(dir: string, base = dir): Promise<string[]> {
   let entries;
@@ -40,11 +47,11 @@ async function listFilesRecursive(dir: string, base = dir): Promise<string[]> {
 
 export async function createBackup(localStorageEntries: Record<string, string>): Promise<string | null> {
   const window = BrowserWindow.getFocusedWindow();
-  const defaultName = `hibiki-backup-${new Date().toISOString().slice(0, 10)}.hibikibackup`;
+  const defaultName = `riuplay-backup-${new Date().toISOString().slice(0, 10)}.riuplaybackup`;
   const options: Electron.SaveDialogOptions = {
-    title: "Сохранить резервную копию",
+    title: "Save a RiuPlay backup",
     defaultPath: defaultName,
-    filters: [{ name: "Резервная копия hibiki", extensions: ["hibikibackup"] }],
+    filters: [{ name: "RiuPlay backup", extensions: ["riuplaybackup"] }],
   };
   const { canceled, filePath } = await (window ? dialog.showSaveDialog(window, options) : dialog.showSaveDialog(options));
   if (canceled || !filePath) return null;
@@ -67,7 +74,10 @@ export async function createBackup(localStorageEntries: Record<string, string>):
     createdAt: Date.now(),
     dbBase64,
     extensions,
-    localStorage: localStorageEntries,
+    ...(() => {
+      const { entries, redactions } = redactLocalStorageForBackup(localStorageEntries);
+      return { localStorage: entries, ...(redactions.length ? { redactions } : {}) };
+    })(),
   };
   await fs.writeFile(filePath, JSON.stringify(backup));
   return filePath;
@@ -75,14 +85,15 @@ export async function createBackup(localStorageEntries: Record<string, string>):
 
 export interface RestoreResult {
   localStorage: Record<string, string>;
+  redactions?: Redaction[];
 }
 
 export async function restoreBackup(): Promise<RestoreResult | null> {
   const window = BrowserWindow.getFocusedWindow();
   const options: Electron.OpenDialogOptions = {
-    title: "Выбрать резервную копию",
+    title: "Restore a RiuPlay backup",
     properties: ["openFile"],
-    filters: [{ name: "Резервная копия hibiki", extensions: ["hibikibackup"] }],
+    filters: BACKUP_FILTERS,
   };
   const { canceled, filePaths } = await (window ? dialog.showOpenDialog(window, options) : dialog.showOpenDialog(options));
   if (canceled || filePaths.length === 0) return null;
@@ -92,10 +103,10 @@ export async function restoreBackup(): Promise<RestoreResult | null> {
   try {
     backup = JSON.parse(raw);
   } catch {
-    throw new Error("Файл повреждён или не является резервной копией hibiki");
+    throw new Error("This file is damaged or is not a RiuPlay backup");
   }
   if (backup.formatVersion !== FORMAT_VERSION) {
-    throw new Error("Эта резервная копия сделана в несовместимой версии hibiki");
+    throw new Error("This backup was made by an incompatible version");
   }
 
   // Closed (not just checkpointed) before overwriting - the running process still holds this file
@@ -117,5 +128,5 @@ export async function restoreBackup(): Promise<RestoreResult | null> {
     await fs.writeFile(destination, Buffer.from(contentBase64, "base64"));
   }
 
-  return { localStorage: backup.localStorage };
+  return { localStorage: backup.localStorage, ...(backup.redactions?.length ? { redactions: backup.redactions } : {}) };
 }

@@ -1,34 +1,23 @@
-// RiuPlay M3: the Electron/app pieces behind the secure proxy store - Electron 45's asynchronous
-// safeStorage (no synchronous safeStorage call) and the app_settings table.
+// RiuPlay M3: the Electron piece behind the secure proxy store - Electron 45's asynchronous
+// safeStorage (no synchronous safeStorage call). On Windows the data key is protected with DPAPI
+// for the current Windows user and kept in this profile's "Local State": a copy of the database on
+// another account or profile cannot decrypt it (it then loads as "unavailable" and fails closed).
 import { safeStorage } from "electron";
-import { eq } from "drizzle-orm";
-import { appSettings } from "../../core/db/schema";
-import { getPlatform } from "../../core/platform";
-import type { ProxyCipher, SettingsStore } from "./secureProxyStore";
+import type { ProxyCipher } from "./secureProxyStore";
 import { SecureProxyStore } from "./secureProxyStore";
+import { appSettingsStore } from "./settingsStore";
 
 export const asyncSafeStorageCipher: ProxyCipher = {
   isAvailable: () => safeStorage.isAsyncEncryptionAvailable(),
   encrypt: (plaintext) => safeStorage.encryptStringAsync(plaintext),
-  decrypt: async (ciphertext) => (await safeStorage.decryptStringAsync(ciphertext)).result,
-};
-
-/** Only the key it is asked for - this store never lists or reads other settings. */
-export const appSettingsStore: SettingsStore = {
-  async get(key) {
-    const row = await getPlatform().db.get().select().from(appSettings).where(eq(appSettings.key, key)).get();
-    return row?.value ?? null;
-  },
-  async set(key, value) {
-    const updatedAt = Date.now();
-    await getPlatform().db.get().insert(appSettings).values({ key, value, updatedAt }).onConflictDoUpdate({ target: appSettings.key, set: { value, updatedAt } }).run();
-  },
-  async delete(key) {
-    await getPlatform().db.get().delete(appSettings).where(eq(appSettings.key, key)).run();
+  decrypt: async (ciphertext) => {
+    const { result, shouldReEncrypt } = await safeStorage.decryptStringAsync(ciphertext);
+    return { text: result, shouldReEncrypt: Boolean(shouldReEncrypt) };
   },
 };
 
 let store: SecureProxyStore | null = null;
+/** The one store in the app: its write queue serializes every proxy write in the main process. */
 export function secureProxyStore(): SecureProxyStore {
   store ??= new SecureProxyStore(appSettingsStore, asyncSafeStorageCipher);
   return store;
