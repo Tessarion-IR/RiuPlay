@@ -48,7 +48,13 @@ function lazyPage(load: () => Promise<React.ComponentType>): PersistedPage {
 }
 
 const PERSISTED_PAGES: Record<string, PersistedPage> = {
-  "/": lazyPage(() => import("@/pages/home").then((module) => module.CatalogPage)),
+  // RiuPlay: Home spans every content type; hibiki's source home becomes Discover.
+  "/": lazyPage(() => import("@/pages/riuplayHome").then((module) => module.RiuPlayHomePage)),
+  "/discover": lazyPage(() => import("@/pages/home").then((module) => module.CatalogPage)),
+  "/video": lazyPage(() => import("@/pages/mediaSection").then((module) => module.VideoSectionPage)),
+  "/manga": lazyPage(() => import("@/pages/mediaSection").then((module) => module.MangaSectionPage)),
+  "/audio": lazyPage(() => import("@/pages/mediaSection").then((module) => module.AudioSectionPage)),
+  "/collections": lazyPage(() => import("@/pages/collections").then((module) => module.CollectionsPage)),
   "/catalog": lazyPage(() => import("@/pages/catalog").then((module) => module.CatalogBrowsePage)),
   "/library": lazyPage(() => import("@/pages/library").then((module) => module.LibraryPage)),
   "/history": lazyPage(() => import("@/pages/history").then((module) => module.HistoryPage)),
@@ -178,7 +184,7 @@ function RootLayoutContent() {
   // and the sidebar visibly vanished into an empty black frame before the player appeared. Reading
   // the resolved location keeps the page you are leaving on screen, sidebar and all, until the
   // player is actually ready to be shown, and the swap then happens in one frame.
-  const isWatching = useRouterState({ select: (s) => (s.resolvedLocation ?? s.location).pathname.startsWith("/watch/") });
+  const isWatching = useRouterState({ select: (s) => (s.resolvedLocation ?? s.location).pathname.startsWith("/watch/") || (s.resolvedLocation ?? s.location).pathname.startsWith("/play/") });
   // Resolved as well, and for the same reason: this decides which persisted page is the visible
   // one, so reading the pending location hid the page being left the instant a navigation started,
   // leaving an empty frame under the chrome until the next route's chunk arrived.
@@ -195,8 +201,8 @@ function RootLayoutContent() {
     return () => document.removeEventListener("click", onClickCapture, true);
   }, []);
   useLayoutEffect(() => {
-    if (pathname === "/" || pathname === "/catalog") {
-      const section: BrowseSection = pathname === "/" ? "home" : "catalog";
+    if (pathname === "/discover" || pathname === "/catalog") {
+      const section: BrowseSection = pathname === "/discover" ? "home" : "catalog";
       browseSection.current = section;
       clickedBrowseSection.current = null;
       return;
@@ -358,7 +364,7 @@ function RootLayoutContent() {
           // and artwork, which then made the active catalog less smooth to scroll.
           return <div
             key={path}
-            data-browse-section={path === "/" ? "home" : path === "/catalog" ? "catalog" : undefined}
+            data-browse-section={path === "/discover" ? "home" : path === "/catalog" ? "catalog" : undefined}
             data-page-scroll={path}
             aria-hidden={!isActive}
             className={cn(

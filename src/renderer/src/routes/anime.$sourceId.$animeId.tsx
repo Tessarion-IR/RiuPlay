@@ -13,6 +13,7 @@ import { CloudflareCheckButton, useCloudflareText } from "@/components/Cloudflar
 import { cloudflareCheckOf } from "@shared/cloudflare";
 import { RatingButton, SourceRatings } from "@/components/RatingButton";
 import { TrackerLinkButton } from "@/components/TrackerLinkButton";
+import { CollectionsButton } from "@/components/media/CollectionsButton";
 import { useRecommendationReason } from "@/lib/recommendations";
 import { hibiki } from "@/lib/hibiki";
 import { useNewEpisodesPrefs } from "@/lib/newEpisodes";
@@ -963,6 +964,8 @@ function Overview({ anime, libraryCategory, onSetLibraryCategory, onRemoveFromLi
         <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs empty:hidden">
           {source && <RatingButton source={source} animeId={animeId} />}
           <TrackerLinkButton sourceId={sourceId} animeId={animeId} searchName={anime.englishName || anime.originalName || title} inLibrary={libraryCategory !== null} />
+          {/* RiuPlay: collections gather source titles and local video/manga/audio together. */}
+          <CollectionsButton titleRef={{ sourceId, titleId: animeId }} className="gap-1 rounded-md px-1.5 py-0.5 text-[11px]" />
           {nextEpisodeLabel && <span className="flex items-center gap-1 rounded-md bg-emerald-400/15 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-500 dark:text-emerald-400"><Clock className="h-3 w-3" strokeWidth={2.5} />{nextEpisodeLabel}</span>}
         </div>
       </div>
@@ -1020,6 +1023,8 @@ function Overview({ anime, libraryCategory, onSetLibraryCategory, onRemoveFromLi
           <LibraryButton category={libraryCategory} onSelect={onSetLibraryCategory} onRemove={onRemoveFromLibrary} />
           {source && <RatingButton source={source} animeId={animeId} />}
           <TrackerLinkButton sourceId={sourceId} animeId={animeId} searchName={anime.englishName || anime.originalName || title} inLibrary={libraryCategory !== null} />
+          {/* RiuPlay: collections gather source titles and local video/manga/audio together. */}
+          <CollectionsButton titleRef={{ sourceId, titleId: animeId }} />
           {/* This title's own page when the source supplied one (an id here is whatever that site
               identifies titles by, which is often not what its URLs use, so nothing outside the
               source can build this) - falling back to the source's own homepage from its manifest

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, Search, Home, LayoutGrid, Bookmark, Download, Radio, User, Settings } from "lucide-react";
+import { Check, Search, Home, LayoutGrid, Bookmark, Download, Radio, User, Settings, Compass, Clapperboard, BookOpen, Headphones, FolderHeart } from "lucide-react";
 import { usePopoverTheme } from "@/lib/usePopoverTheme";
 import { useUiStore } from "@/stores/uiStore";
 import { useSpotlightStore } from "@/stores/spotlightStore";
@@ -20,11 +20,19 @@ const MIN_FULL_WIDTH = 160;
 const COMPACT_WIDTH = 68;
 const SNAP_POINT = (MIN_FULL_WIDTH + COMPACT_WIDTH) / 2;
 
+// RiuPlay: one navigation for every content type - Home across all of them, Discover/Catalog/Search
+// for extension sources, first-class Video, Manga and Audio sections, then the shared Library,
+// Collections, Downloads and Sources.
 const navigation = [
   { to: "/", labelKey: "nav.home", icon: Home },
+  { to: "/discover", labelKey: "media.nav.discover", icon: Compass },
   { to: "/catalog", labelKey: "nav.catalog", icon: LayoutGrid },
   { to: "/search", labelKey: "nav.search", icon: Search },
+  { to: "/video", labelKey: "media.section.video.title", icon: Clapperboard },
+  { to: "/manga", labelKey: "media.section.manga.title", icon: BookOpen },
+  { to: "/audio", labelKey: "media.section.audio.title", icon: Headphones },
   { to: "/library", labelKey: "library.title", icon: Bookmark },
+  { to: "/collections", labelKey: "media.collections.title", icon: FolderHeart },
   { to: "/downloads", labelKey: "downloads.title", icon: Download },
   { to: "/sources", labelKey: "nav.sources", icon: Radio },
 ] as const;
@@ -113,7 +121,7 @@ function NavLink({
   compact,
   badgeCount = 0,
 }: {
-  to: "/" | "/catalog" | "/search" | "/library" | "/downloads" | "/sources" | "/settings" | "/profile";
+  to: "/" | "/discover" | "/catalog" | "/search" | "/video" | "/manga" | "/audio" | "/library" | "/collections" | "/downloads" | "/sources" | "/settings" | "/profile";
   label: string;
   icon: typeof Home;
   compact: boolean;
@@ -121,7 +129,7 @@ function NavLink({
 }) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => (state.resolvedLocation ?? state.location).pathname });
-  const section: BrowseSection | null = to === "/" ? "home" : to === "/catalog" ? "catalog" : null;
+  const section: BrowseSection | null = to === "/discover" ? "home" : to === "/catalog" ? "catalog" : null;
   const spotlightOpen = useSpotlightStore((s) => s.open);
   if (to === "/search") {
     // Quick search is a panel (Ctrl+K), not a page to move to.

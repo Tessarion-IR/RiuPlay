@@ -10,15 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AudioRouteImport } from './routes/audio'
 import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as CollectionsRouteImport } from './routes/collections'
+import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DownloadsRouteImport } from './routes/downloads'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as LibraryRouteImport } from './routes/library'
+import { Route as MangaRouteImport } from './routes/manga'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SourcesRouteImport } from './routes/sources'
+import { Route as VideoRouteImport } from './routes/video'
+import { Route as MediaMediaIdRouteImport } from './routes/media.$mediaId'
 import { Route as AnimeSourceIdAnimeIdRouteImport } from './routes/anime.$sourceId.$animeId'
+import { Route as ListenMediaIdUnitIdRouteImport } from './routes/listen.$mediaId.$unitId'
+import { Route as PlayMediaIdUnitIdRouteImport } from './routes/play.$mediaId.$unitId'
+import { Route as ReadMediaIdUnitIdRouteImport } from './routes/read.$mediaId.$unitId'
 import { Route as WatchSourceIdAnimeIdGroupIdEpisodeIdRouteImport } from './routes/watch.$sourceId.$animeId.$groupId.$episodeId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -26,9 +35,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AudioRoute = AudioRouteImport.update({
+  id: '/audio',
+  path: '/audio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CatalogRoute = CatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollectionsRoute = CollectionsRouteImport.update({
+  id: '/collections',
+  path: '/collections',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiscoverRoute = DiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DownloadsRoute = DownloadsRouteImport.update({
@@ -44,6 +68,11 @@ const HistoryRoute = HistoryRouteImport.update({
 const LibraryRoute = LibraryRouteImport.update({
   id: '/library',
   path: '/library',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MangaRoute = MangaRouteImport.update({
+  id: '/manga',
+  path: '/manga',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -66,9 +95,34 @@ const SourcesRoute = SourcesRouteImport.update({
   path: '/sources',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VideoRoute = VideoRouteImport.update({
+  id: '/video',
+  path: '/video',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MediaMediaIdRoute = MediaMediaIdRouteImport.update({
+  id: '/media/$mediaId',
+  path: '/media/$mediaId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnimeSourceIdAnimeIdRoute = AnimeSourceIdAnimeIdRouteImport.update({
   id: '/anime/$sourceId/$animeId',
   path: '/anime/$sourceId/$animeId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListenMediaIdUnitIdRoute = ListenMediaIdUnitIdRouteImport.update({
+  id: '/listen/$mediaId/$unitId',
+  path: '/listen/$mediaId/$unitId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlayMediaIdUnitIdRoute = PlayMediaIdUnitIdRouteImport.update({
+  id: '/play/$mediaId/$unitId',
+  path: '/play/$mediaId/$unitId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReadMediaIdUnitIdRoute = ReadMediaIdUnitIdRouteImport.update({
+  id: '/read/$mediaId/$unitId',
+  path: '/read/$mediaId/$unitId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WatchSourceIdAnimeIdGroupIdEpisodeIdRoute =
@@ -80,97 +134,160 @@ const WatchSourceIdAnimeIdGroupIdEpisodeIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/audio': typeof AudioRoute
   '/catalog': typeof CatalogRoute
+  '/collections': typeof CollectionsRoute
+  '/discover': typeof DiscoverRoute
   '/downloads': typeof DownloadsRoute
   '/history': typeof HistoryRoute
   '/library': typeof LibraryRoute
+  '/manga': typeof MangaRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
+  '/video': typeof VideoRoute
+  '/media/$mediaId': typeof MediaMediaIdRoute
   '/anime/$sourceId/$animeId': typeof AnimeSourceIdAnimeIdRoute
+  '/listen/$mediaId/$unitId': typeof ListenMediaIdUnitIdRoute
+  '/play/$mediaId/$unitId': typeof PlayMediaIdUnitIdRoute
+  '/read/$mediaId/$unitId': typeof ReadMediaIdUnitIdRoute
   '/watch/$sourceId/$animeId/$groupId/$episodeId': typeof WatchSourceIdAnimeIdGroupIdEpisodeIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/audio': typeof AudioRoute
   '/catalog': typeof CatalogRoute
+  '/collections': typeof CollectionsRoute
+  '/discover': typeof DiscoverRoute
   '/downloads': typeof DownloadsRoute
   '/history': typeof HistoryRoute
   '/library': typeof LibraryRoute
+  '/manga': typeof MangaRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
+  '/video': typeof VideoRoute
+  '/media/$mediaId': typeof MediaMediaIdRoute
   '/anime/$sourceId/$animeId': typeof AnimeSourceIdAnimeIdRoute
+  '/listen/$mediaId/$unitId': typeof ListenMediaIdUnitIdRoute
+  '/play/$mediaId/$unitId': typeof PlayMediaIdUnitIdRoute
+  '/read/$mediaId/$unitId': typeof ReadMediaIdUnitIdRoute
   '/watch/$sourceId/$animeId/$groupId/$episodeId': typeof WatchSourceIdAnimeIdGroupIdEpisodeIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/audio': typeof AudioRoute
   '/catalog': typeof CatalogRoute
+  '/collections': typeof CollectionsRoute
+  '/discover': typeof DiscoverRoute
   '/downloads': typeof DownloadsRoute
   '/history': typeof HistoryRoute
   '/library': typeof LibraryRoute
+  '/manga': typeof MangaRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
+  '/video': typeof VideoRoute
+  '/media/$mediaId': typeof MediaMediaIdRoute
   '/anime/$sourceId/$animeId': typeof AnimeSourceIdAnimeIdRoute
+  '/listen/$mediaId/$unitId': typeof ListenMediaIdUnitIdRoute
+  '/play/$mediaId/$unitId': typeof PlayMediaIdUnitIdRoute
+  '/read/$mediaId/$unitId': typeof ReadMediaIdUnitIdRoute
   '/watch/$sourceId/$animeId/$groupId/$episodeId': typeof WatchSourceIdAnimeIdGroupIdEpisodeIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/audio'
     | '/catalog'
+    | '/collections'
+    | '/discover'
     | '/downloads'
     | '/history'
     | '/library'
+    | '/manga'
     | '/profile'
     | '/search'
     | '/settings'
     | '/sources'
+    | '/video'
+    | '/media/$mediaId'
     | '/anime/$sourceId/$animeId'
+    | '/listen/$mediaId/$unitId'
+    | '/play/$mediaId/$unitId'
+    | '/read/$mediaId/$unitId'
     | '/watch/$sourceId/$animeId/$groupId/$episodeId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/audio'
     | '/catalog'
+    | '/collections'
+    | '/discover'
     | '/downloads'
     | '/history'
     | '/library'
+    | '/manga'
     | '/profile'
     | '/search'
     | '/settings'
     | '/sources'
+    | '/video'
+    | '/media/$mediaId'
     | '/anime/$sourceId/$animeId'
+    | '/listen/$mediaId/$unitId'
+    | '/play/$mediaId/$unitId'
+    | '/read/$mediaId/$unitId'
     | '/watch/$sourceId/$animeId/$groupId/$episodeId'
   id:
     | '__root__'
     | '/'
+    | '/audio'
     | '/catalog'
+    | '/collections'
+    | '/discover'
     | '/downloads'
     | '/history'
     | '/library'
+    | '/manga'
     | '/profile'
     | '/search'
     | '/settings'
     | '/sources'
+    | '/video'
+    | '/media/$mediaId'
     | '/anime/$sourceId/$animeId'
+    | '/listen/$mediaId/$unitId'
+    | '/play/$mediaId/$unitId'
+    | '/read/$mediaId/$unitId'
     | '/watch/$sourceId/$animeId/$groupId/$episodeId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AudioRoute: typeof AudioRoute
   CatalogRoute: typeof CatalogRoute
+  CollectionsRoute: typeof CollectionsRoute
+  DiscoverRoute: typeof DiscoverRoute
   DownloadsRoute: typeof DownloadsRoute
   HistoryRoute: typeof HistoryRoute
   LibraryRoute: typeof LibraryRoute
+  MangaRoute: typeof MangaRoute
   ProfileRoute: typeof ProfileRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   SourcesRoute: typeof SourcesRoute
+  VideoRoute: typeof VideoRoute
+  MediaMediaIdRoute: typeof MediaMediaIdRoute
   AnimeSourceIdAnimeIdRoute: typeof AnimeSourceIdAnimeIdRoute
+  ListenMediaIdUnitIdRoute: typeof ListenMediaIdUnitIdRoute
+  PlayMediaIdUnitIdRoute: typeof PlayMediaIdUnitIdRoute
+  ReadMediaIdUnitIdRoute: typeof ReadMediaIdUnitIdRoute
   WatchSourceIdAnimeIdGroupIdEpisodeIdRoute: typeof WatchSourceIdAnimeIdGroupIdEpisodeIdRoute
 }
 
@@ -183,11 +300,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/audio': {
+      id: '/audio'
+      path: '/audio'
+      fullPath: '/audio'
+      preLoaderRoute: typeof AudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/catalog': {
       id: '/catalog'
       path: '/catalog'
       fullPath: '/catalog'
       preLoaderRoute: typeof CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collections': {
+      id: '/collections'
+      path: '/collections'
+      fullPath: '/collections'
+      preLoaderRoute: typeof CollectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discover': {
+      id: '/discover'
+      path: '/discover'
+      fullPath: '/discover'
+      preLoaderRoute: typeof DiscoverRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/downloads': {
@@ -209,6 +347,13 @@ declare module '@tanstack/react-router' {
       path: '/library'
       fullPath: '/library'
       preLoaderRoute: typeof LibraryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manga': {
+      id: '/manga'
+      path: '/manga'
+      fullPath: '/manga'
+      preLoaderRoute: typeof MangaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -239,11 +384,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SourcesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/video': {
+      id: '/video'
+      path: '/video'
+      fullPath: '/video'
+      preLoaderRoute: typeof VideoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/media/$mediaId': {
+      id: '/media/$mediaId'
+      path: '/media/$mediaId'
+      fullPath: '/media/$mediaId'
+      preLoaderRoute: typeof MediaMediaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/anime/$sourceId/$animeId': {
       id: '/anime/$sourceId/$animeId'
       path: '/anime/$sourceId/$animeId'
       fullPath: '/anime/$sourceId/$animeId'
       preLoaderRoute: typeof AnimeSourceIdAnimeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listen/$mediaId/$unitId': {
+      id: '/listen/$mediaId/$unitId'
+      path: '/listen/$mediaId/$unitId'
+      fullPath: '/listen/$mediaId/$unitId'
+      preLoaderRoute: typeof ListenMediaIdUnitIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/play/$mediaId/$unitId': {
+      id: '/play/$mediaId/$unitId'
+      path: '/play/$mediaId/$unitId'
+      fullPath: '/play/$mediaId/$unitId'
+      preLoaderRoute: typeof PlayMediaIdUnitIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/read/$mediaId/$unitId': {
+      id: '/read/$mediaId/$unitId'
+      path: '/read/$mediaId/$unitId'
+      fullPath: '/read/$mediaId/$unitId'
+      preLoaderRoute: typeof ReadMediaIdUnitIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/watch/$sourceId/$animeId/$groupId/$episodeId': {
@@ -258,15 +438,24 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AudioRoute: AudioRoute,
   CatalogRoute: CatalogRoute,
+  CollectionsRoute: CollectionsRoute,
+  DiscoverRoute: DiscoverRoute,
   DownloadsRoute: DownloadsRoute,
   HistoryRoute: HistoryRoute,
   LibraryRoute: LibraryRoute,
+  MangaRoute: MangaRoute,
   ProfileRoute: ProfileRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   SourcesRoute: SourcesRoute,
+  VideoRoute: VideoRoute,
+  MediaMediaIdRoute: MediaMediaIdRoute,
   AnimeSourceIdAnimeIdRoute: AnimeSourceIdAnimeIdRoute,
+  ListenMediaIdUnitIdRoute: ListenMediaIdUnitIdRoute,
+  PlayMediaIdUnitIdRoute: PlayMediaIdUnitIdRoute,
+  ReadMediaIdUnitIdRoute: ReadMediaIdUnitIdRoute,
   WatchSourceIdAnimeIdGroupIdEpisodeIdRoute:
     WatchSourceIdAnimeIdGroupIdEpisodeIdRoute,
 }

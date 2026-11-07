@@ -21,6 +21,11 @@ const queryClient = new QueryClient({
   // reason. Nothing here benefits from "revalidate on focus" the way a live web dashboard would.
   defaultOptions: { queries: { staleTime: 60_000, retry: 1, refetchOnWindowFocus: false } },
 });
+// RiuPlay: the unified media model and collections are cheap local-database reads, shared by many
+// screens (Home, the three sections, Library, Collections, title pages). Always stale, so a screen
+// opening reads the current state instead of another screen's cached copy from up to a minute ago.
+queryClient.setQueryDefaults(["media"], { staleTime: 0 });
+queryClient.setQueryDefaults(["collections"], { staleTime: 0 });
 
 // Settings > Network to the host, and the traffic counter running from the first request.
 startNetworkSync();

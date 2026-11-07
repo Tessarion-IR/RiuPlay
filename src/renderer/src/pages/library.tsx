@@ -5,58 +5,104 @@ import { AnimatePresence, motion } from "motion/react";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { Bookmark, Trash2, TriangleAlert } from "lucide-react";
 import { hibiki } from "@/lib/hibiki";
+import { useRefreshWhenShown } from "@/lib/useRefreshWhenShown";
 import { AnimeCard, type AnimeCardSource } from "@/components/AnimeCard";
 import { usePopoverTheme } from "@/lib/usePopoverTheme";
 import { cn } from "@/lib/cn";
 import { isMobile } from "@/lib/mobile";
 import { LibrarySegments } from "@/components/MobilePageHeader";
-import { ALL_LIBRARY_CATEGORIES, LIBRARY_CATEGORY_ICONS, LIBRARY_CATEGORY_LABEL_KEYS } from "@/lib/libraryCategories";
 import type { LibraryCategory, LibraryEntry } from "@shared/types";
+import { LIBRARY_STATUSES, MEDIA_TYPES, type LibraryStatus, type MediaSummary, type MediaType } from "@shared/media";
+import { MEDIA_TYPE_ICONS, mediaKeys, statusLabelKey } from "@/lib/media";
+import { MediaCard } from "@/components/media/MediaCard";
 
 // Rendered persistently from __root.tsx instead - see index.tsx for why.
+//
+// RiuPlay: one library for every content type. Titles followed from extension sources (hibiki's
+// library, video/anime) and the user's own video, manga and audio (the unified media model) are
+// listed together and filtered the same way - by type, then by status - instead of living in two
+// separate libraries.
+type TypeFilter = "all" | MediaType;
+type StatusFilter = "all" | LibraryStatus | "favorite";
+
+/** hibiki's categories, read as RiuPlay's statuses (hibiki keeps "favorite" as a category of its own). */
+const STATUS_OF_CATEGORY: Record<LibraryCategory, LibraryStatus | "favorite"> = {
+  watching: "active",
+  planned: "planned",
+  completed: "completed",
+  dropped: "dropped",
+  on_hold: "on_hold",
+  favorite: "favorite",
+};
+
+type Row =
+  | { kind: "source"; key: string; at: number; status: LibraryStatus | "favorite"; entry: LibraryEntry }
+  | { kind: "local"; key: string; at: number; status: LibraryStatus; favorite: boolean; summary: MediaSummary };
+
 export function LibraryPage() {
   const { t } = useTranslation();
   const libraryQuery = useQuery({ queryKey: ["library"], queryFn: () => hibiki.library.list() });
+  const localQuery = useQuery({ queryKey: mediaKeys.list({ inLibrary: true }), queryFn: () => hibiki.media.list({ inLibrary: true }) });
   const sourcesQuery = useQuery({ queryKey: ["sources"], queryFn: () => hibiki.sources.list() });
-  const [filter, setFilter] = useState<LibraryCategory | "all">("all");
+  const [type, setType] = useState<TypeFilter>("all");
+  useRefreshWhenShown([mediaKeys.all, ["library"]]);
+  const [status, setStatus] = useState<StatusFilter>("all");
 
-  const entries = libraryQuery.data ?? [];
   const sourceById = useMemo(() => new Map((sourcesQuery.data ?? []).map((s) => [s.id, s])), [sourcesQuery.data]);
-  const counts = useMemo(() => {
-    const map = new Map<LibraryCategory, number>();
-    for (const entry of entries) map.set(entry.category, (map.get(entry.category) ?? 0) + 1);
-    return map;
-  }, [entries]);
-  const visible = filter === "all" ? entries : entries.filter((e) => e.category === filter);
+  const rows = useMemo<Row[]>(() => {
+    const fromSources: Row[] = (libraryQuery.data ?? []).map((entry) => ({
+      kind: "source",
+      key: `s:${entry.sourceId}:${entry.animeId}`,
+      at: entry.addedAt,
+      status: STATUS_OF_CATEGORY[entry.category],
+      entry,
+    }));
+    const local: Row[] = (localQuery.data ?? [])
+      .filter((s) => s.library)
+      .map((summary) => ({ kind: "local", key: `l:${summary.item.id}`, at: summary.library!.updatedAt, status: summary.library!.status, favorite: summary.library!.favorite, summary }));
+    return [...fromSources, ...local].sort((a, b) => b.at - a.at);
+  }, [libraryQuery.data, localQuery.data]);
+
+  const typeOf = (row: Row): MediaType => (row.kind === "source" ? "video" : row.summary.item.type);
+  const ofType = rows.filter((row) => type === "all" || typeOf(row) === type);
+  const matchesStatus = (row: Row, f: StatusFilter) => f === "all" || (f === "favorite" ? row.status === "favorite" || (row.kind === "local" && row.favorite) : row.status === f);
+  const visible = ofType.filter((row) => matchesStatus(row, status));
+  const statusWordType: MediaType = type === "all" ? "video" : type;
 
   return (
     <div className="min-h-full bg-app-bg px-8 py-8 pb-16 mobile:px-4 mobile:pb-6 mobile:pt-4">
-      {/* Phone: the tab's name, and the switch to the history and downloads it also holds (the
-          sidebar's own entries on desktop). */}
       {isMobile && <LibrarySegments active="/library" />}
-      {libraryQuery.isError && <ErrorBanner message={(libraryQuery.error as Error).message} />}
+      {(libraryQuery.isError || localQuery.isError) && <ErrorBanner message={((libraryQuery.error ?? localQuery.error) as Error).message} />}
+      <div className="mb-3 flex flex-wrap gap-2">
+        {(["all", ...MEDIA_TYPES] as TypeFilter[]).map((f) => {
+          const Icon = f === "all" ? Bookmark : MEDIA_TYPE_ICONS[f];
+          return (
+            <CategoryChip key={f} active={type === f} onClick={() => setType(f)} label={f === "all" ? t("library.filterAll") : t(`media.type.${f}`)} count={f === "all" ? rows.length : rows.filter((r) => typeOf(r) === f).length} icon={Icon} />
+          );
+        })}
+      </div>
       <div className="mb-6 flex flex-wrap gap-2 mobile:[scrollbar-width:none] mobile:-mx-4 mobile:mb-4 mobile:flex-nowrap mobile:overflow-x-auto mobile:px-4">
-        <CategoryChip active={filter === "all"} onClick={() => setFilter("all")} label={t("library.filterAll")} count={entries.length} />
-        {ALL_LIBRARY_CATEGORIES.map((category) => (
+        {(["all", ...LIBRARY_STATUSES, "favorite"] as StatusFilter[]).map((f) => (
           <CategoryChip
-            key={category}
-            active={filter === category}
-            onClick={() => setFilter(category)}
-            label={t(LIBRARY_CATEGORY_LABEL_KEYS[category])}
-            count={counts.get(category) ?? 0}
-            icon={LIBRARY_CATEGORY_ICONS[category]}
+            key={f}
+            active={status === f}
+            onClick={() => setStatus(f)}
+            label={f === "all" ? t("media.filter.anyStatus") : f === "favorite" ? t("library.categories.favorite") : type === "all" && f === "active" ? t("media.status.active.any") : t(statusLabelKey(statusWordType, f))}
+            count={ofType.filter((row) => matchesStatus(row, f)).length}
           />
         ))}
       </div>
       {visible.length === 0 ? (
-        // The tabs are there either way; only the words under them differ: nothing at all yet, or
-        // nothing in this one.
-        <EmptyState text={entries.length === 0 ? t("library.empty") : t("library.categoryEmpty")} />
+        <EmptyState text={rows.length === 0 ? t("media.library.empty") : t("library.categoryEmpty")} />
       ) : (
         <div className="grid grid-cols-5 gap-x-4 gap-y-6 mobile:grid-cols-3 mobile:gap-x-3 mobile:gap-y-5">
-          {visible.map((entry) => (
-            <LibraryCard key={`${entry.sourceId}:${entry.animeId}`} entry={entry} source={sourceById.get(entry.sourceId)} />
-          ))}
+          {visible.map((row) =>
+            row.kind === "source" ? (
+              <LibraryCard key={row.key} entry={row.entry} source={sourceById.get(row.entry.sourceId)} />
+            ) : (
+              <MediaCard key={row.key} item={row.summary.item} library={row.summary.library} />
+            ),
+          )}
         </div>
       )}
     </div>

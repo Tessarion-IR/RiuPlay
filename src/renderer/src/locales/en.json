@@ -1081,5 +1081,254 @@
     "allDone": "All downloaded",
     "completed_one": "{{count}} episode downloaded",
     "completed_other": "{{count}} episodes downloaded"
+  },
+  "media": {
+    "nav": {
+      "discover": "Discover"
+    },
+    "type": {
+      "video": "Video",
+      "manga": "Manga",
+      "audio": "Audio"
+    },
+    "origin": {
+      "direct": "From URL",
+      "file": "Local files",
+      "manual": "Added by hand"
+    },
+    "status": {
+      "active": {
+        "video": "Watching",
+        "manga": "Reading",
+        "audio": "Listening",
+        "any": "In progress"
+      },
+      "planned": "Planned",
+      "completed": "Completed",
+      "on_hold": "On hold",
+      "dropped": "Dropped"
+    },
+    "unit": {
+      "video": "Episode",
+      "manga": "Chapter",
+      "audio": "Track"
+    },
+    "continue": {
+      "video": "Continue Watching",
+      "manga": "Continue Reading",
+      "audio": "Continue Listening"
+    },
+    "count": {
+      "video_one": "{{count}} episode",
+      "video_other": "{{count}} episodes",
+      "manga_one": "{{count}} chapter",
+      "manga_other": "{{count}} chapters",
+      "audio_one": "{{count}} track",
+      "audio_other": "{{count}} tracks"
+    },
+    "filter": {
+      "all": "All",
+      "inLibrary": "In library",
+      "search": "Search titles",
+      "noMatch": "No titles match this filter.",
+      "anyStatus": "Any status"
+    },
+    "section": {
+      "video": {
+        "title": "Video",
+        "subtitle": "Anime, series and films: your own files and links, and what you watch from sources.",
+        "yours": "Your videos",
+        "emptyTitle": "No videos added yet",
+        "emptyText": "Add a video by URL (MP4, HLS .m3u8, DASH .mpd), pick video files from your PC, or enter a title by hand and add episodes later. RiuPlay never adds demo content.",
+        "fromSources": "From your sources",
+        "discover": "Discover",
+        "fromSourcesEmpty": "Nothing in progress from extension sources. Browse Discover once you have added a source repository."
+      },
+      "manga": {
+        "title": "Manga",
+        "subtitle": "Manga, manhwa and comics: chapters from links or from folders of images on your PC.",
+        "yours": "Your manga",
+        "emptyTitle": "No manga added yet",
+        "emptyText": "Add a manga from a folder of images (one folder per chapter, or a single chapter), by page URLs, or by hand. RiuPlay never adds demo content."
+      },
+      "audio": {
+        "title": "Audio",
+        "subtitle": "ASMR, audio dramas, albums and podcasts: tracks from links or files on your PC.",
+        "yours": "Your audio",
+        "emptyTitle": "No audio added yet",
+        "emptyText": "Add audio files or a whole folder from your PC, tracks by URL, or a title by hand. Lyrics files (.lrc) next to tracks are kept for synced lyrics. RiuPlay never adds demo content."
+      }
+    },
+    "add": {
+      "button": {
+        "video": "Add video",
+        "manga": "Add manga",
+        "audio": "Add audio"
+      },
+      "title": {
+        "video": "Add video",
+        "manga": "Add manga",
+        "audio": "Add audio"
+      },
+      "honest": "Only add media you have the right to play. Files stay where they are: RiuPlay only remembers where they live.",
+      "mode": {
+        "url": "By URL",
+        "files": "Local files",
+        "manual": "By hand"
+      },
+      "titleRequired": "Title",
+      "titleOptional": "Title (optional, taken from the first link or file if empty)",
+      "filesHint": {
+        "video": "One episode per video file (MP4, MKV, WebM, MOV). A .vtt file with the same name is used as subtitles.",
+        "manga": "Pick a folder: its images become one chapter, or each subfolder of images becomes a chapter.",
+        "audio": "Pick audio files (MP3, FLAC, M4A, OGG, Opus, WAV). Each file is a track; .lrc files with the same name are kept as lyrics."
+      },
+      "chooseFolder": "Choose folder…",
+      "chooseFiles": "Choose files…",
+      "chosen_one": "{{first}}",
+      "chosen_other": "{{count}} files, starting with {{first}}",
+      "noneChosen": "Nothing chosen yet",
+      "filesReferenced": "The files are not copied or uploaded anywhere. If you move them later, add them again.",
+      "lines": {
+        "video": "Episode URLs, one per line",
+        "manga": "Page image URLs, one per line; a blank line starts the next chapter",
+        "audio": "Track URLs, one per line"
+      },
+      "linesOptional": {
+        "video": "Episode URLs (optional), one per line",
+        "manga": "Page image URLs (optional); a blank line starts the next chapter",
+        "audio": "Track URLs (optional), one per line"
+      },
+      "parsed": {
+        "video_one": "{{count}} episode",
+        "video_other": "{{count}} episodes",
+        "manga_one": "{{count}} chapter",
+        "manga_other": "{{count}} chapters",
+        "audio_one": "{{count}} track",
+        "audio_other": "{{count}} tracks"
+      },
+      "invalidLines_one": "{{count}} line is not an http(s) URL",
+      "invalidLines_other": "{{count}} lines are not http(s) URLs",
+      "cover": "Cover image URL (optional)",
+      "description": "Description (optional)",
+      "genres": "Genres, comma-separated (optional)",
+      "library": "Library",
+      "notInLibrary": "Don't add to library",
+      "submit": "Add",
+      "existed": "“{{title}}” is already in RiuPlay. Nothing was added twice."
+    },
+    "detail": {
+      "notFound": "This title doesn't exist any more.",
+      "home": "Back to Home",
+      "finished": "{{done}} of {{total}} finished",
+      "continue": {
+        "video": "Continue",
+        "manga": "Continue reading",
+        "audio": "Continue listening"
+      },
+      "start": {
+        "video": "Play",
+        "manga": "Read",
+        "audio": "Listen"
+      },
+      "inLibrarySince": "In your library since {{date}}",
+      "libraryStatus": "Library status",
+      "addToLibrary": "Add to library…",
+      "favorite": "Add to favorites",
+      "unfavorite": "Remove from favorites",
+      "inCollections_one": "In {{count}} collection",
+      "inCollections_other": "In {{count}} collections",
+      "addToCollection": "Add to collection",
+      "collectionsTitle": "Collections",
+      "edit": "Edit details",
+      "keepFileCover": "Leave empty to keep the cover from the folder",
+      "releaseInfo": "Release info (year, season…)",
+      "save": "Save",
+      "delete": "Remove title",
+      "deleteTitle": "Remove this title?",
+      "deleteText": "“{{title}}” will be removed from RiuPlay with its progress and library entry.",
+      "deleteTextFiles": "“{{title}}” will be removed from RiuPlay with its progress and library entry. Your files on disk are not touched.",
+      "deleteConfirm": "Remove"
+    },
+    "units": {
+      "video": "Episodes",
+      "manga": "Chapters",
+      "audio": "Tracks",
+      "empty": {
+        "video": "No episodes yet. Add episode URLs below.",
+        "manga": "No chapters yet. Add page URLs below.",
+        "audio": "No tracks yet. Add track URLs below."
+      },
+      "pages_one": "{{count}} page",
+      "pages_other": "{{count}} pages",
+      "lyrics": "Lyrics",
+      "subtitles": "Subtitles",
+      "markFinished": "Mark as finished",
+      "markUnfinished": "Mark as not finished",
+      "remove": "Remove",
+      "add": {
+        "video": "Add episodes",
+        "manga": "Add chapters",
+        "audio": "Add tracks"
+      }
+    },
+    "player": {
+      "fileError": "This file can't be played. It may have been moved, or its format isn't supported.",
+      "streamError": "This stream can't be played. Check the link or your connection.",
+      "seek": "Position",
+      "previous": "Previous track",
+      "next": "Next track",
+      "play": "Play",
+      "pause": "Pause",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "volume": "Volume",
+      "speed": "Playback speed"
+    },
+    "reader": {
+      "page": "Page {{page}} of {{total}}",
+      "fit": "Page fit",
+      "fitWidth": "Fit width",
+      "fitHeight": "Fit height",
+      "previousChapter": "Previous chapter",
+      "nextChapter": "Next chapter",
+      "pageFailed": "Page {{page}} couldn't be loaded",
+      "endOfChapter": "End of chapter",
+      "backToTitle": "Back to the title"
+    },
+    "collections": {
+      "title": "Collections",
+      "subtitle": "Group anything: your own video, manga and audio, and titles from sources.",
+      "none": "No collections yet.",
+      "newName": "New collection name",
+      "create": "Create",
+      "emptyList": "Create your first collection with the field above.",
+      "emptyItems": "This collection is empty. Use “Add to collection” on any title's page.",
+      "deleteConfirm": "Delete this collection? Its titles stay in RiuPlay.",
+      "delete": "Delete collection",
+      "fromSource": "From {{source}}",
+      "removeItem": "Remove from collection"
+    },
+    "library": {
+      "empty": "Your library is empty. Add titles from Video, Manga or Audio, or from a source's title page."
+    },
+    "home": {
+      "welcome": "Welcome back",
+      "hello": "Hi, {{name}}",
+      "title": "Your media",
+      "emptyTitle": "Let's add your first media",
+      "emptyText": "RiuPlay brings anime, video, manga and audio together in one place. Add your own files or links in each section, or add a source repository to discover titles. Nothing here is demo content.",
+      "sectionHint": {
+        "video": "Add video files or stream links.",
+        "manga": "Add a folder of manga images or page links.",
+        "audio": "Add albums, ASMR or tracks."
+      },
+      "addSources": "Add a source repository",
+      "favorites": "Favorites",
+      "recentlyAdded": "Recently added",
+      "discoverTitle": "Discover from your sources",
+      "discoverText": "Browse and search the extension sources you've installed.",
+      "seeAll": "See all"
+    }
   }
 }

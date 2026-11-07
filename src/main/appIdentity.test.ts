@@ -22,7 +22,7 @@ describe("app identity", () => {
 
   it("is the first import of the main process, before anything reads userData", () => {
     const source = readFileSync(fileURLToPath(new URL("./index.ts", import.meta.url)), "utf-8");
-    const firstImport = source.split("\n").find((line) => line.startsWith("import "));
+    const firstImport = source.split(/\r?\n/).find((line) => line.startsWith("import "));
     expect(firstImport).toBe('import "./appIdentity";');
   });
 });
