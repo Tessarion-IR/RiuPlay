@@ -2,6 +2,9 @@ appId: io.github.tessarion.riuplay
 productName: RiuPlay
 directories:
   output: release
+# better-sqlite3 (the only native module) ships an ABI-stable N-API prebuilt binary since v13, so
+# nothing needs compiling per Electron version - and this machine has no C++ toolchain to do it.
+npmRebuild: false
 files:
   - dist
   - dist-electron
