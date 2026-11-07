@@ -1,0 +1,621 @@
+{
+  "mode": "compat",
+  "electron": "45.2.3",
+  "chrome": "156.0.8078.80",
+  "node": "24.22.2",
+  "platform": "win32 10.0.28000",
+  "startedAt": "2026-11-07T21:19:47.538Z",
+  "checks": [
+    {
+      "name": "hibiki-format extension loads in the sandbox",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "search: sandbox result identical to hibiki's node:vm result",
+      "pass": true,
+      "detail": [
+        {
+          "russianName": null,
+          "englishName": "Frieren",
+          "japaneseName": null,
+          "year": 2023,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/42.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Fantasy",
+            "Drama"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "42",
+          "sourceId": "compat"
+        },
+        {
+          "russianName": null,
+          "englishName": "Frieren: Specials",
+          "japaneseName": null,
+          "year": 2024,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/7.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Fantasy"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "7",
+          "sourceId": "compat"
+        }
+      ]
+    },
+    {
+      "name": "latest: sandbox result identical to hibiki's node:vm result",
+      "pass": true
+    },
+    {
+      "name": "getById: sandbox result identical to hibiki's node:vm result",
+      "pass": true
+    },
+    {
+      "name": "getPlaybackGroups: sandbox result identical to hibiki's node:vm result",
+      "pass": true
+    },
+    {
+      "name": "getPlayerLinks: sandbox result identical to hibiki's node:vm result",
+      "pass": true
+    },
+    {
+      "name": "getSettings: sandbox result identical to hibiki's node:vm result",
+      "pass": true
+    },
+    {
+      "name": "the compat extension's own network access stays within its declared host",
+      "pass": true
+    }
+  ],
+  "data": {
+    "ms_search": 18.299999997019768,
+    "ms_latest": 7.199999995529652,
+    "ms_getById": 8.600000001490116,
+    "ms_getPlaybackGroups": 5.600000001490116,
+    "ms_getPlayerLinks": 5.899999998509884,
+    "ms_getSettings": 1,
+    "sandbox": {
+      "search": [
+        {
+          "russianName": null,
+          "englishName": "Frieren",
+          "japaneseName": null,
+          "year": 2023,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/42.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Fantasy",
+            "Drama"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "42",
+          "sourceId": "compat"
+        },
+        {
+          "russianName": null,
+          "englishName": "Frieren: Specials",
+          "japaneseName": null,
+          "year": 2024,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/7.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Fantasy"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "7",
+          "sourceId": "compat"
+        }
+      ],
+      "latest": [
+        {
+          "russianName": null,
+          "englishName": "Frieren",
+          "japaneseName": null,
+          "year": 2023,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/42.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Fantasy",
+            "Drama"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "42",
+          "sourceId": "compat"
+        },
+        {
+          "russianName": null,
+          "englishName": "Frieren: Specials",
+          "japaneseName": null,
+          "year": 2024,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/7.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Fantasy"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "7",
+          "sourceId": "compat"
+        },
+        {
+          "russianName": null,
+          "englishName": "Mushishi",
+          "japaneseName": null,
+          "year": 2005,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/9.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Mystery"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "9",
+          "sourceId": "compat"
+        }
+      ],
+      "getById": {
+        "russianName": null,
+        "englishName": "Frieren",
+        "japaneseName": null,
+        "year": 2023,
+        "type": null,
+        "episodeCount": null,
+        "posterUrl": "http://public.test:7702/img/42.jpg",
+        "pageUrl": null,
+        "status": null,
+        "description": "An elf mage outlives her party.",
+        "nextEpisodeAt": null,
+        "ageRating": null,
+        "viewCount": null,
+        "trailer": null,
+        "sourceMaterial": null,
+        "season": null,
+        "availableEpisodeCount": null,
+        "posterFallbackUrl": null,
+        "synonyms": [],
+        "genres": [
+          "Fantasy",
+          "Drama"
+        ],
+        "ratings": [],
+        "screenshots": [],
+        "studios": [],
+        "mainCharacters": [],
+        "similarAnime": [],
+        "franchiseAnime": [],
+        "relatedAnime": [],
+        "id": "42",
+        "sourceId": "compat"
+      },
+      "getPlaybackGroups": [
+        {
+          "id": "sub",
+          "title": "Subtitles",
+          "episodes": [
+            {
+              "id": "1",
+              "number": 1
+            },
+            {
+              "id": "2",
+              "number": 2
+            }
+          ]
+        },
+        {
+          "id": "dub",
+          "title": "Dub",
+          "episodes": [
+            {
+              "id": "1",
+              "number": 1
+            },
+            {
+              "id": "2",
+              "number": 2
+            }
+          ]
+        }
+      ],
+      "getPlayerLinks": [
+        {
+          "url": "http://public.test:7702/hls/1/master.m3u8",
+          "type": "DIRECT_HLS",
+          "quality": "1080p",
+          "playerName": "fixture"
+        }
+      ],
+      "getSettings": {
+        "lastOpened": "42"
+      }
+    },
+    "reference": {
+      "search": [
+        {
+          "russianName": null,
+          "englishName": "Frieren",
+          "japaneseName": null,
+          "year": 2023,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/42.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Fantasy",
+            "Drama"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "42",
+          "sourceId": "compat"
+        },
+        {
+          "russianName": null,
+          "englishName": "Frieren: Specials",
+          "japaneseName": null,
+          "year": 2024,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/7.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Fantasy"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "7",
+          "sourceId": "compat"
+        }
+      ],
+      "latest": [
+        {
+          "russianName": null,
+          "englishName": "Frieren",
+          "japaneseName": null,
+          "year": 2023,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/42.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Fantasy",
+            "Drama"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "42",
+          "sourceId": "compat"
+        },
+        {
+          "russianName": null,
+          "englishName": "Frieren: Specials",
+          "japaneseName": null,
+          "year": 2024,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/7.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Fantasy"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "7",
+          "sourceId": "compat"
+        },
+        {
+          "russianName": null,
+          "englishName": "Mushishi",
+          "japaneseName": null,
+          "year": 2005,
+          "type": null,
+          "episodeCount": null,
+          "posterUrl": "http://public.test:7702/img/9.jpg",
+          "pageUrl": null,
+          "status": null,
+          "description": null,
+          "nextEpisodeAt": null,
+          "ageRating": null,
+          "viewCount": null,
+          "trailer": null,
+          "sourceMaterial": null,
+          "season": null,
+          "availableEpisodeCount": null,
+          "posterFallbackUrl": null,
+          "synonyms": [],
+          "genres": [
+            "Mystery"
+          ],
+          "ratings": [],
+          "screenshots": [],
+          "studios": [],
+          "mainCharacters": [],
+          "similarAnime": [],
+          "franchiseAnime": [],
+          "relatedAnime": [],
+          "id": "9",
+          "sourceId": "compat"
+        }
+      ],
+      "getById": {
+        "russianName": null,
+        "englishName": "Frieren",
+        "japaneseName": null,
+        "year": 2023,
+        "type": null,
+        "episodeCount": null,
+        "posterUrl": "http://public.test:7702/img/42.jpg",
+        "pageUrl": null,
+        "status": null,
+        "description": "An elf mage outlives her party.",
+        "nextEpisodeAt": null,
+        "ageRating": null,
+        "viewCount": null,
+        "trailer": null,
+        "sourceMaterial": null,
+        "season": null,
+        "availableEpisodeCount": null,
+        "posterFallbackUrl": null,
+        "synonyms": [],
+        "genres": [
+          "Fantasy",
+          "Drama"
+        ],
+        "ratings": [],
+        "screenshots": [],
+        "studios": [],
+        "mainCharacters": [],
+        "similarAnime": [],
+        "franchiseAnime": [],
+        "relatedAnime": [],
+        "id": "42",
+        "sourceId": "compat"
+      },
+      "getPlaybackGroups": [
+        {
+          "id": "sub",
+          "title": "Subtitles",
+          "episodes": [
+            {
+              "id": "1",
+              "number": 1
+            },
+            {
+              "id": "2",
+              "number": 2
+            }
+          ]
+        },
+        {
+          "id": "dub",
+          "title": "Dub",
+          "episodes": [
+            {
+              "id": "1",
+              "number": 1
+            },
+            {
+              "id": "2",
+              "number": 2
+            }
+          ]
+        }
+      ],
+      "getPlayerLinks": [
+        {
+          "url": "http://public.test:7702/hls/1/master.m3u8",
+          "type": "DIRECT_HLS",
+          "quality": "1080p",
+          "playerName": "fixture"
+        }
+      ],
+      "getSettings": {
+        "lastOpened": "42"
+      }
+    }
+  },
+  "finishedAt": "2026-11-07T21:19:47.915Z",
+  "summary": {
+    "passed": 8,
+    "failed": 0
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "mode": "cpu",
+  "electron": "34.5.8",
+  "chrome": "132.0.6834.210",
+  "node": "20.19.1",
+  "platform": "win32 10.0.28000",
+  "startedAt": "2026-11-07T21:20:31.774Z",
+  "checks": [
+    {
+      "name": "main process stays responsive while an extension loops forever",
+      "pass": true,
+      "detail": {
+        "eventLoopLagMs": 8
+      }
+    },
+    {
+      "name": "host page thread (not the worker) still answers, so it can terminate the worker",
+      "pass": true,
+      "detail": {
+        "pageAlive": 2,
+        "pageMs": 0
+      }
+    },
+    {
+      "name": "worker.terminate() stops the loop (host process remains for reuse)",
+      "pass": true,
+      "detail": {
+        "terminateMs": 1,
+        "cpuProcess": {
+          "type": "Tab",
+          "sandboxed": true,
+          "integrityLevel": "untrusted",
+          "workingSetMB": 75,
+          "privateMB": 31
+        }
+      }
+    },
+    {
+      "name": "forcefullyCrashRenderer() ends the extension process",
+      "pass": true,
+      "detail": {
+        "ms": 167,
+        "reason": "crashed"
+      }
+    }
+  ],
+  "data": {},
+  "finishedAt": "2026-11-07T21:20:33.995Z",
+  "summary": {
+    "passed": 4,
+    "failed": 0
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "mode": "safestorage",
+  "electron": "34.5.8",
+  "chrome": "132.0.6834.210",
+  "node": "20.19.1",
+  "platform": "win32 10.0.28000",
+  "startedAt": "2026-11-07T21:20:39.747Z",
+  "checks": [
+    {
+      "name": "safeStorage encryption is available on this Windows account",
+      "pass": true
+    },
+    {
+      "name": "ciphertext does not contain the plaintext",
+      "pass": true,
+      "detail": {
+        "bytes": 84,
+        "prefix": "v10"
+      }
+    },
+    {
+      "name": "round trip returns the exact value (incl. non-ASCII)",
+      "pass": true
+    },
+    {
+      "name": "encryption is randomised (same value -> different ciphertext)",
+      "pass": true
+    },
+    {
+      "name": "corrupted ciphertext fails loudly (so a recovery path is needed, never silent garbage)",
+      "pass": true,
+      "detail": "threw: Error while decrypting the ciphertext provided to safeStorage.decryptString."
+    }
+  ],
+  "data": {
+    "emptyCiphertext": "",
+    "note": "DPAPI binds ciphertext to this Windows user (and, for Chromium's os_crypt, to the app's Local State key). A restored backup on another PC/user cannot decrypt: the migration must keep a recovery path (re-enter the password) and must not delete the plaintext until the encrypted copy is verified."
+  },
+  "finishedAt": "2026-11-07T21:20:39.788Z",
+  "summary": {
+    "passed": 5,
+    "failed": 0
+  }
+}

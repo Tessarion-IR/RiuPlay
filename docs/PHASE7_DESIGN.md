@@ -1,6 +1,6 @@
 # Phase 7 Design: Sources, Extension Security, Networking, Suwayomi and Kikoeru
 
-Status: **proposal, awaiting owner approval. No code has been changed for Phase 7.**
+Status: **proposal; M0 research spikes done (see [`M0_RESULTS.md`](M0_RESULTS.md) for evidence, limitations, the recommended architecture and the revised estimate). M1–M5 await owner approval. No application code has been changed for Phase 7.**
 Basis: the code at commit `2e544bb`, plus the actual source of Suwayomi-Server @ `7b061be` and KikoFlu @ `d8a8c61`.
 
 ---

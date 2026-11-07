@@ -1,0 +1,50 @@
+{
+  "mode": "memory-jsflags",
+  "electron": "34.5.8",
+  "chrome": "132.0.6834.210",
+  "node": "20.19.1",
+  "platform": "win32 10.0.28000",
+  "startedAt": "2026-11-07T21:16:27.985Z",
+  "checks": [
+    {
+      "name": "memory (natural): app survives and a new extension host starts afterwards",
+      "pass": true,
+      "detail": {
+        "heap": {
+          "peakMB": 310,
+          "endedBy": "renderer died by itself: oom (exitCode -536870904)",
+          "killLatencyMs": null,
+          "secondsToEnd": 1.092
+        },
+        "buffers": {
+          "peakMB": 3753,
+          "endedBy": "watchdog-kill (crashed)",
+          "killLatencyMs": 20,
+          "secondsToEnd": 0.72
+        }
+      }
+    }
+  ],
+  "data": {
+    "memory": {
+      "heap": {
+        "peakMB": 310,
+        "endedBy": "renderer died by itself: oom (exitCode -536870904)",
+        "killLatencyMs": null,
+        "secondsToEnd": 1.092
+      },
+      "buffers": {
+        "peakMB": 3753,
+        "endedBy": "watchdog-kill (crashed)",
+        "killLatencyMs": 20,
+        "secondsToEnd": 0.72
+      }
+    },
+    "jsFlags": "--max-old-space-size=256 (applies to every renderer in the app)"
+  },
+  "finishedAt": "2026-11-07T21:16:32.584Z",
+  "summary": {
+    "passed": 1,
+    "failed": 0
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "mode": "perf",
+  "electron": "45.2.3",
+  "chrome": "156.0.8078.80",
+  "node": "24.22.2",
+  "platform": "win32 10.0.28000",
+  "startedAt": "2026-11-07T21:19:48.227Z",
+  "checks": [
+    {
+      "name": "synchronous XHR from a sandboxed worker to an async custom-protocol handler works",
+      "pass": true,
+      "detail": {
+        "outcome": "returned",
+        "value": {
+          "n": 500,
+          "meanMs": 1.024,
+          "p50Ms": 0.7,
+          "p95Ms": 1.6,
+          "maxMs": 98.4
+        }
+      }
+    },
+    {
+      "name": "fetch through broker + guardedFetch works repeatedly",
+      "pass": true,
+      "detail": {
+        "outcome": "returned",
+        "value": {
+          "n": 200,
+          "meanMs": 3.32,
+          "p50Ms": 3.2,
+          "p95Ms": 5.3,
+          "maxMs": 17.3
+        }
+      }
+    },
+    {
+      "name": "fetchAll runs requests concurrently (10 x 200 ms in well under 2 s)",
+      "pass": true,
+      "detail": {
+        "outcome": "returned",
+        "value": {
+          "ms": 226.2,
+          "ok": true
+        }
+      }
+    }
+  ],
+  "data": {
+    "perf": {
+      "brokerRoundtrip": {
+        "outcome": "returned",
+        "value": {
+          "n": 500,
+          "meanMs": 1.024,
+          "p50Ms": 0.7,
+          "p95Ms": 1.6,
+          "maxMs": 98.4
+        }
+      },
+      "fetchThroughBroker": {
+        "outcome": "returned",
+        "value": {
+          "n": 200,
+          "meanMs": 3.32,
+          "p50Ms": 3.2,
+          "p95Ms": 5.3,
+          "maxMs": 17.3
+        }
+      },
+      "fetchAllTenConcurrent": {
+        "outcome": "returned",
+        "value": {
+          "ms": 226.2,
+          "ok": true
+        }
+      }
+    }
+  },
+  "finishedAt": "2026-11-07T21:19:49.872Z",
+  "summary": {
+    "passed": 3,
+    "failed": 0
+  }
+}

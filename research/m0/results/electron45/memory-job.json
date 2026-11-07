@@ -1,0 +1,53 @@
+{
+  "mode": "memory-job",
+  "electron": "45.2.3",
+  "chrome": "156.0.8078.80",
+  "node": "24.22.2",
+  "platform": "win32 10.0.28000",
+  "startedAt": "2026-11-07T21:24:09.851Z",
+  "checks": [
+    {
+      "name": "a Windows Job Object memory limit (512 MB) holds for both workloads (peak never above the cap)",
+      "pass": true,
+      "detail": {
+        "heap": {
+          "pid": 26932,
+          "jobAssignment": "ok",
+          "peakMB": 512,
+          "endedBy": "renderer stopped by itself: oom (exitCode -536870904)",
+          "secondsToEnd": 0.837
+        },
+        "buffers": {
+          "pid": 27480,
+          "jobAssignment": "ok",
+          "peakMB": 481,
+          "endedBy": "still running at 60 s",
+          "secondsToEnd": 60.559
+        }
+      }
+    }
+  ],
+  "data": {
+    "memoryJob": {
+      "heap": {
+        "pid": 26932,
+        "jobAssignment": "ok",
+        "peakMB": 512,
+        "endedBy": "renderer stopped by itself: oom (exitCode -536870904)",
+        "secondsToEnd": 0.837
+      },
+      "buffers": {
+        "pid": 27480,
+        "jobAssignment": "ok",
+        "peakMB": 481,
+        "endedBy": "still running at 60 s",
+        "secondsToEnd": 60.559
+      }
+    }
+  },
+  "finishedAt": "2026-11-07T21:25:12.486Z",
+  "summary": {
+    "passed": 1,
+    "failed": 0
+  }
+}

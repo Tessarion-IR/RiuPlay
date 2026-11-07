@@ -1,0 +1,541 @@
+{
+  "mode": "security",
+  "electron": "45.2.3",
+  "chrome": "156.0.8078.80",
+  "node": "24.22.2",
+  "platform": "win32 10.0.28000",
+  "startedAt": "2026-11-07T21:25:52.015Z",
+  "checks": [
+    {
+      "name": "extension B planted its secrets in its own storage, IndexedDB and Cache Storage",
+      "pass": true,
+      "detail": {
+        "outcome": "returned",
+        "value": {
+          "planted": true,
+          "readBack": "B-SECRET-STORAGE"
+        }
+      }
+    },
+    {
+      "name": "hostile extension's worker started (it did not need any privilege to load)",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "no Node/Electron globals (require, process, module, global, __dirname, electron, ipcRenderer)",
+      "pass": true,
+      "detail": {
+        "require": "undefined",
+        "process": "undefined",
+        "module": "undefined",
+        "global": "undefined",
+        "__dirname": "undefined",
+        "electron": "undefined",
+        "ipcRenderer": "undefined",
+        "Buffer_isPolyfill": true
+      }
+    },
+    {
+      "name": "Function-constructor escape gives nothing (blocked by CSP, or no process to find)",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "EvalError: Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self'\".\n"
+      }
+    },
+    {
+      "name": "file read refused: readFileSyncXhr",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'send' on 'XMLHttpRequest': Failed to load 'file:///%USERPROFILE%/AppData/Local/Temp/riuplay-m0-secret-28592.txt'."
+      }
+    },
+    {
+      "name": "file read refused: readFileFetch",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      }
+    },
+    {
+      "name": "file read refused: readFileImportScripts",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'file:///%USERPROFILE%/AppData/Local/Temp/riuplay-m0-secret-28592.txt' failed to load."
+      }
+    },
+    {
+      "name": "file read refused: readWindowsFile",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      }
+    },
+    {
+      "name": "host protocol: path traversal and unknown broker routes return 404",
+      "pass": true,
+      "detail": {
+        "dotdot": {
+          "status": 404,
+          "length": 25,
+          "leaked": false,
+          "hasOtherExtensionCode": false,
+          "hasWinIni": false
+        },
+        "encoded": {
+          "status": 404,
+          "length": 25,
+          "leaked": false,
+          "hasOtherExtensionCode": false,
+          "hasWinIni": false
+        },
+        "otherExtensionPath": {
+          "status": 404,
+          "length": 25,
+          "leaked": false,
+          "hasOtherExtensionCode": false,
+          "hasWinIni": false
+        },
+        "unknownBrokerRoute": {
+          "status": 404,
+          "length": 25,
+          "leaked": false,
+          "hasOtherExtensionCode": false,
+          "hasWinIni": false
+        }
+      }
+    },
+    {
+      "name": "host protocol: asking for another extension's script returns only the caller's own script",
+      "pass": true,
+      "detail": {
+        "status": 200,
+        "length": 6476,
+        "leaked": false,
+        "hasOtherExtensionCode": false,
+        "hasWinIni": false
+      }
+    },
+    {
+      "name": "direct network refused: directFetchLoopback",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      }
+    },
+    {
+      "name": "direct network refused: directXhrLoopback",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'send' on 'XMLHttpRequest': Failed to load 'http://127.0.0.1:8482/direct-xhr'."
+      }
+    },
+    {
+      "name": "direct network refused: directFetchPublicInternet",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      }
+    },
+    {
+      "name": "direct network refused: directFetchNoCors",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      }
+    },
+    {
+      "name": "direct network refused: importScriptsRemote",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'http://127.0.0.1:8482/import.js' failed to load."
+      }
+    },
+    {
+      "name": "direct network refused: nestedWorkerEscape",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "SecurityError: Failed to construct 'Worker': Script at 'http://127.0.0.1:8482/w.js' cannot be accessed from origin 'riuplay-ext-host://host'."
+      }
+    },
+    {
+      "name": "WebSocket to loopback refused",
+      "pass": true,
+      "detail": {
+        "outcome": "returned",
+        "value": "error"
+      }
+    },
+    {
+      "name": "the canary server received no request and no WebSocket upgrade from the sandbox",
+      "pass": true,
+      "detail": {
+        "hits": [],
+        "upgrades": 0
+      }
+    },
+    {
+      "name": "program launch refused: launchProgramFetch",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      }
+    },
+    {
+      "name": "program launch refused: launchProgramXhr",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'send' on 'XMLHttpRequest': Failed to load 'calculator://'."
+      }
+    },
+    {
+      "name": "program launch refused: launchProgramWorker",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "SecurityError: Failed to construct 'Worker': Script at 'ms-calculator:' cannot be accessed from origin 'riuplay-ext-host://host'."
+      }
+    },
+    {
+      "name": "program launch refused: launchProgramImport",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'ms-settings:' failed to load."
+      }
+    },
+    {
+      "name": "broker refuses brokerLoopback (blocked-address)",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "Error: 127.0.0.1 resolves to a blocked address (loopback) (blocked-address)"
+      }
+    },
+    {
+      "name": "broker refuses brokerMetadata (blocked-address)",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "Error: 169.254.169.254 resolves to a blocked address (link-local (incl. cloud metadata)) (blocked-address)"
+      }
+    },
+    {
+      "name": "broker refuses brokerEncodedLoopback (blocked-address)",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "Error: 127.0.0.1 resolves to a blocked address (loopback) (blocked-address)"
+      }
+    },
+    {
+      "name": "broker refuses brokerFileUrl (scheme-not-allowed)",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "Error: Scheme file: is not allowed (scheme-not-allowed)"
+      }
+    },
+    {
+      "name": "broker refuses brokerUndeclaredHost (dns-failed)",
+      "pass": true,
+      "detail": {
+        "outcome": "threw",
+        "error": "Error: Could not resolve example.com: ENOTFOUND (the spike resolver knows only test names, so nothing reaches the internet) (dns-failed)"
+      }
+    },
+    {
+      "name": "broker storage is keyed by session: B's secret is invisible to A even when A names B",
+      "pass": true,
+      "detail": "{\"value\":null}"
+    },
+    {
+      "name": "IndexedDB is per extension session: A cannot see B's database",
+      "pass": true,
+      "detail": {
+        "outcome": "returned",
+        "value": {
+          "value": null
+        }
+      }
+    },
+    {
+      "name": "Cache Storage is per extension session: A cannot see B's caches",
+      "pass": true,
+      "detail": {
+        "outcome": "returned",
+        "value": {
+          "cacheNames": []
+        }
+      }
+    },
+    {
+      "name": "A's attack results contain none of B's secrets and not the secret file's content",
+      "pass": true
+    },
+    {
+      "name": "host page has no Node either, and its file fetch fails",
+      "pass": true,
+      "detail": {
+        "process": "undefined",
+        "require": "undefined",
+        "open": "called",
+        "navigate": "called",
+        "pageFileFetch": "TypeError"
+      }
+    },
+    {
+      "name": "window.open / navigation to external protocols were intercepted (denied)",
+      "pass": true,
+      "detail": [
+        "open:ms-calculator:",
+        "navigate:ms-calculator:"
+      ]
+    },
+    {
+      "name": "no calculator process was started by any launch attempt",
+      "pass": true,
+      "detail": {
+        "before": 0,
+        "after": 0
+      }
+    },
+    {
+      "name": "extensions A and B run in separate OS processes (no shared renderer)",
+      "pass": true,
+      "detail": {
+        "a": 18312,
+        "b": 27304,
+        "bInfo": {
+          "type": "Tab",
+          "sandboxed": true,
+          "integrityLevel": "untrusted",
+          "workingSetMB": 79,
+          "privateMB": 31
+        }
+      }
+    },
+    {
+      "name": "extension host renderer runs sandboxed (OS-level, per Electron's process metrics)",
+      "pass": true,
+      "detail": {
+        "type": "Tab",
+        "sandboxed": true,
+        "integrityLevel": "untrusted",
+        "workingSetMB": 88,
+        "privateMB": 32
+      }
+    }
+  ],
+  "data": {
+    "attacks": {
+      "nodeAndElectronGlobals": {
+        "outcome": "returned",
+        "value": {
+          "require": "undefined",
+          "process": "undefined",
+          "module": "undefined",
+          "global": "undefined",
+          "__dirname": "undefined",
+          "electron": "undefined",
+          "ipcRenderer": "undefined",
+          "Buffer_isPolyfill": true
+        }
+      },
+      "functionConstructorEscape": {
+        "outcome": "threw",
+        "error": "EvalError: Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self'\".\n"
+      },
+      "evalAllowed": {
+        "outcome": "returned",
+        "value": {
+          "blocked": "EvalError"
+        }
+      },
+      "readFileSyncXhr": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'send' on 'XMLHttpRequest': Failed to load 'file:///%USERPROFILE%/AppData/Local/Temp/riuplay-m0-secret-28592.txt'."
+      },
+      "readFileFetch": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      },
+      "readFileImportScripts": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'file:///%USERPROFILE%/AppData/Local/Temp/riuplay-m0-secret-28592.txt' failed to load."
+      },
+      "readWindowsFile": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      },
+      "hostPathTraversal": {
+        "outcome": "returned",
+        "value": {
+          "dotdot": {
+            "status": 404,
+            "length": 25,
+            "leaked": false,
+            "hasOtherExtensionCode": false,
+            "hasWinIni": false
+          },
+          "encoded": {
+            "status": 404,
+            "length": 25,
+            "leaked": false,
+            "hasOtherExtensionCode": false,
+            "hasWinIni": false
+          },
+          "otherExtension": {
+            "status": 200,
+            "length": 6476,
+            "leaked": false,
+            "hasOtherExtensionCode": false,
+            "hasWinIni": false
+          },
+          "otherExtensionPath": {
+            "status": 404,
+            "length": 25,
+            "leaked": false,
+            "hasOtherExtensionCode": false,
+            "hasWinIni": false
+          },
+          "unknownBrokerRoute": {
+            "status": 404,
+            "length": 25,
+            "leaked": false,
+            "hasOtherExtensionCode": false,
+            "hasWinIni": false
+          }
+        }
+      },
+      "directFetchLoopback": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      },
+      "directXhrLoopback": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'send' on 'XMLHttpRequest': Failed to load 'http://127.0.0.1:8482/direct-xhr'."
+      },
+      "directFetchPublicInternet": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      },
+      "directFetchNoCors": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      },
+      "webSocketLoopback": {
+        "outcome": "returned",
+        "value": "error"
+      },
+      "importScriptsRemote": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'http://127.0.0.1:8482/import.js' failed to load."
+      },
+      "nestedWorkerEscape": {
+        "outcome": "threw",
+        "error": "SecurityError: Failed to construct 'Worker': Script at 'http://127.0.0.1:8482/w.js' cannot be accessed from origin 'riuplay-ext-host://host'."
+      },
+      "launchProgramFetch": {
+        "outcome": "threw",
+        "error": "TypeError: Failed to fetch"
+      },
+      "launchProgramXhr": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'send' on 'XMLHttpRequest': Failed to load 'calculator://'."
+      },
+      "launchProgramWorker": {
+        "outcome": "threw",
+        "error": "SecurityError: Failed to construct 'Worker': Script at 'ms-calculator:' cannot be accessed from origin 'riuplay-ext-host://host'."
+      },
+      "launchProgramImport": {
+        "outcome": "threw",
+        "error": "NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'ms-settings:' failed to load."
+      },
+      "brokerLoopback": {
+        "outcome": "threw",
+        "error": "Error: 127.0.0.1 resolves to a blocked address (loopback) (blocked-address)"
+      },
+      "brokerMetadata": {
+        "outcome": "threw",
+        "error": "Error: 169.254.169.254 resolves to a blocked address (link-local (incl. cloud metadata)) (blocked-address)"
+      },
+      "brokerEncodedLoopback": {
+        "outcome": "threw",
+        "error": "Error: 127.0.0.1 resolves to a blocked address (loopback) (blocked-address)"
+      },
+      "brokerUndeclaredHost": {
+        "outcome": "threw",
+        "error": "Error: Could not resolve example.com: ENOTFOUND (the spike resolver knows only test names, so nothing reaches the internet) (dns-failed)"
+      },
+      "brokerFileUrl": {
+        "outcome": "threw",
+        "error": "Error: Scheme file: is not allowed (scheme-not-allowed)"
+      },
+      "brokerStorageOfOther": {
+        "outcome": "returned",
+        "value": "{\"value\":null}"
+      },
+      "indexedDbOfOther": {
+        "outcome": "returned",
+        "value": {
+          "value": null
+        }
+      },
+      "cacheStorageOfOther": {
+        "outcome": "returned",
+        "value": {
+          "cacheNames": []
+        }
+      },
+      "crossOriginIsolated": {
+        "outcome": "returned",
+        "value": {
+          "crossOriginIsolated": false,
+          "sharedArrayBuffer": "undefined"
+        }
+      }
+    },
+    "evalAllowed": {
+      "outcome": "returned",
+      "value": {
+        "blocked": "EvalError"
+      }
+    },
+    "crossOriginIsolated": {
+      "crossOriginIsolated": false,
+      "sharedArrayBuffer": "undefined"
+    },
+    "hostProcess": {
+      "type": "Tab",
+      "sandboxed": true,
+      "integrityLevel": "untrusted",
+      "workingSetMB": 88,
+      "privateMB": 32
+    },
+    "integrityLevel": "untrusted",
+    "blockedByWebRequest": [],
+    "hostIds": {
+      "a": "malicious-a",
+      "b": "malicious-b"
+    }
+  },
+  "finishedAt": "2026-11-07T21:25:54.647Z",
+  "summary": {
+    "passed": 36,
+    "failed": 0
+  }
+}

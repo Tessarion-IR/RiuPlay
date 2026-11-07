@@ -1,0 +1,269 @@
+{
+  "mode": "real-scripts",
+  "electron": "34.5.8",
+  "chrome": "132.0.6834.210",
+  "node": "20.19.1",
+  "platform": "win32 10.0.28000",
+  "startedAt": "2026-11-07T21:15:34.269Z",
+  "checks": [
+    {
+      "name": "real hibiki-format scripts load in the sandbox with no network granted (26/26)",
+      "pass": true,
+      "detail": {}
+    }
+  ],
+  "data": {
+    "realScripts": {
+      "ani-liberty.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getById",
+          "getSettings",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "anichi.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getSettings",
+          "getById",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "anikappa.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getById",
+          "getSettings",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "anikoto.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getById",
+          "getSettings",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "animego.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getById",
+          "getSettings",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "animelib.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getById",
+          "getSettings",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "animepahe.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getById",
+          "getSettings",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "animevost.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getSettings",
+          "getById",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "anitube.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getSettings",
+          "getById",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "anixart.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getById",
+          "getSettings",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "donghuastream.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getSettings",
+          "getById",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "hentaimama.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getById",
+          "getSettings",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "kickassanime.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getById",
+          "getSettings",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "mikai.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getSettings",
+          "getById",
+          "getPlaybackGroups",
+          "getPlayerLinks"
+        ]
+      },
+      "yummy-anime.js": {
+        "loadErrors": [],
+        "methods": [
+          "search",
+          "latest",
+          "getById",
+          "getTitleExtras",
+          "getSettings",
+          "getPlaybackGroups",
+          "getPlayerLinks",
+          "login",
+          "loginWeb",
+          "logout",
+          "getAccount",
+          "listLibrary",
+          "reportPlayback",
+          "pingOnline",
+          "listComments",
+          "voteComment",
+          "postComment",
+          "listReviews",
+          "postReview",
+          "syncLibraryEntry"
+        ]
+      },
+      "aksor.js": {
+        "loadErrors": [],
+        "methods": [
+          "resolve"
+        ]
+      },
+      "alloha.browser-legacy.js": {
+        "loadErrors": [],
+        "methods": [
+          "browserScript"
+        ]
+      },
+      "alloha.js": {
+        "loadErrors": [],
+        "methods": [
+          "browserScript"
+        ]
+      },
+      "aniboom.js": {
+        "loadErrors": [],
+        "methods": [
+          "resolve"
+        ]
+      },
+      "animepahe-player.js": {
+        "loadErrors": [],
+        "methods": [
+          "browserScript"
+        ]
+      },
+      "anitube-ashdi.js": {
+        "loadErrors": [],
+        "methods": [
+          "resolve"
+        ]
+      },
+      "anitube-player.js": {
+        "loadErrors": [],
+        "methods": [
+          "browserScript"
+        ]
+      },
+      "dailymotion.js": {
+        "loadErrors": [],
+        "methods": [
+          "resolve"
+        ]
+      },
+      "kickassanime-player.js": {
+        "loadErrors": [],
+        "methods": [
+          "browserScript"
+        ]
+      },
+      "kodik.js": {
+        "loadErrors": [],
+        "methods": [
+          "resolve"
+        ]
+      },
+      "vk.js": {
+        "loadErrors": [],
+        "methods": [
+          "resolve"
+        ]
+      }
+    }
+  },
+  "finishedAt": "2026-11-07T21:15:40.405Z",
+  "summary": {
+    "passed": 1,
+    "failed": 0
+  }
+}

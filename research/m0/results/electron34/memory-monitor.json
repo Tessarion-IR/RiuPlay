@@ -1,0 +1,50 @@
+{
+  "mode": "memory-monitor",
+  "electron": "34.5.8",
+  "chrome": "132.0.6834.210",
+  "node": "20.19.1",
+  "platform": "win32 10.0.28000",
+  "startedAt": "2026-11-07T21:20:34.963Z",
+  "checks": [
+    {
+      "name": "memory (monitor): app survives and a new extension host starts afterwards",
+      "pass": true,
+      "detail": {
+        "heap": {
+          "peakMB": 630,
+          "endedBy": "watchdog-kill (crashed)",
+          "killLatencyMs": 5,
+          "secondsToEnd": 0.904
+        },
+        "buffers": {
+          "peakMB": 2344,
+          "endedBy": "watchdog-kill (crashed)",
+          "killLatencyMs": 13,
+          "secondsToEnd": 0.404
+        }
+      }
+    }
+  ],
+  "data": {
+    "memory": {
+      "heap": {
+        "peakMB": 630,
+        "endedBy": "watchdog-kill (crashed)",
+        "killLatencyMs": 5,
+        "secondsToEnd": 0.904
+      },
+      "buffers": {
+        "peakMB": 2344,
+        "endedBy": "watchdog-kill (crashed)",
+        "killLatencyMs": 13,
+        "secondsToEnd": 0.404
+      }
+    },
+    "jsFlags": null
+  },
+  "finishedAt": "2026-11-07T21:20:38.709Z",
+  "summary": {
+    "passed": 1,
+    "failed": 0
+  }
+}
