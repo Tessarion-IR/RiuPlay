@@ -7,6 +7,31 @@ All notable changes to RiuPlay are documented here. The format follows [Keep a C
 ### Product direction
 - Documented the integration vision: RiuPlay combines the original RiuPlay, hibiki, KikoFlu and Suwayomi into one product, and is not a hibiki rebrand. Added `docs/FEATURE_INTEGRATION_MATRIX.md` (every feature, its origin, reuse mode, unified design and status, plus the origin and license ledger). `docs/INTEGRATION_PLAN.md` is reordered so the integration phases (unified media core, source lifecycle and servers, audio experience, manga reader, unified library and updates) come before polish and release.
 
+### Phase 6: unified media core
+
+#### Added
+- **One media model for video, manga and audio** (`src/shared/media.ts`, `src/core/media/`). A title is made of units (episodes, chapters or tracks), with a personal library, per-unit progress, Continue lists and collections. This ports the original RiuPlay prototype onto the SQLite foundation. Migration `0024_riuplay_local_library` is additive.
+- **Video, Manga and Audio sections**, and an **Add Media** dialog: by URL, from local files (native picker; files referenced in place, never copied), or by hand. The same URL is never added twice.
+- **Title pages** for every type: status (Watching/Reading/Listening…), favourite, collections, editing, removal, and units with progress. Units can be marked finished.
+- **Playing, listening, reading**:
+  - Video plays in hibiki's own player, with resume.
+  - An audio page with automatic next track, keyboard control and Windows media keys.
+  - A continuous manga reader that resumes at the saved page.
+- **Unified Library**: titles from sources and your own titles, filtered by type and status.
+- **Collections**: local and source titles together. "Add to collection" is also on source anime pages.
+- **New Home**: Continue Watching (local episodes and source anime together), Continue Reading, Continue Listening, favourites, recently added and collections. Hibiki's source home is now **Discover**.
+- `riuplay-media://` protocol: serves only files recorded for imported titles, with byte ranges. Only paths the native picker returned this session can be imported.
+- Tests: 21 core media tests, 9 file/protocol tests, 7 renderer helper tests, and a migration test for 0024.
+
+#### Fixed
+- Persisted pages (Home, sections, Library, Collections) now refresh when shown again, and media queries are always fresh. Before, a screen could show another screen's outdated copy for up to a minute.
+
+#### Known limitations
+- Streams with no known length (live streams, some WebM files) don't save video progress, because hibiki's player reports progress only when the duration is known.
+- The History page and statistics cover source anime only.
+- First-run onboarding still uses hibiki's sources-first wording.
+- The reader has no single-page mode, RTL or zoom yet (Phase 9). The audio player has no persistent mini player, queue or lyrics yet (Phase 8).
+
 ### Phase 5: database, security, test reliability
 
 #### Added

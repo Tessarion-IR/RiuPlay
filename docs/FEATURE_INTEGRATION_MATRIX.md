@@ -1,6 +1,6 @@
 # RiuPlay Feature Integration Matrix
 
-Status: **living document**. Last full review: 2026-11-07, at RiuPlay commit `e189e48`. The architecture is **not complete** until every row below is either "Done" or deliberately "Excluded".
+Status: **living document**. Last full review: 2026-11-07, at commit `e189e48`. Phase 6 rows updated 2026-11-08, at commit `6bde960`. The architecture is **not complete** until every row below is either "Done" or deliberately "Excluded".
 
 RiuPlay is one product built from four inputs:
 
@@ -53,12 +53,12 @@ The **Unified as** column says how each row fits RiuPlay's single model, so noth
 
 | Feature | Orig. RiuPlay | Hibiki | KikoFlu | Suwayomi | Decision | Unified as | Status |
 |---|---|---|---|---|---|---|---|
-| Video and anime titles with episodes | ✅ model | ✅ `AnimeTitle`/`PlaybackGroup` | – | – | **Reuse** Hibiki runtime, **generalise** to `MediaItem` | `MediaItem{contentType:'video'}` + `Unit{kind:'episode'}` | 🟡 (anime-only types) |
-| Manga and manhwa with chapters and pages | ✅ model (`chapters.pages`) | – | – | ✅ Manga/Chapter/Page | **Port** RiuPlay model, **reimplement** Suwayomi chapter/page semantics | `contentType:'manga'`, `Unit{kind:'chapter'}` | 🟡 (schema only) |
-| Audio and ASMR works with tracks | ✅ model (`tracks`) | – | ✅ Work/Track tree | – | **Port** RiuPlay model, **reimplement** KikoFlu work→folder→track tree | `contentType:'audio'`, `Unit{kind:'track'}` | 🟡 (schema only) |
-| Direct URL / manual / local-file media | ✅ AddMediaModal, upload | – | ✅ local import + metadata scan | local source | **Port** RiuPlay, **reimplement** KikoFlu local scan | `local_media` provider | 🟡 (schema only) |
-| Same title from several sources, duplicate detection | ✅ unique `(source, id)` | per-source | – | per-source | RiuPlay original | `media_source_links` + normalised-title match | 🔴 |
-| Universal metadata (title, alt titles, genres, cover, status, year) | ✅ | ✅ | ✅ tags, VA, rating | ✅ | **Unify** | `MediaItem` fields + `providerMeta` | 🟡 |
+| Video and anime titles with episodes | ✅ model | ✅ `AnimeTitle`/`PlaybackGroup` | – | – | **Port** RiuPlay model for local/URL video. Source anime keep hibiki's types but meet the model in every shared view (Home, Video section, Library, Collections) | `MediaItem{type:'video'}` + `Unit{kind:'episode'}`; source anime via `MediaRef` | 🟡 local/URL video ✅; extension sources still use `AnimeTitle` internally |
+| Manga and manhwa with chapters and pages | ✅ model (`chapters.pages`) | – | – | ✅ Manga/Chapter/Page | **Port** RiuPlay model, **reimplement** Suwayomi chapter/page semantics | `type:'manga'`, `Unit{kind:'chapter', pages}` | ✅ local folders + page URLs (Phase 6). Extension/server manga: Phase 7 |
+| Audio and ASMR works with tracks | ✅ model (`tracks`) | – | ✅ Work/Track tree | – | **Port** RiuPlay model; KikoFlu's folder tree → nested folders (2 levels) on import | `type:'audio'`, `Unit{kind:'track'}`; `.lrc` lyrics kept per track | ✅ local files/folders + track URLs (Phase 6). Kikoeru server: Phase 7 |
+| Direct URL / manual / local-file media | ✅ AddMediaModal, upload | – | ✅ local import + metadata scan | local source | **Port** RiuPlay (dialog, dedupe), adapted: files referenced in place, picker-only paths, `riuplay-media://` protocol | Add Media dialog in every section | ✅ (Phase 6; tests + e2e). Metadata scan from tags: later |
+| Same title from several sources, duplicate detection | ✅ unique `(source, id)` | per-source | – | per-source | RiuPlay original | `(origin, originRef)` unique ✅; cross-source `media_source_links` 🔴 | 🟡 same-origin dedupe only |
+| Universal metadata (title, alt titles, genres, cover, status, year) | ✅ | ✅ | ✅ tags, VA, rating | ✅ | **Unify** | `MediaItem` fields, editable on the title page | ✅ for local titles |
 
 ## 3. Sources, extensions and repositories
 
@@ -87,19 +87,19 @@ The **Unified as** column says how each row fits RiuPlay's single model, so noth
 |---|---|---|---|---|---|---|---|
 | Video player (HLS/DASH/MP4, quality, speed, skip OP/ED) | basic HTML5 + hls | ✅ advanced | media_kit | – | **Reuse** Hibiki | `PlaybackEngine` → HtmlMediaEngine | ✅ |
 | External engine for MKV/HEVC/ASS | – | – | libmpv (media_kit) | – | **Reimplement** the KikoFlu engine idea as optional `mpv.exe` over IPC | `MpvEngine` | 🔴 |
-| Audio player with background playback | ✅ context + mini bar | – | ✅ | – | **Port** RiuPlay mini bar, **reimplement** KikoFlu player service | `AudioEngine` + persistent mini player | 🔴 |
+| Audio player with background playback | ✅ context + mini bar | – | ✅ | – | **Port** RiuPlay player, **reimplement** KikoFlu player service | `/listen` page now; persistent mini player across pages in Phase 8 | 🟡 page player (play/seek/prev/next/volume/speed/auto-next/resume); no background mini player yet |
 | Queue, loop (one/all), shuffle | – | autoplay next | ✅ queue builder | – | **Reimplement** KikoFlu | Shared `PlayQueue` for audio and video | 🔴 |
 | Playlists | – | – | ✅ | – | **Reimplement** KikoFlu | `collections` (kind = playlist) | 🔴 |
 | Sleep timer | – | – | ✅ | – | **Reimplement** KikoFlu | Player control | 🔴 |
 | Playback-session restore after restart | – | per-episode progress | ✅ session snapshot v1 | – | **Reimplement** KikoFlu snapshot | `app_settings['playback.session']` | 🔴 |
 | Audio gain and normalisation | – | – | ✅ | – | **Reimplement** with Web Audio `GainNode` | Player setting | 🔴 |
-| Windows media keys / SMTC | – | – | ✅ `smtc_windows` | – | **Reimplement** with `navigator.mediaSession` | All engines | 🔴 |
+| Windows media keys / SMTC | – | – | ✅ `smtc_windows` | – | **Reimplement** with `navigator.mediaSession` | All engines | 🟡 audio page (play/pause/prev/next + metadata); video: Phase 8 |
 | Subtitles: VTT, SRT, ASS; delay | single URL | ✅ VTT, delay | ✅ 11 formats, editing, timing | – | **Reuse** Hibiki + **reimplement** KikoFlu parsers | `SubtitleService` (UI-independent) | 🟡 |
 | Synced lyrics (LRC) + fullscreen lyrics | – | – | ✅ | – | **Reimplement** KikoFlu parser and display | Same `SubtitleService` timeline | 🔴 |
 | Floating desktop lyrics (click-through) | – | – | ✅ | – | **Reimplement** as an always-on-top transparent window | Opt-in | 🔴 |
 | Subtitle library + automatic matching to tracks | – | – | ✅ SQLite index + scoring | – | **Reimplement** KikoFlu `SubtitleMatcher` rules | `subtitle_library` table | 🔴 |
 | Subtitle and lyric translation (Microsoft, Youdao, LLM) | – | – | ✅ | – | **Exclude** for now: sends content to third parties. Reconsider as an opt-in plugin | – | – |
-| Manga reader: single/continuous, LTR/RTL, fit, zoom | ✅ settings model | – | – | (clients do) | **Port** RiuPlay `readerDefaults`, **reimplement** reader UI | Reader route for `Unit{kind:'chapter'}` | 🔴 |
+| Manga reader: single/continuous, LTR/RTL, fit, zoom | ✅ settings model | – | – | (clients do) | **Port** RiuPlay `readerDefaults`, **reimplement** reader UI | `/read` route | 🟡 continuous + fit width/height + page tracking/resume + next chapter; single page, RTL, zoom: Phase 9 |
 | Page prefetch and image cache | – | image proxy | ✅ cover prefetch | ✅ page cache | **Reimplement** | `core/cache` | 🔴 |
 | Text, PDF and image files inside works | – | – | ✅ previews | – | **Reimplement** (PDF via Chromium viewer) | File viewer in work details | 🔴 |
 
@@ -107,11 +107,11 @@ The **Unified as** column says how each row fits RiuPlay's single model, so noth
 
 | Feature | Orig. RiuPlay | Hibiki | KikoFlu | Suwayomi | Decision | Unified as | Status |
 |---|---|---|---|---|---|---|---|
-| Library statuses + favourites | ✅ per type | ✅ | – | ✅ in library | **Reuse** Hibiki, add statuses per type from RiuPlay (reading/listening) | One library, all types | 🟡 (anime) |
+| Library statuses + favourites | ✅ per type | ✅ | – | ✅ in library | **Port** RiuPlay statuses (active/planned/completed/on_hold/dropped + favourite) with per-type words; hibiki categories mapped onto them | One Library page for all types | ✅ (Phase 6; tests + e2e) |
 | Categories with update include/exclude | – | fixed categories | – | ✅ | **Reimplement** Suwayomi | `collections` + `include_in_updates` | 🔴 |
-| Custom collections | ✅ planned | – | ✅ playlists | categories | RiuPlay original | `collections` / `collection_items` | 🟡 (schema) |
-| Progress + Continue Watching/Reading/Listening | ✅ three rows | ✅ watching | ✅ history | ✅ last read | **Reuse** Hibiki, **port** RiuPlay rows | Per-unit progress for every type | 🟡 (watching) |
-| History, clear with confirmation | ✅ | ✅ | ✅ | ✅ | **Reuse** Hibiki | All types | 🟡 |
+| Custom collections | ✅ planned | – | ✅ playlists | categories | RiuPlay original | `collections` / `collection_items`; local and source titles together; button on local **and** source title pages | ✅ (Phase 6; tests + e2e) |
+| Progress + Continue Watching/Reading/Listening | ✅ three rows | ✅ watching | ✅ history | ✅ last read | **Reuse** hibiki for source anime, **port** RiuPlay rows for local titles | Per-unit `local_progress` (ms / page); Home + sections | ✅ (Phase 6; tests + e2e). Unknown-length streams don't save progress (hibiki player reports only with a known duration) |
+| History, clear with confirmation | ✅ | ✅ | ✅ | ✅ | **Reuse** hibiki | All types | 🟡 History page covers source anime only; local titles show progress on their pages |
 | New-unit checks (episodes/chapters/tracks) | – | ✅ `newEpisodes` checker | – | ✅ scheduled updater, per-source queues, failure isolation | **Reuse** Hibiki checker + **reimplement** Suwayomi per-source channels and category filters | `core/updates` for every type | 🟡 (episodes) |
 | "Updates" feed (recently released units) | – | notifications | – | ✅ | **Reimplement** Suwayomi | Home + Updates view | 🔴 |
 | Downloads: queue, progress, cancel | ✅ basic | ✅ concurrent, HLS segments | ✅ selective, concurrent | ✅ chapters | **Reuse** Hibiki, **port** RiuPlay disk-space guard | One queue for episodes, chapters, tracks | 🟡 (episodes) |
@@ -128,12 +128,13 @@ The **Unified as** column says how each row fits RiuPlay's single model, so noth
 | Backup / restore | ✅ versioned JSON | ✅ db + extensions | – | ✅ Mihon-compatible, scheduled | **Reuse** Hibiki, **reimplement** Suwayomi scheduled backups | Settings → Backup | 🟡 |
 | Import Mihon/Tachiyomi backup (manga library) | – | – | – | ✅ protobuf | **Reimplement** read-only importer (later) | Backup → Import | 🔴 |
 | Trackers (AniList, MAL, MangaUpdates) | – | ✅ AniList | – | ✅ several | **Reuse** Hibiki AniList (needs a RiuPlay client id). **Reimplement** others later | `core/tracking` for all types | 🟡 |
-| Statistics, streaks, achievements | – | ✅ | – | – | **Reuse**, make optional | Profile | ✅ |
+| Statistics, streaks, achievements | – | ✅ | – | – | **Reuse**, make optional | Profile | ✅ (source anime only) |
+| First-run onboarding | – | ✅ (sources step) | ✅ | – | **Adapt** to RiuPlay (all types, no source required) | Onboarding | 🟡 still hibiki's sources-first wording |
 | Privacy mode (blur covers) | – | – | ✅ | – | **Reimplement** | Appearance setting | 🔴 |
 | Content rating filter / NSFW opt-in | nsfw flag | ✅ ignore NSFW | ✅ age rating | ✅ | **Unify** | One NSFW setting | 🟡 |
 | Themes, accent colour, light/dark | ✅ | ✅ | ✅ M3 | – | **Reuse** Hibiki | RiuPlay design tokens | ✅ |
-| Navigation covering all content types | ✅ Anime/Manga/Audio entries | anime only | audio only | – | RiuPlay original | Sidebar: Home, Discover, Video, Manga, Audio, Library, Updates, Downloads, Sources, Settings | 🔴 |
-| Home mixing all types | ✅ continue watching/reading/listening | ✅ anime rows | ✅ | – | **Port** RiuPlay layout onto Hibiki components | Home | 🔴 |
+| Navigation covering all content types | ✅ Anime/Manga/Audio entries | anime only | audio only | – | RiuPlay original | Sidebar: Home, Discover, Catalog, Search, Video, Manga, Audio, Library, Collections, Downloads, Sources, Settings, Profile | ✅ (Phase 6) |
+| Home mixing all types | ✅ continue watching/reading/listening | ✅ anime rows | ✅ | – | **Port** RiuPlay layout onto hibiki components; hibiki's source home becomes Discover | Home | ✅ (Phase 6; e2e) |
 | Search across all providers and types | ✅ local search | ✅ per source + spotlight | ✅ advanced tags | ✅ global search | **Reuse** Hibiki spotlight, **reimplement** KikoFlu tag include/exclude | One search | 🟡 |
 | OPDS feed / web UI / GraphQL server | – | – | – | ✅ | **Exclude**: RiuPlay is a desktop client and doesn't host a server (security surface) | – | – |
 | Discord Rich Presence | – | ✅ | – | – | **Reuse**, opt-in. Needs RiuPlay's own Discord app id | – | 🟡 |
@@ -158,5 +159,9 @@ Every file that enters the repository from outside, or that closely reimplements
 | `src/`, `apk-host/`, build config (see `THIRD_PARTY_NOTICES.md`) | hibiki | 132a71e | GPL-3.0-only | Reuse (modified) |
 | `apk-host/` Aniyomi compat portions | Anikku / yuzono via hibiki | – | Apache-2.0 | Reuse |
 | `src/core/db/schema.ts` (RiuPlay section), migration 0023 | original RiuPlay `legacy/next-app/src/db/schema.ts` | 35b853e | GPL-3.0 (owner) | Port |
+| `src/core/db/schema.ts` (local_library, local_progress), migration 0024 | original RiuPlay `library_entries` + progress model | 35b853e | GPL-3.0 (owner) | Port |
+| `src/core/media/*` (media, validation, collections, resolve) | original RiuPlay `src/server/queries.ts`, `providers.ts` (validation approach) | 35b853e | GPL-3.0 (owner) | Port |
+| `src/main/mediaFiles.ts`, `src/main/mediaProtocol.ts` | original RiuPlay `src/server/storage.ts`, `src/app/api/files/[...path]` | 35b853e | GPL-3.0 (owner) | Port (adapted: reference in place, picker allowlist, DB-resolved URLs) |
+| `src/renderer/src/components/media/AddMediaDialog.tsx`, pages `riuplayHome`, `mediaSection`, `collections`, `features/media/*` | original RiuPlay `AddMediaModal`, home page, `AudioPlayerContext`; hibiki UI components and `VideoPlayer` | 35b853e / 132a71e | GPL-3.0 | Port + Reuse |
 | *(future)* `src/core/audio/*`, `src/core/subtitles/*` | KikoFlu `lib/src/services/*` | d8a8c61 | GPL-3.0 | Reimplement (credited per file) |
 | *(future)* `src/core/extensions/lifecycle.ts`, `src/core/updates/*` | Suwayomi design only | 7b061be | MPL-2.0 (no files copied) | Reimplement |

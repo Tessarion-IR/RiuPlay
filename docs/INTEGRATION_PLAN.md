@@ -18,12 +18,13 @@ Phases 6–10 are therefore integration work, scheduled **before** polish and re
 | 1–3 | Audit, reference audit, architecture decision | `docs/` audits |
 | 4 | Foundation import | Hibiki v3.3.0 imported under GPL-3.0, rebranded, legacy preserved |
 | 5 | Database and security | drizzle 0.45.4, schema 0023 + pre-migration backups, opt-in LAN sync, sync test root cause fixed, repository audit |
+| 6 | Unified media core | One model for video/manga/audio (migration 0024), Add Media by URL/files/manual, Video/Manga/Audio sections, title pages, play (hibiki player)/listen/read with progress + resume, unified Library, Collections across local and source titles, unified Home, Discover. Verified by unit tests and a 25-check end-to-end run in the real app |
 
 ## Integration phases (next)
 
 Each phase ends with tests green 3× in a row, a local commit, matrix rows updated, and a report.
 
-### Phase 6: Unified media core *(original RiuPlay + Hibiki)*
+### Phase 6: Unified media core *(original RiuPlay + Hibiki)* - ✅ done (see the matrix for what is partial)
 The domain stops being anime-only.
 - Introduce `MediaItem` / `Unit` (episode, chapter, track) / `MediaSourceLink` in `src/shared`. Adapt Hibiki's `AnimeTitle`/`PlaybackGroup` into them, with compatibility shims so the extension runtime and existing data keep working.
 - Port the original RiuPlay query layer (`legacy/next-app/src/server/queries.ts`) onto SQLite: `local_media`, `local_media_units`, collections, duplicate detection.

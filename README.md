@@ -28,6 +28,13 @@
 
 ## Features
 
+### RiuPlay's own media (Phase 6, verified on Windows 11)
+- **Video, Manga and Audio** sections, one model for all three.
+- **Add media** by URL, from files on your PC (never copied), or by hand.
+- Title pages with library status, favourites, collections, and episodes, chapters or tracks.
+- Video plays in the built-in player. Audio has its own player page with auto-next and media keys. Manga has a continuous reader. All of them remember where you stopped.
+- **Home** with Continue Watching / Reading / Listening, a **Library** for every type, and **Collections** that mix your own titles with titles from sources.
+
 ### Inherited from the hibiki foundation
 These features come with the imported codebase. On Windows 11 so far, startup, database creation and the full automated test suite have been verified. Each feature will be checked by hand in the next phases.
 - Install, update and remove scripted source extensions from HTTPS repositories.
@@ -40,7 +47,7 @@ These features come with the imported codebase. On Windows 11 so far, startup, d
 - Backup and restore of the local database.
 
 ### Planned (see [INTEGRATION_PLAN.md](docs/INTEGRATION_PLAN.md))
-- **Manga** reader and **audio/ASMR** player, sharing one media model with video.
+- Manga reader modes (single page, right-to-left, zoom) and the KikoFlu audio experience (queue, synced lyrics, session restore, mini player).
 - A versioned **RiuPlay extension spec** with declared permissions, integrity hashes, a consent prompt and an out-of-process sandbox.
 - Hardened networking: SSRF protection, and HTTP, HTTPS and SOCKS5 proxies, globally or per source.
 - Generic providers: direct URLs, local files, RSS/Atom, JSON-LD/OpenGraph, and a Suwayomi server connection.
