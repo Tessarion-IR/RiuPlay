@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+dist-electron/
+release/
+storage/
+*.db
+*.sqlite
+*.sqlite-journal
+.env
+.env.*
+!.env.example
+*.log
+next-env.d.ts
+*.tsbuildinfo

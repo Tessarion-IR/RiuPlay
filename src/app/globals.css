@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  --accent: #7c5cff;
+  --accent-rgb: 124, 92, 255;
+  --bg: #f4f5f8;
+  --surface: #ffffff;
+  --surface-2: #f0f1f6;
+  --border: rgba(15, 17, 26, 0.08);
+  --text: #15161f;
+  --text-dim: #5b5e6e;
+}
+
+html.dark {
+  --bg: #0b0c11;
+  --surface: #14151e;
+  --surface-2: #1a1c27;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f1f1f6;
+  --text-dim: #9699ab;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(var(--accent-rgb), 0.35);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.35);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.55);
+}
+
+.surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.surface-2 {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.text-dim {
+  color: var(--text-dim);
+}
+
+.accent-bg {
+  background: var(--accent);
+}
+.accent-text {
+  color: var(--accent);
+}
+.accent-border {
+  border-color: var(--accent);
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@keyframes riuplay-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in {
+  animation: riuplay-fade-in 0.18s ease-out;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
