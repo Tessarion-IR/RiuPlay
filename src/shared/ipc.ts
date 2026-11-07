@@ -163,6 +163,9 @@ export const IPC = {
   syncDiscover: "sync:discover",
   syncPair: "sync:pair",
   syncNow: "sync:now",
+  // RiuPlay: LAN sync is opt-in (main/lanSync.ts).
+  syncIsEnabled: "sync:isEnabled",
+  syncSetEnabled: "sync:setEnabled",
   // Pushed main -> renderer: paired devices changed, or a sync brought data in.
   syncChanged: "sync:changed",
 

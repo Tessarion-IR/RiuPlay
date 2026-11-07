@@ -1,3 +1,5 @@
+// Must stay the first import: fixes the app name and profile folder before any module reads them.
+import "./appIdentity";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { createReadStream } from "node:fs";
@@ -12,7 +14,7 @@ import { destroyAllLoginWindows } from "./extensions/webLogin";
 import { registerSourceHandlers } from "./ipc/sources";
 import { registerLibraryHandlers } from "./ipc/library";
 import { registerTrackingHandlers } from "./ipc/tracking";
-import { registerSyncHandlers } from "./ipc/sync";
+import { registerSyncHandlers, shutdownSync } from "./ipc/sync";
 import { handleTrackingRedirect } from "../core/api/tracking";
 import { registerXpEventHandlers } from "./ipc/xpEvents";
 import { registerMarketplaceHandlers } from "./ipc/marketplace";
@@ -60,9 +62,6 @@ protocol.registerSchemesAsPrivileged([
   { scheme: APK_IMAGE_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } },
 ]);
 
-// Keep the taskbar identity independent from Electron's development executable name.
-app.setName("RiuPlay");
-app.setAppUserModelId("io.github.tessarion.riuplay");
 
 // What lets a "Watch" button on a Discord Rich Presence card (see discordRpc.ts) actually open this
 // app - the OS hands a "riuplay://..." link to whichever process registered as its handler, the same
@@ -577,4 +576,5 @@ app.on("before-quit", () => {
   extensionRuntime?.dispose();
   shutdownDiscordRpc();
   void getApkHost()?.stop();
+  void shutdownSync();
 });

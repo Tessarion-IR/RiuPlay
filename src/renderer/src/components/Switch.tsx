@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 // `justify-end`/`justify-start` track with the thumb as its only child) that read as visibly
 // uneven - not flush against the track's edges the way this one is. See the thumb's own comment
 // below for why flow + `translate-x` avoids that in the first place.
-export function Switch({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+export function Switch({ checked, onChange, labelledBy }: { checked: boolean; onChange: (checked: boolean) => void; labelledBy?: string }) {
   // The thumb is a normal-flow child (not `absolute`) positioned purely by `translate-x` from the
   // track's own padding - an `absolute` thumb has to fall back to a browser-computed "static
   // position" for its un-set `left`, which is where an earlier version kept ending up detached
@@ -15,6 +15,7 @@ export function Switch({ checked, onChange }: { checked: boolean; onChange: (che
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-labelledby={labelledBy}
       onClick={() => onChange(!checked)}
       className={cn(
         // A border on the track always, not just when unchecked - a black or white accent color

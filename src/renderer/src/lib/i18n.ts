@@ -18,7 +18,7 @@ function detectInitialLocale(): Locale {
   if (stored && isLocale(stored)) return stored;
   const browserLang = navigator.language.slice(0, 2).toLowerCase();
   if (isLocale(browserLang)) return browserLang;
-  return "ru";
+  return "en";
 }
 
 i18n.use(initReactI18next).init({
@@ -28,7 +28,8 @@ i18n.use(initReactI18next).init({
     uk: { translation: uk },
   },
   lng: detectInitialLocale(),
-  fallbackLng: "ru",
+  // RiuPlay: English is the default and the fallback for strings a translation lacks.
+  fallbackLng: "en",
   interpolation: { escapeValue: false },
 });
 

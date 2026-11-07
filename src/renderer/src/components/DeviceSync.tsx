@@ -11,9 +11,11 @@ import { Modal } from "@/components/Modal";
 import { cn } from "@/lib/cn";
 import { hibiki } from "@/lib/hibiki";
 import { isMobile } from "@/lib/mobile";
+import { Switch } from "@/components/Switch";
 
 const DEVICES_KEY = ["syncDevices"];
 const PAIRING_KEY = ["syncPairing"];
+const ENABLED_KEY = ["syncEnabled"];
 // What a sync can bring in: everything that shows the library, progress, ratings or xp.
 const DATA_KEYS = ["library", "recent-progress", "progress-all", "progress", "dailyActivity", "rating", "xpEvents", "recommendations", "missingSources"];
 
@@ -51,23 +53,57 @@ function useRelativeTime() {
  */
 export function DeviceSyncSection() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const devices = useQuery({ queryKey: DEVICES_KEY, queryFn: () => hibiki.sync.devices() });
   const list = devices.data ?? [];
+  // RiuPlay: LAN sync is opt-in on desktop. A platform without the switch (Android) is always on.
+  const canToggle = typeof hibiki.sync.isEnabled === "function";
+  const enabledQuery = useQuery({ queryKey: ENABLED_KEY, queryFn: () => (canToggle ? hibiki.sync.isEnabled!() : Promise.resolve(true)) });
+  const enabled = enabledQuery.data === true;
+  const toggle = useMutation({
+    mutationFn: (next: boolean) => hibiki.sync.setEnabled!(next),
+    onSuccess: (now) => {
+      queryClient.setQueryData(ENABLED_KEY, now);
+      void queryClient.invalidateQueries({ queryKey: PAIRING_KEY });
+    },
+  });
+
+  const enableRow = canToggle && (
+    <div className="mt-3 flex items-start justify-between gap-3 rounded-xl bg-text/[.04] px-3 py-2.5">
+      <div className="min-w-0">
+        <p id="lan-sync-toggle-label" className="text-sm font-medium text-text">{t("deviceSync.enableTitle")}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-muted">{t(enabled ? "deviceSync.enabledHint" : "deviceSync.disabledHint")}</p>
+        {toggle.error instanceof Error && <p className="mt-1 text-xs text-red-400">{toggle.error.message}</p>}
+      </div>
+      <div className={cn(toggle.isPending && "pointer-events-none opacity-60")}>
+        <Switch checked={enabled} labelledBy="lan-sync-toggle-label" onChange={(next) => toggle.mutate(next)} />
+      </div>
+    </div>
+  );
 
   const devicesAndActions = (
     <>
-      {list.length > 0 && (
+      {enableRow}
+      {/* Paired devices are local data: listed (and removable) even while sync is off. */}
+      {!enabled && list.length > 0 && (
+        <div className="mt-3 space-y-1.5">
+          {list.map((device) => <DeviceRow key={device.deviceId} device={device} canSync={false} />)}
+        </div>
+      )}
+      {enabled && list.length > 0 && (
         <div className="mt-3 space-y-1.5">
           {list.map((device) => <DeviceRow key={device.deviceId} device={device} />)}
         </div>
       )}
 
       {/* Phone: the way in first, full width; showing a code for another phone is the rarer case. */}
-      <div className={cn("mt-3", isMobile ? "space-y-2" : "flex flex-wrap items-start gap-2")}>
-        {isMobile && <ConnectToDevice paired={list.some((device) => device.connects)} />}
-        <ShowCode />
-        {!isMobile && <ConnectToDevice paired={list.some((device) => device.connects)} />}
-      </div>
+      {enabled && (
+        <div className={cn("mt-3", isMobile ? "space-y-2" : "flex flex-wrap items-start gap-2")}>
+          {isMobile && <ConnectToDevice paired={list.some((device) => device.connects)} />}
+          <ShowCode />
+          {!isMobile && <ConnectToDevice paired={list.some((device) => device.connects)} />}
+        </div>
+      )}
     </>
   );
 
@@ -93,7 +129,7 @@ export function DeviceSyncSection() {
   );
 }
 
-function DeviceRow({ device }: { device: SyncDevice }) {
+function DeviceRow({ device, canSync = true }: { device: SyncDevice; canSync?: boolean }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const relative = useRelativeTime();
@@ -113,7 +149,7 @@ function DeviceRow({ device }: { device: SyncDevice }) {
           <p className="text-xs text-muted">{t("deviceSync.lastSync", { when: relative(device.lastSyncAt) })}</p>
         </div>
         {/* Only where this device is the one that syncs; the other side does it otherwise. */}
-        {device.connects && (
+        {device.connects && canSync && (
           <button
             type="button"
             onClick={() => sync.mutate()}

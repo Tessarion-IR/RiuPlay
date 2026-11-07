@@ -47,22 +47,23 @@ async function install(options: { apk: boolean; markers?: string[]; repositories
   return createRepositoriesApi().repositories;
 }
 
+// RiuPlay: no repository is preinstalled (see repositories.ts and docs/EXTENSION_REPOSITORY_AUDIT.md).
 describe("preinstalled repositories", () => {
-  it("start a fresh install with hibiki-sources, then the APK repository where APK sources run", async () => {
-    expect(await (await install({ apk: true })).list()).toEqual([DEFAULT_REPOSITORY_URL, DEFAULT_APK_REPOSITORY_URL]);
-    expect(await (await install({ apk: false })).list()).toEqual([DEFAULT_REPOSITORY_URL]);
+  it("there are none: a fresh install starts with an empty list, with or without APK sources", async () => {
+    expect(await (await install({ apk: true })).list()).toEqual([]);
+    expect(await (await install({ apk: false })).list()).toEqual([]);
   });
 
-  it("add hibiki-sources on a phone that only ever got the APK repository", async () => {
-    const repositories = await install({ apk: true, markers: ["apk-repository-seeded"], repositories: [DEFAULT_APK_REPOSITORY_URL] });
-    expect(await repositories.list()).toEqual([DEFAULT_APK_REPOSITORY_URL, DEFAULT_REPOSITORY_URL]);
+  it("an existing install keeps the repositories hibiki had seeded into it", async () => {
+    const repositories = await install({ apk: true, markers: ["default-repository-seeded", "apk-repository-seeded"], repositories: [DEFAULT_REPOSITORY_URL, DEFAULT_APK_REPOSITORY_URL] });
+    expect(await repositories.list()).toEqual([DEFAULT_REPOSITORY_URL, DEFAULT_APK_REPOSITORY_URL]);
   });
 
-  it("stay removed once removed", async () => {
-    const repositories = await install({ apk: false });
-    await repositories.list();
+  it("a removed repository is not added back", async () => {
+    const repositories = await install({ apk: true, repositories: [DEFAULT_REPOSITORY_URL] });
     expect(await repositories.remove(DEFAULT_REPOSITORY_URL)).toEqual([]);
     expect(await repositories.list()).toEqual([]);
+    expect(await (await install({ apk: true })).list()).toEqual([]);
   });
 });
 
@@ -108,7 +109,7 @@ describe("the same repository twice", () => {
   });
 
   it("is refused before anything is fetched, and through a GitHub page too", async () => {
-    const repositories = await install({ apk: false });
+    const repositories = await install({ apk: false, repositories: [DEFAULT_REPOSITORY_URL] });
     const request = vi.fn(async ({ url }: { url: string }) => ({ status: 200, url, headers: {}, body: JSON.stringify({ extensions: [] }) }));
     (getPlatform() as unknown as Record<string, unknown>).http = { request };
     await expect(repositories.add(longForm)).rejects.toThrow("[repository-already-added]");

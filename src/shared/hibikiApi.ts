@@ -246,6 +246,11 @@ export interface HibikiApi {
     pair?(candidate: SyncCandidate, code: string, mode: SyncPairMode): Promise<SyncDevice>;
     /** Sync now with the computers this device reaches out to. */
     syncNow?(): Promise<void>;
+    /** RiuPlay (desktop): whether LAN sync is on. Off by default; while off nothing listens on the
+     * network and pairing, discovery and syncing are refused. */
+    isEnabled?(): Promise<boolean>;
+    /** RiuPlay (desktop): turn LAN sync on or off. Resolves with the new state. */
+    setEnabled?(enabled: boolean): Promise<boolean>;
   };
   updates: {
     check(): Promise<AppUpdate | null>;

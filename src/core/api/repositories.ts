@@ -3,32 +3,22 @@ import type { HibikiApi } from "@shared/hibikiApi";
 import type { RepositoryFetchResult } from "@shared/types";
 import { sourceRepositories } from "../db/schema";
 import { repositoryAlreadyAddedError } from "@shared/repositoryErrors";
-import { DEFAULT_APK_REPOSITORY_URL, DEFAULT_REPOSITORY_URL, fetchRepositoryResult, repositoryIndexCandidates, repositoryKey, resolveRepositoryUrl } from "../marketplace";
+import { fetchRepositoryResult, repositoryIndexCandidates, repositoryKey, resolveRepositoryUrl } from "../marketplace";
 import { logger } from "../logger";
 import { getPlatform } from "../platform";
 
 const getDb = () => getPlatform().db.get();
 
-// Where each one-time seeding is remembered, so removing a preinstalled repository sticks.
-const DEFAULT_REPOSITORY_SEEDED = "default-repository-seeded";
-const APK_REPOSITORY_SEEDED = "apk-repository-seeded";
-
-/** Adds a preinstalled repository once per install. Each has its own marker: hibiki-sources used to
- * be added only to an empty list, which on Android never was one - the APK repository got there
- * first - so the app's own sources were missing there. */
-async function seedOnce(url: string, markerName: string): Promise<void> {
-  const { files, paths } = getPlatform();
-  const marker = files.join(paths.userData, markerName);
-  if (await files.exists(marker)) return;
-  await getDb().insert(sourceRepositories).values({ url, addedAt: Date.now() }).onConflictDoNothing().run();
-  await files.writeText(marker, "1");
-}
+// RiuPlay ships with NO preinstalled repository. hibiki seeded its own hibiki-sources index (and,
+// where APK sources run, the yuzono Aniyomi index) into every fresh install. RiuPlay does not: those
+// are third-party repositories RiuPlay neither owns nor reviews, hibiki-sources carries no license,
+// and their scripts run with the app's rights (see SECURITY.md and
+// docs/EXTENSION_REPOSITORY_AUDIT.md). Users add repositories themselves, behind the trust prompt.
+// Existing installs keep whatever their list already holds - nothing is removed from user data.
+// marketplace.ts keeps DEFAULT_REPOSITORY_URL / DEFAULT_APK_REPOSITORY_URL only as known addresses
+// (legacy import on Android matches against the APK one); they are never added automatically.
 
 async function listRepositoryUrls(): Promise<string[]> {
-  // hibiki-sources first, so on a fresh install it heads the list (the first repository to list an
-  // id owns it); the Aniyomi APK repository only where APK sources run.
-  await seedOnce(DEFAULT_REPOSITORY_URL, DEFAULT_REPOSITORY_SEEDED);
-  if (getPlatform().apkSources) await seedOnce(DEFAULT_APK_REPOSITORY_URL, APK_REPOSITORY_SEEDED);
   const rows = await getDb().select().from(sourceRepositories).all();
   // One URL per repository: copies saved before add() compared addresses (another spelling of the
   // same index) go, the earliest-added one stays.

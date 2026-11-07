@@ -461,7 +461,7 @@
     "repositoriesRemove": "Remove",
     "repositoriesRemoveConfirmTitle": "Remove repository?",
     "repositoriesRemoveConfirmMessage": "Remove {{name}} from the repository list? Installed extensions will remain available.",
-    "repositoriesEmpty": "No repositories added yet",
+    "repositoriesEmpty": "No repositories added yet. RiuPlay doesn't include or endorse any extension repository. Add one you trust with \"Add repository\".",
     "repositoriesExtensionCount": "{{count}} extensions",
     "openInBrowser": "Open in browser",
     "copyUrl": "Copy link",
@@ -982,6 +982,9 @@
     "downloadingTitle_other": "Downloading {{count}} episodes"
   },
   "deviceSync": {
+    "enableTitle": "Turn on LAN sync",
+    "disabledHint": "Off. RiuPlay opens no network ports and contacts no other device. Turning it on lets devices on your local network find this computer and pair with it using a code. Windows may ask you to allow RiuPlay through the firewall.",
+    "enabledHint": "On. This computer listens on your local network (TCP 47652, UDP 47653). Only devices you pair with a code can sync. Turn it off to close the ports.",
     "hint": "Library and progress on all your devices on the same network.",
     "connectPhone": "Show a code",
     "connectComputer": "Connect to a device",
