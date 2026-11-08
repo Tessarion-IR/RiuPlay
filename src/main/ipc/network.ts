@@ -5,7 +5,7 @@
 // renderer's store; removing it is the renderer's own explicit action, offered only when
 // `plaintextRemovalAllowed` (the encrypted proxy is in force and passed on both paths).
 import { app, ipcMain } from "electron";
-import { readApkOptIn, writeApkOptIn } from "../../platform/electron/apkOptIn";
+import { apkRuntimeEnabled, writeApkOptIn } from "../../platform/electron/apkOptIn";
 import { getApkHost } from "../../platform/electron/apkHost";
 import { IPC } from "@shared/ipc";
 import type { SecureProxyInput, SecureProxyStatus, SecureProxyVerification } from "@shared/types";
@@ -88,7 +88,7 @@ async function verify(): Promise<SecureProxyVerification> {
 
 export function registerNetworkHandlers(): void {
   // RiuPlay M2: the APK (Java) runtime opt-in; takes effect on the next start.
-  ipcMain.handle(IPC.extensionsApkRuntimeGet, () => ({ enabled: readApkOptIn(app.getPath("userData")), running: Boolean(getApkHost()) }));
+  ipcMain.handle(IPC.extensionsApkRuntimeGet, () => ({ enabled: apkRuntimeEnabled(app.getPath("userData")), running: Boolean(getApkHost()) }));
   ipcMain.handle(IPC.extensionsApkRuntimeSet, (_e, enabled: unknown) => {
     if (typeof enabled !== "boolean") throw new TypeError("enabled must be a boolean");
     writeApkOptIn(app.getPath("userData"), enabled);

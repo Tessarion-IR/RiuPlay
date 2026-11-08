@@ -17,4 +17,6 @@ data class InstalledApkExtension(
     val isTrusted: Boolean,
     val file: File,
     val iconFile: File?,
+    /** RiuPlay: "anime" (Aniyomi) or "manga" (Tachiyomi / Keiyoushi, extensions-lib 1.6). */
+    val kind: String = "anime",
 )

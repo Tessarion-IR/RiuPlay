@@ -7,7 +7,8 @@
 //   5. one real item is consumed in the native player/reader (bytes actually decoded);
 //   6. progress is saved and the title shows in Continue Watching/Reading/Listening.
 // The sources are RiuPlay's own built-in extensions, hitting the real, openly licensed services
-// (Internet Archive, Pepper&Carrot, LibriVox) - this needs network access.
+// (Internet Archive, Pepper&Carrot, LibriVox), then the mandatory ecosystems (KikoFlu's asmr.one, Hibiki,
+// Keiyoushi) - this needs network access.
 //
 // Usage: set RIUPLAY_USER_DATA_DIR=<empty temp dir> & node research/m8/verify-extension-slices.mjs <repoDir> [outDir]
 // (refuses to run without RIUPLAY_USER_DATA_DIR, so a real profile is never used).
@@ -78,6 +79,9 @@ const SLICES = [
   { type: "audio", name: "asmr.one (KikoFlu source)", query: "耳かき", route: "listen", continueText: "Continue Listening" },
 ];
 const ONLY = process.env.SLICES ? process.env.SLICES.split(",") : null;
+// Phase 8 mandatory ecosystem: Keiyoushi's manga extensions, run in the confined APK host (K1-K5). Arknights
+// Comics is the publisher's own official comics site and reachable from where this was checked.
+const KEIYOUSHI = { type: "manga", name: "Arknights Comics", query: "Prelude", route: "read", continueText: "Continue Reading", dialog: /sandbox/, dialogLine: /Runs Android[^\n]*/ };
 
 try {
   await send("Page.enable");
@@ -100,7 +104,7 @@ try {
   await clickByText(["Extensions"]);
   await sleep(1500);
 
-  for (const slice of SLICES.filter((x) => !ONLY || ONLY.some((o) => x.name.toLowerCase().includes(o.toLowerCase())))) {
+  async function runSlice(slice) {
     const label = `${slice.type[0].toUpperCase() + slice.type.slice(1)} [${slice.name.split(" ")[0]}]`;
     // 2. Install from the UI: the card's Install button, then the permission dialog.
     await go("#/sources", 2000);
@@ -120,9 +124,10 @@ try {
       return false;
     })()`);
     const dialog = pressed && (await waitFor(`document.querySelector('[data-testid="accept-permissions"]') && document.body.innerText`, 10_000));
-    check(`${label} 2b. Install opens the permission dialog listing the hosts`, dialog && /Connects only to/.test(dialog), dialog ? dialog.match(/Connects only to:[^\n]*/)?.[0] : "no dialog");
+    const wanted = slice.dialog ?? /Connects only to/;
+    check(`${label} 2b. Install opens the permission dialog ${slice.dialog ? "saying how it is confined" : "listing the hosts"}`, dialog && wanted.test(dialog), dialog ? dialog.match(slice.dialogLine ?? /Connects only to:[^\n]*/)?.[0] : "no dialog");
     await evaluate(`document.querySelector('[data-testid="accept-permissions"]')?.click()`);
-    const installed = await waitFor(`hibiki.sources.list().then((l) => l.some((s) => s.name === ${JSON.stringify(slice.name)}))`, 30_000);
+    const installed = await waitFor(`hibiki.sources.list().then((l) => l.some((s) => s.name === ${JSON.stringify(slice.name)}))`, slice.dialog ? 120_000 : 30_000);
     check(`${label} 2c. The extension is installed and enabled`, installed);
 
     // 3. Its content appears in the section by itself.
@@ -144,7 +149,7 @@ try {
     check(`${label} 4b. Opening a result shows its RiuPlay title page`, details && details.item.origin === "extension" && details.units.length > 0, details ? `${details.item.title} (${details.units.length} units)` : "no title");
     await sleep(1500);
     await shot(`m8-${slice.type}-03-title`);
-    if (!details) continue;
+    if (!details) return;
 
     // 5. Consume one unit in the native player/reader.
     const unit = details.units[0];
@@ -173,6 +178,8 @@ try {
     check(`${label} 6. Progress is saved and the title is in ${slice.continueText}`, progress && progress.position > 0 && continuing && sectionText.includes(slice.continueText), progress ? `position ${progress.position}` : "no progress");
     await shot(`m8-${slice.type}-05-continue`);
   }
+
+  for (const slice of SLICES.filter((x) => !ONLY || ONLY.some((o) => x.name.toLowerCase().includes(o.toLowerCase())))) await runSlice(slice);
 
   // Phase 8 mandatory ecosystem: Hibiki's anime sources - one click from the catalog, no address typed.
   if (!ONLY || ONLY.includes("hibiki")) {
@@ -209,6 +216,20 @@ try {
       break;
     }
     if (!opened) check(`${label} 3-4. Some installed Hibiki source returned titles`, false);
+  }
+
+  if (!ONLY || ONLY.includes("keiyoushi")) {
+    const label = "Manga [Keiyoushi]";
+    await go("#/sources", 2000);
+    await clickByText(["Repositories"]);
+    await waitFor(`document.body.innerText.includes("Keiyoushi manga extensions")`, 20_000);
+    const added = await evaluate(`(() => { const name = [...document.querySelectorAll("p")].find((p) => p.innerText.trim() === "Keiyoushi manga extensions"); let card = name; for (let i = 0; i < 6 && card; i++, card = card.parentElement) { const b = [...card.querySelectorAll("button")].find((x) => x.innerText.trim() === "Add repository" && !x.disabled); if (b) { b.click(); return true; } } return false; })()`);
+    const listed = added && (await waitFor(`hibiki.sources.repositories.list().then((l) => l.some((u) => u.includes("keiyoushi")))`, 90_000));
+    check(`${label} 1. Keiyoushi's repository is added with one click from Discover`, listed);
+    const offered = await evaluate(`hibiki.sources.repositories.list().then((u) => hibiki.sources.marketplace(u)).then((r) => r.filter((x) => x.url.includes("keiyoushi")).map((x) => x.ok ? x.extensions.length + " extensions, signer " + (x.extensions[0]?.signingFingerprint ?? "?").slice(0, 12) : "error: " + x.error)[0])`);
+    check(`${label} 2. Its extensions are read from the v2 (protobuf) index`, /^\d{3,} extensions/.test(offered ?? ""), offered);
+    await clickByText(["Extensions"]);
+    await runSlice({ ...KEIYOUSHI, name: KEIYOUSHI.name });
   }
 } catch (error) {
   check("run completed without an exception", false, String(error?.stack ?? error).slice(0, 400));

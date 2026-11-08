@@ -152,7 +152,7 @@ export function createExtensionsApi(runtime: ExtensionRuntime): Pick<HibikiApi["
     if (extension.apkPackage) {
       const port = getPlatform().apkSources;
       if (!port) throw new Error("APK sources are not available in this build");
-      await port.install(extension.manifestUrl, extension.apkPackage);
+      await port.install(extension.manifestUrl, extension.apkPackage, originUrl);
       await runtime.reload();
       notifyChanged();
       return runtime.list();

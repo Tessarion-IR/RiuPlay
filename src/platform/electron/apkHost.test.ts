@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { ApkHostError, ApkHostProcess, apkIconUrl, apkSourcesPort, locateApkHost, type LocateOptions } from "./apkHost";
+import { ApkHostError, ApkHostProcess, apkIconUrl, apkSourcesPort, confinedCommand, locateApkHost, systemLocateOptions, type LocateOptions } from "./apkHost";
 
 const options = (existing: string[], overrides: Partial<LocateOptions> = {}): LocateOptions => ({
   resourcesPath: null,
@@ -14,41 +14,53 @@ const options = (existing: string[], overrides: Partial<LocateOptions> = {}): Lo
 });
 
 describe("locateApkHost", () => {
-  it("uses the bundled jars and runtime of a packaged app", () => {
-    const resources = path.join("/res");
-    const bundled = path.join(resources, "apk-host");
-    const found = locateApkHost(options([path.join(bundled, "lib"), path.join(bundled, "runtime", "bin", "java")], { resourcesPath: resources }));
-    expect(found).toEqual({ java: path.join(bundled, "runtime", "bin", "java"), libDir: path.join(bundled, "lib") });
+  const resources = path.join("/res");
+  const bundled = path.join(resources, "apk-host");
+  const java = path.join(bundled, "runtime", "bin", "java.exe");
+  const lib = path.join(bundled, "lib");
+  const sandbox = path.join(bundled, "riuplay-sandbox.exe");
+
+  it("uses the bundled jars, runtime and sandbox launcher of a packaged app", () => {
+    expect(locateApkHost(options([lib, java, sandbox], { resourcesPath: resources, platform: "win32" }))).toEqual({
+      java,
+      runtimeDir: path.join(bundled, "runtime"),
+      libDir: lib,
+      sandbox,
+    });
   });
 
-  it("names java.exe on Windows", () => {
-    const resources = path.join("/res");
-    const bundled = path.join(resources, "apk-host");
-    const java = path.join(bundled, "runtime", "bin", "java.exe");
-    expect(locateApkHost(options([path.join(bundled, "lib"), java], { resourcesPath: resources, platform: "win32" }))?.java).toBe(java);
+  it("is off without the sandbox launcher: APK sources never run unconfined", () => {
+    expect(locateApkHost(options([lib, java], { resourcesPath: resources, platform: "win32" }))).toBeNull();
+  });
+
+  it("is off where the host cannot be confined (not Windows)", () => {
+    expect(locateApkHost(options([lib, java, sandbox], { resourcesPath: resources, platform: "linux" }))).toBeNull();
   });
 
   it("is off when a packaged app lacks its runtime, rather than falling back to whatever java is around", () => {
-    const resources = path.join("/res");
-    expect(locateApkHost(options([path.join(resources, "apk-host", "lib")], { resourcesPath: resources }))).toBeNull();
+    expect(locateApkHost(options([lib, sandbox], { resourcesPath: resources, platform: "win32" }))).toBeNull();
   });
 
-  it("is off in development until the host has been built", () => {
-    expect(locateApkHost(options([]))).toBeNull();
+  it("finds the Gradle bundle and the built launcher in development", () => {
+    const dev = path.join("/app", "apk-host", "build");
+    const found = locateApkHost(options([path.join(dev, "bundle-dev", "lib"), path.join(dev, "bundle-dev", "runtime", "bin", "java.exe"), path.join(dev, "bundle-dev", "riuplay-sandbox.exe")], { platform: "win32" }));
+    expect(found?.libDir).toBe(path.join(dev, "bundle-dev", "lib"));
+    expect(locateApkHost(options([], { platform: "win32" }))).toBeNull();
   });
+});
 
-  it("finds the Gradle build in development and prefers HIBIKI_JAVA, then JAVA_HOME, then the PATH", () => {
-    const lib = path.join("/app", "apk-host", "build", "install", "apk-host", "lib");
-    expect(locateApkHost(options([lib], { env: {} }))).toEqual({ java: "java", libDir: lib });
-    const home = path.join("/jdk");
-    const fromHome = path.join(home, "bin", "java");
-    expect(locateApkHost(options([lib, fromHome], { env: { JAVA_HOME: home } }))?.java).toBe(fromHome);
-    expect(locateApkHost(options([lib, fromHome, "/custom/java"], { env: { JAVA_HOME: home, HIBIKI_JAVA: "/custom/java" } }))?.java).toBe("/custom/java");
-  });
-
-  it("takes the host folder from HIBIKI_APK_HOST_DIR", () => {
-    const lib = path.join("/elsewhere", "lib");
-    expect(locateApkHost(options([lib], { env: { HIBIKI_APK_HOST_DIR: "/elsewhere" } }))?.libDir).toBe(lib);
+describe("confinedCommand", () => {
+  it("starts java through the launcher with only its runtime readable and its data folder writable", () => {
+    const location = { java: "C:\\h\\runtime\\bin\\java.exe", runtimeDir: "C:\\h\\runtime", libDir: "C:\\h\\lib", sandbox: "C:\\h\\riuplay-sandbox.exe" };
+    const { command, args } = confinedCommand(location, "C:\\data", "Main", ["--x", "1"]);
+    expect(command).toBe(location.sandbox);
+    const separator = args.indexOf("--");
+    const options = args.slice(0, separator);
+    expect(options.filter((_, i) => options[i - 1] === "--read")).toEqual([location.runtimeDir, location.libDir, path.join(path.dirname(location.libDir), "native")]);
+    expect(options.filter((_, i) => options[i - 1] === "--write")).toEqual(["C:\\data"]);
+    expect(options[options.indexOf("--name") + 1]).toBe("RiuPlay.ApkHost");
+    expect(args[separator + 1]).toBe(location.java);
+    expect(args.slice(-3)).toEqual(["Main", "--x", "1"]);
   });
 });
 
@@ -123,13 +135,16 @@ describe("apkSourcesPort", () => {
   });
 });
 
-// The real thing: starts the built host (apk-host/build/install) when there is one and a Java to run it.
-const lib = path.join(process.cwd(), "apk-host", "build", "install", "apk-host", "lib");
-const runnable = fs.existsSync(lib);
+// The real thing: the built bundle in its sandbox (apk-host: `gradlew bundle`).
+const realLocation = locateApkHost(systemLocateOptions(process.cwd(), null));
 
-describe.skipIf(!runnable)("ApkHostProcess with the real host", () => {
-  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "hibiki-apk-host-"));
-  const host = new ApkHostProcess({ java: process.env.HIBIKI_JAVA ?? "java", libDir: lib }, dataDir);
+describe.skipIf(!realLocation)("ApkHostProcess with the real, confined host", () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "riuplay-apk-host-"));
+  const refused: string[] = [];
+  const host = new ApkHostProcess(realLocation!, dataDir, async (h, p) => {
+    refused.push(`${h}:${p}`);
+    throw new Error("no network in this test");
+  });
   afterAll(async () => {
     await host.stop();
     fs.rmSync(dataDir, { recursive: true, force: true });
@@ -144,6 +159,11 @@ describe.skipIf(!runnable)("ApkHostProcess with the real host", () => {
     await expect(host.request("POST", "/source/apk%3A1/search", {})).rejects.toThrow(/not installed/);
     await expect(host.request("POST", "/install", { url: "http://insecure.example/x.apk" })).rejects.toThrow(ApkHostError);
   }, 30_000);
+
+  it("asks this process for every connection it wants", async () => {
+    await expect(host.request("POST", "/install", { url: "https://example.com/x.apk" })).rejects.toThrow(ApkHostError);
+    expect(refused).toContain("example.com:443");
+  }, 60_000);
 
   it("starts again after the process died", async () => {
     (host as unknown as { child: { kill(): void } }).child.kill();

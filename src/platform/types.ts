@@ -9,7 +9,7 @@
 // direct electron/node import with one of these ports, and adds what that module turns out to need.
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import type { UpdateKind } from "@shared/appUpdateSelection";
-import type { PlayerLink, SourceInfo, SubtitleTrack } from "@shared/types";
+import type { MarketplaceExtension, PlayerLink, SourceInfo, SubtitleTrack } from "@shared/types";
 import type * as schema from "../core/db/schema";
 
 export type PlatformKind = "electron" | "android";
@@ -293,7 +293,11 @@ export interface ApkSourcesPort {
   call(sourceId: string, method: string, args: unknown[]): Promise<unknown>;
   /** Downloads the package's APK and installs it; the signer is trusted on a first install, and an
    * update signed by anyone else is refused. */
-  install(url: string, packageName: string): Promise<void>;
+  install(url: string, packageName: string, repositoryUrl?: string): Promise<void>;
+  /** RiuPlay K3: a Keiyoushi (manga APK) repository's cards, or null when the URL is not one. */
+  readRepository?(url: string): Promise<MarketplaceExtension[] | null>;
+  /** RiuPlay: a manga source's page picture, by the token its getPages gave. */
+  page?(sourceId: string, token: string): Promise<{ contentType: string; body: Uint8Array }>;
   uninstall(packageName: string): Promise<void>;
   /** Hands over what a passed Cloudflare check earned, for a platform whose sources do not share the
    * check window's cookies (Android's do). Later requests to the site carry them. */

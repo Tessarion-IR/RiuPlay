@@ -103,6 +103,13 @@ export async function fetchRepositoryIndex(url: string): Promise<MarketplaceExte
   }
   // An Aniyomi/Mihon-style repository: an array of APK entries (index.min.json beside apk/ and icon/).
   if (Array.isArray(parsed)) return apkIndexEntries(url, parsed as AniyomiIndexEntry[]);
+  // RiuPlay K3: a Keiyoushi (Tachiyomi 1.6) repository: repo.json naming a protobuf index (index_v2).
+  if (parsed && typeof parsed === "object" && "index_v2" in parsed) {
+    const port = getPlatform().apkSources;
+    const cards = port?.readRepository ? await port.readRepository(url) : null;
+    if (!cards) throw new Error("Manga APK repositories (Keiyoushi) are not available in this build");
+    return cards;
+  }
   return (parsed as { extensions?: MarketplaceExtension[] }).extensions ?? [];
 }
 

@@ -40,6 +40,7 @@ class ApkHost(val dataDir: File) {
                 val settings = runCatching { ApkPreferences.describe(application, adapter) }.getOrDefault(JSONArray())
                 sources.put(adapter.info(settings))
             }
+            for (adapter in extension.mangaAdapters) sources.put(adapter.info())
         }
         val extensions = JSONArray()
         store.list().forEach { extension ->
@@ -52,7 +53,8 @@ class ApkHost(val dataDir: File) {
                 put("trusted", extension.isTrusted)
                 put("fingerprint", extension.signingFingerprint ?: JSONObject.NULL)
                 put("iconPath", extension.iconFile?.absolutePath ?: JSONObject.NULL)
-                put("sourceIds", JSONArray(loaded[extension.packageName]?.adapters?.map { it.id }.orEmpty()))
+                put("kind", extension.kind)
+                put("sourceIds", JSONArray(loaded[extension.packageName]?.let { it.adapters.map { a -> a.id } + it.mangaAdapters.map { a -> a.id } }.orEmpty()))
                 put("error", failures[extension.packageName]?.message ?: JSONObject.NULL)
             })
         }
@@ -65,7 +67,7 @@ class ApkHost(val dataDir: File) {
      * update signed by anyone else is refused before it replaces anything.
      */
     fun install(downloaded: File, expectedPackage: String?): InstalledApkExtension {
-        val incoming = store.inspect(downloaded) ?: throw IllegalStateException("The file is not an Aniyomi anime extension")
+        val incoming = store.inspect(downloaded) ?: throw IllegalStateException("The file is not an Aniyomi or Tachiyomi extension")
         val trusted = store.trustedFingerprint(incoming.packageName)
         if (trusted != null && trusted != incoming.signingFingerprint) {
             throw IllegalStateException("${incoming.name}: the update is signed by someone else than the installed version - not installed")
@@ -79,6 +81,27 @@ class ApkHost(val dataDir: File) {
         } finally {
             // Loads the new version, or puts the old one back when the install failed.
             registry.refresh()
+        }
+    }
+
+    /**
+     * RiuPlay: installs an APK the application downloaded into <data>/inbox. [fingerprint], when given, is
+     * the signer the repository publishes; an APK signed by anyone else is refused before it replaces anything.
+     */
+    fun installFromInbox(fileName: String, expectedPackage: String?, fingerprint: String?): InstalledApkExtension {
+        require(fileName.matches(Regex("[A-Za-z0-9._-]+\\.(apk|jar)"))) { "Bad file name" }
+        val file = File(File(dataDir, "inbox"), fileName)
+        require(file.isFile) { "No such download" }
+        try {
+            if (fingerprint != null) {
+                val actual = ExtensionStore.signingFingerprint(file)
+                check(actual != null && actual.split(',').contains(fingerprint.lowercase())) {
+                    "The extension is not signed by the repository's key - not installed"
+                }
+            }
+            return install(file, expectedPackage)
+        } finally {
+            file.delete()
         }
     }
 

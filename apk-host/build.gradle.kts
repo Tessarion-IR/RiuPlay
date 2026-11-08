@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "2.2.10"
-    kotlin("plugin.serialization") version "2.2.10"
+    kotlin("jvm") version "2.4.10"
+    kotlin("plugin.serialization") version "2.4.10"
     application
 }
 
@@ -17,26 +17,12 @@ kotlin { jvmToolchain(21) }
 application { mainClass.set("app.hibiki.apkhost.MainKt") }
 
 /**
- * The Android build's own sources for the part that is plain Kotlin: the Aniyomi source API, the
- * network helpers and the adapter that answers the page in the shared JSON shapes. They compile
- * here against src/main/java's android.* stand-ins, so the two builds cannot drift apart. What
- * needs the real Android (the network helper's WebView, the package manager) is replaced by this
- * project's own file of the same name.
+ * Hibiki's shared Kotlin sources (GPL-3.0): the Aniyomi source API, the network helpers and the
+ * adapter that answers in the shared JSON shapes. Hibiki compiled these from its Android build; RiuPlay
+ * keeps its own copy in shared/ (it has no Android build), compiled against src/main/java's android.*
+ * stand-ins. What needs the real Android is replaced by this project's src/main file of the same name.
  */
-val androidSources = rootDir.resolve("../android/app/src/main/java")
-val syncShared = tasks.register<Sync>("syncSharedSources") {
-    from(androidSources) {
-        include("eu/**/*.kt", "app/hibiki/apk/ApkSourceAdapter.kt", "app/hibiki/apk/ApkFilters.kt", "app/hibiki/apk/ApkPreferences.kt")
-        exclude(
-            "eu/kanade/tachiyomi/AppInfo.kt",
-            "eu/kanade/tachiyomi/network/NetworkHelper.kt",
-            "eu/kanade/tachiyomi/network/JavaScriptEngine.kt",
-            "eu/kanade/tachiyomi/network/interceptor/CloudflareInterceptor.kt",
-        )
-    }
-    into(layout.buildDirectory.dir("shared-src"))
-}
-sourceSets.main { kotlin.srcDir(files(layout.buildDirectory.dir("shared-src")).builtBy(syncShared)) }
+sourceSets.main { kotlin.srcDir("shared") }
 
 dependencies {
     implementation("de.femtopedia.dex2jar:dex-translator:2.4.38")
@@ -45,23 +31,25 @@ dependencies {
     implementation("com.android.tools.build:apksig:8.7.3")
     implementation("org.ow2.asm:asm:9.9.1")
     implementation("org.ow2.asm:asm-tree:9.9.1")
-    implementation("com.squareup.okhttp3:okhttp:5.3.2")
-    implementation("com.squareup.okhttp3:okhttp-brotli:5.3.2")
-    implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:5.3.2")
+    implementation("com.squareup.okhttp3:okhttp:5.4.0")
+    implementation("com.squareup.okhttp3:okhttp-brotli:5.4.0")
+    implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:5.4.0")
+    // Keiyoushi 1.6 sources decode zstd responses themselves (CompressionInterceptor with Zstd).
+    implementation("com.squareup.okhttp3:okhttp-zstd:5.4.0")
     implementation("org.jsoup:jsoup:1.23.2")
     implementation("org.json:json:20250517")
     implementation("org.nanohttpd:nanohttpd:2.3.1")
     implementation("org.mozilla:rhino:1.7.15")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-okio:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-okio:1.11.0")
     implementation("io.reactivex:rxjava:1.3.8")
     implementation("com.github.null2264.injekt:injekt-core:4135455a2a")
 
     testImplementation(kotlin("test"))
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.4.0")
 }
 
 tasks.test {
@@ -69,9 +57,14 @@ tasks.test {
     // The survey tests read the APK collection the extension ABI check downloads.
     System.getProperty("apk.only")?.let { systemProperty("apk.only", it) }
     System.getProperty("apk.live")?.let { systemProperty("apk.live", it) }
+    System.getProperty("kei.apks")?.let { systemProperty("kei.apks", it) }
     testLogging { showStandardStreams = true }
     systemProperty("apk.samples", rootDir.resolve("../.tmp/extension-abi/apk-yuzono").absolutePath)
     maxHeapSize = "1g"
+    // As the application runs the host (apkHost.ts): see HOST_JVM_ARGS there.
+    jvmArgs("-XX:+UnlockDiagnosticVMOptions", "-XX:-BytecodeVerificationRemote")
+    dependsOn("bundleNative")
+    systemProperty("riuplay.native.dir", layout.buildDirectory.dir("bundle-" + (findProperty("bundleName") as String? ?: "dev") + "/native").get().asFile.absolutePath)
 }
 
 tasks.register<JavaExec>("survey") {
@@ -121,9 +114,34 @@ val jlinkRuntime = tasks.register<Exec>("jlinkRuntime") {
     )
 }
 
+// RiuPlay: native libraries the host loads, read-only beside the jars (the sandbox will not load code from a
+// folder the host can write). zstd-kmp's Windows DLL, for Keiyoushi sources' zstd responses.
+val bundleNative = tasks.register<Copy>("bundleNative") {
+    val zstd = configurations.runtimeClasspath.map { it.files.first { f -> f.name.startsWith("zstd-kmp-jvm") } }
+    from(zstd.map { zipTree(it) }) {
+        include("jni/amd64/zstd-kmp.dll")
+        eachFile { path = name }
+        includeEmptyDirs = false
+    }
+    into(bundleDir.map { it.dir("native") })
+}
+
+// RiuPlay K4: the launcher that confines the host (sandbox/RiuPlaySandbox.cs: AppContainer, Job Object). Built
+// with the C# compiler of the .NET Framework 4.x every Windows 10/11 has; any CPU, so one build serves x64 and arm64.
+val bundleSandbox = tasks.register<Exec>("bundleSandbox") {
+    val source = file("sandbox/RiuPlaySandbox.cs")
+    val output = bundleDir.map { it.file("riuplay-sandbox.exe").asFile }
+    inputs.file(source)
+    outputs.file(output)
+    onlyIf { org.gradle.internal.os.OperatingSystem.current().isWindows }
+    val csc = File(System.getenv("WINDIR") ?: "C:\\Windows", "Microsoft.NET/Framework64/v4.0.30319/csc.exe")
+    doFirst { output.get().parentFile.mkdirs() }
+    commandLine(csc.absolutePath, "-nologo", "-optimize+", "-platform:anycpu", "-target:exe", "-out:" + output.get().absolutePath, source.absolutePath)
+}
+
 tasks.register("bundle") {
-    description = "Builds build/bundle-<name>: the host's jars and the trimmed Java runtime that runs them."
-    dependsOn(bundleLibs, jlinkRuntime)
+    description = "Builds build/bundle-<name>: the host's jars, native libraries, the trimmed Java runtime that runs them and the sandbox launcher."
+    dependsOn(bundleLibs, bundleNative, jlinkRuntime, bundleSandbox)
 }
 
 // Runs the suite on the trimmed runtime instead of the full JDK: proves it has every module the host needs.

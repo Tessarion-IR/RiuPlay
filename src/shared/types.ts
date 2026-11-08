@@ -517,6 +517,9 @@ export interface MarketplaceExtension {
   /** RiuPlay: a short description, and the license of the content it serves (built-in repository). */
   description?: string | null;
   contentLicense?: string | null;
+  /** RiuPlay K3: the signing key (SHA-256 of its certificate) a Keiyoushi repository publishes. Shown only:
+   * the install re-reads it from the repository in the main process. */
+  signingFingerprint?: string;
   /** RiuPlay M7: SHA-256 (hex) of the manifest and script files, checked before install. */
   sha256?: { manifest: string; script: string };
   /** RiuPlay M1, filled in by the main process when listing: can this build install it, and if not, why. */

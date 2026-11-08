@@ -37,7 +37,15 @@ describe("built-in source catalog", () => {
     }
   });
 
-  it("APK repositories say they need the opt-in Java runtime", () => {
-    for (const e of SOURCE_CATALOG) if (e.action.kind === "add-repository" && e.action.requires === "apk-runtime") expect(e.cautions.join(" ")).toMatch(/full user rights/);
+  it("APK repositories say their code runs in the sandboxed Java runtime", () => {
+    for (const e of SOURCE_CATALOG) if (e.action.kind === "add-repository" && e.action.requires === "apk-runtime") expect(e.cautions.join(" ")).toMatch(/sandboxed Java runtime/);
+  });
+
+  it("offers Keiyoushi as a one-click manga repository run inside RiuPlay, not through Suwayomi", () => {
+    const keiyoushi = SOURCE_CATALOG.find((e) => e.id === "keiyoushi-extensions")!;
+    expect(keiyoushi.category).toBe("manga");
+    expect(keiyoushi.action).toEqual({ kind: "add-repository", indexUrl: "https://raw.githubusercontent.com/keiyoushi/extensions/repo/repo.json", requires: "apk-runtime" });
+    expect(keiyoushi.cautions.join(" ")).toMatch(/signed/);
+    expect(ECOSYSTEM_REPOSITORY_URLS).toContain("https://raw.githubusercontent.com/keiyoushi/extensions/repo/repo.json");
   });
 });

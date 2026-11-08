@@ -22,6 +22,8 @@ describe("stored references", () => {
   it("split origin_ref at the first colon: source ids have none, title ids may", () => {
     expect(parseOriginRef("riuplay.librivox:200")).toEqual({ sourceId: "riuplay.librivox", titleId: "200" });
     expect(parseOriginRef("src:a:b")).toEqual({ sourceId: "src", titleId: "a:b" });
+    // An APK source id carries a colon of its own.
+    expect(parseOriginRef("apk:5973713386239249589:/comic/1:2")).toEqual({ sourceId: "apk:5973713386239249589", titleId: "/comic/1:2" });
     expect(parseOriginRef("nocolon")).toBeNull();
   });
 });

@@ -21,7 +21,7 @@ import type { AnimeTitle, ExtensionContentType, PlayerLink, SourceInfo } from "@
 export type { ProviderDetail, ProviderSource, ProviderTitle, ProviderUnit };
 import { localMediaUnits } from "../../core/db/schema";
 import { insertMedia, storedItem, storedUnit, toUnit } from "../../core/media/media";
-import type { ExtensionRuntime } from "../../core/extensions/runtime";
+import { isApkSource, type ExtensionRuntime } from "../../core/extensions/runtime";
 import { getPlatform } from "../../core/platform";
 import { logger } from "../../core/logger";
 import type { NetClient } from "../net/client";
@@ -29,6 +29,8 @@ import type { Caller } from "../net/policy";
 
 export const EXT_UNIT = "ext:unit:";
 export const EXT_PAGE = "ext:page:";
+/** RiuPlay K5: an APK manga source's page, by the token its host gave (served by the host, never fetched here). */
+export const EXT_APK_PAGE = "ext:apkpage:";
 
 const httpUrl = (value: unknown): string => (typeof value === "string" && /^https?:\/\//i.test(value) ? value : "");
 const titleText = (t: AnimeTitle): string => t.englishName || t.originalName || t.russianName || t.id;
@@ -48,7 +50,8 @@ export function parseUnitRef(url: string): { groupId: string; episodeId: string 
 }
 
 export function parseOriginRef(originRef: string): { sourceId: string; titleId: string } | null {
-  const at = originRef.indexOf(":");
+  // An APK source's id has a colon of its own ("apk:<number>"); script extension ids have none.
+  const at = originRef.startsWith("apk:") ? originRef.indexOf(":", 4) : originRef.indexOf(":");
   return at > 0 ? { sourceId: originRef.slice(0, at), titleId: originRef.slice(at + 1) } : null;
 }
 
@@ -65,11 +68,12 @@ export class ExtensionMediaService {
 
   constructor(private readonly runtime: ExtensionRuntime, private readonly net: NetClient) {}
 
-  /** Installed, enabled script extensions that provide `type` (APK sources are not part of this). */
+  /** Installed, enabled extensions that provide `type`: script extensions, and (RiuPlay K5) APK sources -
+   * Tachiyomi/Keiyoushi manga ones in this media pipeline, Aniyomi anime ones in the anime pipeline. */
   sources(type: MediaType): ProviderSource[] {
     return this.runtime
       .list()
-      .filter((s: SourceInfo) => s.runtime !== undefined && !s.id.startsWith("apk:") && (s.contentType ?? "video") === type)
+      .filter((s: SourceInfo) => (s.runtime !== undefined || isApkSource(s.id)) && (s.contentType ?? "video") === type)
       .map((s) => ({ id: s.id, name: s.name, contentType: (s.contentType ?? "video") as MediaType, lang: s.lang ?? null, pipeline: s.pipeline ?? "anime" }));
   }
 
@@ -140,7 +144,8 @@ export class ExtensionMediaService {
     if (!ctx || ctx.media.contentType !== "manga") throw new Error("not an extension chapter");
     const pages = await this.runtime.getPages(ctx.origin.sourceId, ctx.origin.titleId, ctx.ref.groupId, ctx.ref.episodeId);
     if (pages.length === 0) throw new Error("This chapter has no pages");
-    const pagesJson = JSON.stringify(pages.map((p) => `${EXT_PAGE}${p.url}`));
+    const prefix = isApkSource(ctx.origin.sourceId) ? EXT_APK_PAGE : EXT_PAGE;
+    const pagesJson = JSON.stringify(pages.map((p) => `${prefix}${p.url}`));
     await getPlatform().db.get().update(localMediaUnits).set({ pagesJson }).where(eq(localMediaUnits.id, unitId)).run();
     return toUnit({ ...ctx.unit, pagesJson });
   }
@@ -173,6 +178,14 @@ export class ExtensionMediaService {
         const index = num(parts[2]);
         const pages = JSON.parse(ctx.unit.pagesJson) as unknown[];
         const page = index !== null ? pages[index] : undefined;
+        if (typeof page === "string" && page.startsWith(EXT_APK_PAGE) && isApkSource(ctx.origin.sourceId)) {
+          // The confined host fetches it the way the source does (its headers, cookies, interceptors), through the broker.
+          const port = getPlatform().apkSources;
+          if (!port?.page) return notFound();
+          const picture = await port.page(ctx.origin.sourceId, page.slice(EXT_APK_PAGE.length));
+          if (!/^image\//.test(picture.contentType)) return notFound();
+          return new Response(Buffer.from(picture.body), { status: 200, headers: { "content-type": picture.contentType, "cache-control": "private, max-age=3600" } });
+        }
         if (typeof page !== "string" || !page.startsWith(EXT_PAGE)) return notFound();
         return await this.pipe(page.slice(EXT_PAGE.length), caller, null, {}, request.signal);
       }

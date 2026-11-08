@@ -35,7 +35,7 @@ export function describePermissions(extension: Pick<MarketplaceExtension, "permi
   const p = effectivePermissions(extension);
   const list: ExtensionPermission[] = [];
   if (p.native) {
-    list.push({ id: "native-code", level: "danger", text: "Runs native Aniyomi (Android) code in a Java process with your full Windows user rights. RiuPlay cannot sandbox it." });
+    list.push({ id: "native-code", level: "warning", text: "Runs Android extension code in RiuPlay's Java runtime, inside a Windows sandbox: no access to your files or other programs, and no network except through RiuPlay." });
   }
   if (p.hosts === "any-public") {
     list.push({ id: "network:any-public", level: "warning", text: "Connects to any public website. Your computer, your local network and cloud-metadata addresses stay blocked." });

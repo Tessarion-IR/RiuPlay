@@ -207,6 +207,27 @@ export class NetClient {
     return agent;
   }
 
+  /**
+   * RiuPlay K4: a raw TCP connection for the confined APK host (platform/electron/apkBroker.ts), whose own
+   * TLS runs inside it end to end. The same checks as every request here: the caller's host policy, the
+   * active resolver (DoH, through the proxy when one is set), every resolved address must be public, the
+   * socket goes to the validated address, and a configured proxy is never bypassed. Web ports only.
+   */
+  async openTunnel(caller: Caller, host: string, port: number, signal: AbortSignal): Promise<net.Socket> {
+    if (port !== 443 && port !== 80) throw new NetError("blocked-address", `port ${port} is not a web port`);
+    if (this.options.ready) await this.options.ready();
+    const state = this.proxyState();
+    if (state.status === "invalid") throw new NetError("proxy-invalid", `the configured proxy can't be used: ${state.reason}`);
+    if (state.status === "unavailable") throw new NetError("proxy-unavailable", `the configured proxy is unavailable: ${state.reason}`);
+    const proxy = state.status === "ok" ? state.config : null;
+    const policy = policyFor(caller, { timeoutMs: this.options.defaultTimeoutMs ?? 25_000, hostsFor: this.options.hostsFor });
+    const literal = net.isIPv6(host) ? `[${host}]` : host;
+    const validated = await this.validate(`${port === 443 ? "https" : "http"}://${literal}:${port}/`, { ...policy, allowances: [] }, signal);
+    // "http:": the connector hands back the plain socket (or proxy tunnel) without TLS of its own.
+    const connect = pinnedConnector({ ...validated.target, protocol: "http:" }, { proxy, connectTimeoutMs: this.options.connectTimeoutMs ?? 15_000, onConnect: this.options.onConnect });
+    return new Promise((resolve, reject) => connect({}, (error, socket) => (error || !socket ? reject(error ?? new NetError("connect-failed", "no socket")) : resolve(socket))));
+  }
+
   /** Walks the request to its final response (headers only); the body is still unread. */
   private async open(req: ControlledRequest, mode: "buffer" | "stream", deadline: AbortSignal, signal: AbortSignal): Promise<{ head: ResponseHead; data: Dispatcher.ResponseData }> {
     if (this.options.ready) await this.options.ready();

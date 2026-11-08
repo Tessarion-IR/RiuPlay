@@ -11,6 +11,8 @@ class LoadedApkExtension(
     /** Kept alive with the sources: their classes come from it. */
     val classLoader: ClassLoader,
     val adapters: List<ApkSourceAdapter>,
+    /** RiuPlay: the manga sources of a Tachiyomi extension (empty for an Aniyomi one). */
+    val mangaAdapters: List<app.riuplay.apkhost.MangaSourceAdapter> = emptyList(),
 )
 
 /** An installed extension that could not be loaded, and why - shown on the Sources screen. */
@@ -31,6 +33,9 @@ class SourceRegistry(private val store: ExtensionStore, private val cacheDir: Fi
     fun adapter(sourceId: String): ApkSourceAdapter? =
         loaded.values.asSequence().flatMap { it.adapters.asSequence() }.firstOrNull { it.id == sourceId }
 
+    fun mangaAdapter(sourceId: String): app.riuplay.apkhost.MangaSourceAdapter? =
+        loaded.values.asSequence().flatMap { it.mangaAdapters.asSequence() }.firstOrNull { it.id == sourceId }
+
     /** Loads what is installed and trusted, keeping extensions already loaded at the same version. */
     fun refresh() = synchronized(lock) {
         val next = mutableMapOf<String, LoadedApkExtension>()
@@ -45,7 +50,7 @@ class SourceRegistry(private val store: ExtensionStore, private val cacheDir: Fi
             try {
                 val jar = ExtensionLoader.jarFor(extension, cacheDir)
                 val classLoader = ExtensionLoader.classLoader(jar, extension.file)
-                next[extension.packageName] = LoadedApkExtension(extension, classLoader, ExtensionLoader.adapters(extension, classLoader))
+                next[extension.packageName] = LoadedApkExtension(extension, classLoader, ExtensionLoader.adapters(extension, classLoader), ExtensionLoader.mangaAdapters(extension, classLoader))
             } catch (error: Throwable) {
                 Log.w(TAG, "loading ${extension.packageName} failed", error)
                 failed += ApkLoadFailure(extension, error.message ?: error.javaClass.simpleName)

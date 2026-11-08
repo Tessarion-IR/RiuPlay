@@ -2,24 +2,18 @@ package app.hibiki.apkhost
 
 import org.json.JSONObject
 import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
 import java.nio.file.Files
-import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/** The HTTP face of the host, as the application talks to it: token, routes, error mapping. */
+/** The host's calls as the application makes them (RiuPlay: REQ frames, see Broker): routes, error mapping. */
 class ServerTest {
     private val dir = Files.createTempDirectory("apk-host-server").toFile()
     private val sample: File? = System.getProperty("apk.samples")?.let(::File)
         ?.listFiles { f -> f.name.startsWith("aniyomi-ru.animevost-") }?.firstOrNull()
     private val host = ApkHost(dir)
-    private val server = Server(host, "secret").also { it.start() }
-
-    @AfterTest
-    fun stop() = server.stop()
+    private val server = Server(host)
 
     /** What came back: the status and the raw body (the JDK's own client, so the test runs on a trimmed runtime too). */
     private class Answer(val status: Int, val bytes: ByteArray) {
@@ -27,33 +21,12 @@ class ServerTest {
         fun body() = bytes.decodeToString()
     }
 
-    private fun send(method: String, path: String, body: String? = null, token: String? = "secret"): Answer {
-        val connection = URL("http://127.0.0.1:${server.port}$path").openConnection() as HttpURLConnection
-        connection.requestMethod = method
-        if (token != null) connection.setRequestProperty(Server.TOKEN_HEADER, token)
-        if (body != null) {
-            connection.doOutput = true
-            connection.outputStream.use { it.write(body.toByteArray()) }
-        }
-        val status = connection.responseCode
-        val stream = if (status >= 400) connection.errorStream else connection.inputStream
-        return Answer(status, stream?.use { it.readBytes() } ?: ByteArray(0))
+    private fun send(method: String, path: String, body: String? = null): Answer {
+        val reply = server.handle(method, path, body ?: "")
+        return Answer(reply.status, reply.body)
     }
 
     private fun install() = host.install(dir.resolve("in.apk").also { sample!!.copyTo(it, overwrite = true) }, null)
-
-    @Test
-    fun `a request without the token is refused`() {
-        assertEquals(403, send("GET", "/extensions", token = null).statusCode())
-        assertEquals(403, send("GET", "/extensions", token = "wrong").statusCode())
-        assertEquals(200, send("GET", "/extensions").statusCode())
-    }
-
-    @Test
-    fun `it listens on the loopback address only`() {
-        assertTrue(server.address.address.isLoopbackAddress)
-        assertTrue(server.port > 0)
-    }
 
     @Test
     fun `unknown routes and sources are told apart`() {

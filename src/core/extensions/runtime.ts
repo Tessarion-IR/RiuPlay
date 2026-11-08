@@ -281,6 +281,16 @@ function throughSnapshot(forward: BridgeHandler, session: SnapshotSession): Brid
   };
 }
 
+/** RiuPlay K5: an APK manga source's pages - opaque tokens (base64url), at most 2000. */
+export function apkPages(raw: unknown): ChapterPage[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .slice(0, 2000)
+    .map((entry) => (entry && typeof entry === "object" ? (entry as { url?: unknown }).url : null))
+    .filter((token): token is string => typeof token === "string" && /^[A-Za-z0-9_-]{1,4096}$/.test(token))
+    .map((url) => ({ url }));
+}
+
 /** Host API 2: getPages' answer, kept to http(s) URLs with string headers only (at most 2000 pages). */
 export function normalisePages(raw: unknown): ChapterPage[] {
   if (!Array.isArray(raw)) return [];
@@ -785,6 +795,8 @@ export class ExtensionRuntime {
 
   /** RiuPlay host API 2: what an installed source provides (video when it doesn't say). */
   contentTypeOf(sourceId: string): ExtensionContentType {
+    // RiuPlay K5: an APK source says itself (the host reports Tachiyomi sources as "manga").
+    if (isApkSource(sourceId)) return contentTypeOf(this.apkSources.find((source) => source.id === sourceId));
     return contentTypeOf(this.extensions.get(sourceId)?.manifest);
   }
 
@@ -792,6 +804,8 @@ export class ExtensionRuntime {
   async getPages(sourceId: string, titleId: string, groupId: string, chapterId: string): Promise<ChapterPage[]> {
     if (this.contentTypeOf(sourceId) !== "manga") throw new Error(`Source "${sourceId}" does not provide manga`);
     const raw = await this.shareRead("getPages", sourceId, [titleId, groupId, chapterId], () => this.run<unknown[]>("getPages", sourceId, [titleId, groupId, chapterId]));
+    // RiuPlay K5: an APK source's pages are tokens its host turns back into the source's own image request.
+    if (isApkSource(sourceId)) return apkPages(raw);
     return normalisePages(raw);
   }
 

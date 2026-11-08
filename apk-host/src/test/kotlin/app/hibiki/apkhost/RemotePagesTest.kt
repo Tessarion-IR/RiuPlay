@@ -162,38 +162,19 @@ class RemotePagesTest {
     }
 
     @Test
-    fun `the application's stream carries commands out and events back over HTTP`() {
-        val server = Server(ApkHost(Files.createTempDirectory("apk-host-pages-server").toFile()), "secret", pages).also { it.start() }
-        try {
-            val stream = (URL("http://127.0.0.1:${server.port}/pages/commands").openConnection() as HttpURLConnection).apply {
-                setRequestProperty(Server.TOKEN_HEADER, "secret")
-                readTimeout = 10_000
-            }
-            val reader = BufferedReader(InputStreamReader(stream.inputStream))
-            val finished = CountDownLatch(1)
-            val view = view(object : WebViewClient() {
-                override fun onPageFinished(view: WebView, url: String) = finished.countDown()
-            })
-            view.loadUrl("https://embed.example/stream")
-            var line = reader.readLine()
-            while (line != null && line.isBlank()) line = reader.readLine()
-            val load = JSONObject(line)
-            assertEquals("https://embed.example/stream", load.getString("url"))
-
-            val event = (URL("http://127.0.0.1:${server.port}/pages/event").openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                doOutput = true
-                setRequestProperty(Server.TOKEN_HEADER, "secret")
-            }
-            event.outputStream.use { it.write(JSONObject().put("page", load.getLong("page")).put("type", "finished").put("url", "https://embed.example/stream").toString().toByteArray()) }
-            assertEquals(200, event.responseCode)
-            assertTrue(finished.await(2, TimeUnit.SECONDS))
-
-            val refused = URL("http://127.0.0.1:${server.port}/pages/commands").openConnection() as HttpURLConnection
-            assertEquals(403, refused.responseCode)
-        } finally {
-            server.stop()
-        }
+    fun `commands go out and events come back through the server`() {
+        val server = Server(ApkHost(Files.createTempDirectory("apk-host-pages-server").toFile()), pages)
+        val finished = CountDownLatch(1)
+        val view = view(object : WebViewClient() {
+            override fun onPageFinished(view: WebView, url: String) = finished.countDown()
+        })
+        view.loadUrl("https://embed.example/stream")
+        // RiuPlay: the commands leave as EVENT frames (Server.start); the queue they come from is this.
+        val load = pages.nextCommand(5_000)!!
+        assertEquals("https://embed.example/stream", load.getString("url"))
+        val reply = server.handle("POST", "/pages/event", JSONObject().put("page", load.getLong("page")).put("type", "finished").put("url", "https://embed.example/stream").toString())
+        assertEquals(200, reply.status)
+        assertTrue(finished.await(2, TimeUnit.SECONDS))
     }
 
     class Bridge {

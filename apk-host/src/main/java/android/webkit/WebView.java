@@ -47,6 +47,16 @@ public class WebView extends View {
 
     public void setWebViewClient(WebViewClient client) { this.client = client; }
 
+    // RiuPlay: kept for extensions that set one (Keiyoushi's WebView helper); the host's pages report no console or progress.
+    private WebChromeClient chromeClient;
+
+    public void setWebChromeClient(WebChromeClient client) { chromeClient = client; }
+
+    public WebChromeClient getWebChromeClient() { return chromeClient; }
+
+    /** RiuPlay: Android's WebView provider class loader; here the host's own. */
+    public static ClassLoader getWebViewClassLoader() { return WebView.class.getClassLoader(); }
+
     public WebViewClient getWebViewClient() { return client; }
 
     public void addJavascriptInterface(Object object, String name) {

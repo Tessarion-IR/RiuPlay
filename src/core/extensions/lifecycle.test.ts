@@ -54,9 +54,10 @@ describe("permissions", () => {
     expect(describePermissions(entry({ permissions: { hosts: ["example.com"], browser: false } })).map((p) => p.id)).toEqual(["network:example.com", "storage"]);
   });
 
-  it("APK extensions are labelled as native code with full user rights; NSFW is shown", () => {
+  it("APK extensions are labelled as sandboxed native code; NSFW is shown", () => {
     const list = describePermissions(entry({ apkPackage: "eu.kanade.x", isNsfw: true }));
-    expect(list[0]).toMatchObject({ id: "native-code", level: "danger" });
+    expect(list[0]).toMatchObject({ id: "native-code", level: "warning" });
+    expect(list[0].text).toMatch(/sandbox/);
     expect(list.map((p) => p.id)).toContain("nsfw");
   });
 

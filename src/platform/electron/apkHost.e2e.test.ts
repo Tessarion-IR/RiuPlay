@@ -1,15 +1,15 @@
 // The whole path an APK source takes on the desktop, against the real repository and the real site:
 // the Yuzono index the app seeds -> the marketplace's own parsing -> install through the port ->
 // the source listed with its icon -> search -> a title -> episodes -> links. Live network, so it is off
-// unless HIBIKI_E2E_APK=1 (and the host built: `gradlew installDist` in apk-host/).
+// unless HIBIKI_E2E_APK=1 (and the confined host built: `gradlew bundle` in apk-host/).
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it, vi } from "vitest";
-import { ApkHostProcess, apkSourcesPort } from "./apkHost";
+import { ApkHostProcess, apkSourcesPort, locateApkHost, systemLocateOptions } from "./apkHost";
+import { netClient } from "../../main/net/state";
 
-const lib = path.join(process.cwd(), "apk-host", "build", "install", "apk-host", "lib");
-const enabled = process.env.HIBIKI_E2E_APK === "1" && fs.existsSync(lib);
+const enabled = process.env.HIBIKI_E2E_APK === "1" && locateApkHost(systemLocateOptions(process.cwd(), null)) !== null;
 
 // fetchRepositoryIndex asks the platform whether it runs APK sources before it will read an APK index.
 vi.mock("../../core/platform", () => ({
@@ -26,7 +26,7 @@ vi.mock("../../core/platform", () => ({
 
 describe.skipIf(!enabled)("an APK source from the Yuzono repository, end to end", () => {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "hibiki-apk-e2e-"));
-  const host = new ApkHostProcess({ java: process.env.HIBIKI_JAVA ?? "java", libDir: lib }, dataDir);
+  const host = new ApkHostProcess(locateApkHost(systemLocateOptions(process.cwd(), null))!, dataDir, (h, p, signal) => netClient.openTunnel({ kind: "extension", sourceId: "apk:host" }, h, p, signal));
   const port = apkSourcesPort(host);
   afterAll(async () => {
     await host.stop();

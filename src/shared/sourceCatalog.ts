@@ -73,7 +73,7 @@ export const SOURCE_CATALOG: readonly CatalogEntry[] = [
     license: "Apache-2.0",
     maintenance: "Public, not archived, with open issues and pull requests when checked.",
     cautions: [
-      "APK extensions run native code in a Java process with your full user rights; RiuPlay runs them only after you turn on APK sources in Settings.",
+      "APK extensions run Android code in RiuPlay's sandboxed Java runtime (no access to your files; network only through RiuPlay).",
       "The built repository's page appeared under a different account (mojuru/anime-repo) than its source code when checked; its README gives this index address.",
       "Not reviewed by RiuPlay. Sites the extensions reach are third parties.",
     ],
@@ -83,14 +83,17 @@ export const SOURCE_CATALOG: readonly CatalogEntry[] = [
   {
     id: "keiyoushi-extensions",
     category: "manga",
-    name: "Keiyoushi extensions (for your Suwayomi server)",
-    description: "Mihon/Tachiyomi-format manga extensions. Add this repository in your Suwayomi server's own settings; RiuPlay then reads through the server.",
+    name: "Keiyoushi manga extensions",
+    description: "The Mihon/Tachiyomi manga extensions Keiyoushi maintains, run inside RiuPlay - no Suwayomi server needed. Once added, its extensions are listed under Extensions and install with one click; their titles appear in the Manga section.",
     homepage: "https://github.com/keiyoushi/extensions",
     sourceCode: "https://github.com/keiyoushi/extensions-source",
     license: "Apache-2.0 (source code)",
     maintenance: "Public, not archived; the source repository had several thousand commits and open pull requests when checked.",
-    cautions: ["Runs inside your Suwayomi server, not in RiuPlay.", "Not reviewed by RiuPlay. Sites the extensions reach are third parties."],
-    action: { kind: "add-in-suwayomi", indexUrl: "https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json" },
+    cautions: [
+      "Not reviewed by RiuPlay. Most extensions read unofficial manga websites; some are marked 18+ and are hidden unless you show adult content.",
+      "Each extension is installed only if it is signed with the repository's published key, and runs in RiuPlay's sandboxed Java runtime (no access to your files; network only through RiuPlay).",
+    ],
+    action: { kind: "add-repository", indexUrl: "https://raw.githubusercontent.com/keiyoushi/extensions/repo/repo.json", requires: "apk-runtime" },
     checked: CATALOG_CHECKED,
   },
   {
@@ -126,4 +129,4 @@ export const CATALOG_GAPS: Partial<Record<CatalogCategory, string>> = {};
 
 /** RiuPlay: repositories added from this catalog whose extensions are listed directly under
  * Sources > Extensions (like the built-in repository), so they install with one click. */
-export const ECOSYSTEM_REPOSITORY_URLS: readonly string[] = SOURCE_CATALOG.flatMap((e) => (e.action.kind === "add-repository" && e.action.requires === null ? [e.action.indexUrl] : []));
+export const ECOSYSTEM_REPOSITORY_URLS: readonly string[] = SOURCE_CATALOG.flatMap((e) => (e.action.kind === "add-repository" ? [e.action.indexUrl] : []));

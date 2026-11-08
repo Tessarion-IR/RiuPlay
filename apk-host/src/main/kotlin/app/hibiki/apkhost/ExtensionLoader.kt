@@ -24,6 +24,8 @@ object ExtensionLoader {
 
     /** Class files for [apk], converted now unless an up-to-date copy is in [cacheDir]. */
     fun jarFor(extension: InstalledApkExtension, cacheDir: File): File {
+        // RiuPlay: a signed Keiyoushi jar is already JVM class files.
+        if (extension.file.extension == "kjar") return extension.file
         cacheDir.mkdirs()
         val jar = File(cacheDir, "${extension.packageName}-${extension.versionCode}-c$CONVERTER_VERSION.jar")
         if (jar.isFile && jar.lastModified() >= extension.file.lastModified()) return jar
@@ -95,7 +97,31 @@ object ExtensionLoader {
     }
 
     fun adapters(extension: InstalledApkExtension, classLoader: ClassLoader): List<ApkSourceAdapter> =
-        createSources(extension, classLoader).map { ApkSourceAdapter(extension, it) }
+        if (extension.kind == "manga") emptyList() else createSources(extension, classLoader).map { ApkSourceAdapter(extension, it) }
+
+    /** RiuPlay: a Tachiyomi (extensions-lib 1.6) extension's catalogue sources. */
+    fun mangaAdapters(extension: InstalledApkExtension, classLoader: ClassLoader): List<app.riuplay.apkhost.MangaSourceAdapter> {
+        if (extension.kind != "manga") return emptyList()
+        val entryClassName = entryClassName(extension)
+        val sources = try {
+            val entry = Class.forName(entryClassName, true, classLoader)
+            when {
+                eu.kanade.tachiyomi.source.SourceFactory::class.java.isAssignableFrom(entry) ->
+                    (entry.getDeclaredConstructor().newInstance() as eu.kanade.tachiyomi.source.SourceFactory).createSources()
+                eu.kanade.tachiyomi.source.Source::class.java.isAssignableFrom(entry) ->
+                    listOf(entry.getDeclaredConstructor().newInstance() as eu.kanade.tachiyomi.source.Source)
+                else -> error("Entry class $entryClassName is neither a manga source nor a source factory")
+            }
+        } catch (error: java.lang.reflect.InvocationTargetException) {
+            val cause = error.targetException ?: error
+            throw IllegalStateException("The source failed to start: ${cause.message ?: cause.javaClass.simpleName}", cause)
+        } catch (error: LinkageError) {
+            throw IllegalStateException("The extension needs something the app does not provide: ${error.message ?: error.javaClass.simpleName}", error)
+        }
+        val catalogues = sources.filterIsInstance<eu.kanade.tachiyomi.source.CatalogueSource>()
+        check(catalogues.isNotEmpty()) { "The extension created no catalogue sources" }
+        return catalogues.map { app.riuplay.apkhost.MangaSourceAdapter(extension, it) }
+    }
 }
 
 /**

@@ -29,6 +29,22 @@ hibiki itself credits:
 | [Suwayomi-Server](https://github.com/Suwayomi/Suwayomi-Server) | MPL-2.0 | Extension lifecycle design (API-version compatibility window, update and obsolete detection, deferred deletion). RiuPlay can also talk to a user-run Suwayomi server over its public HTTP API. |
 | [kikoeru-express](https://github.com/kikoeru-project/kikoeru-express) | GPL-3.0 | No code. RiuPlay talks to a user-run Kikoeru server over its public HTTP API. |
 
+## The confined APK source host (`apk-host/`)
+
+### Keiyoushi (manga extensions)
+- **extensions-lib** (https://github.com/keiyoushi/extensions-lib, commit `42255ee`), **Apache-2.0**: the Tachiyomi extensions-lib 1.6 API. The library publishes declarations only; `apk-host/src/main/kotlin/eu/kanade/tachiyomi/source/` re-implements them with the same names and shapes, so Keiyoushi's compiled extensions link against RiuPlay's host.
+- **index.proto** (Keiyoushi's `.github/scripts/index.proto`, from mihonapp/tachiyomix), **Apache-2.0**: the field numbers `src/main/extensions/keiyoushiIndex.ts` reads.
+- The extensions themselves are not part of RiuPlay. A user who adds the Keiyoushi repository downloads each extension (its signed jar) from Keiyoushi; their source code is Apache-2.0 (https://github.com/keiyoushi/extensions-source).
+
+### hibiki's shared Android-side sources
+`apk-host/shared/` holds the Kotlin sources hibiki compiled from its Android build (commit `132a71e`, GPL-3.0-only): the Aniyomi source API, network helpers and the source adapter. They include code from Aniyomi/Anikku (Apache-2.0), with their notices kept.
+
+### What a build bundles for the host
+- **Java runtime:** Eclipse Temurin 21 (OpenJDK), trimmed with jlink. **GPL-2.0 with the Classpath Exception**. Its license files ship in `resources/apk-host/runtime/legal/`.
+- **Java libraries** (`resources/apk-host/lib/`): Kotlin standard library, kotlinx.coroutines, kotlinx.serialization, OkHttp and Okio, apksig, Injekt, RxJava, dex2jar, ANTLR runtime (BSD-3-Clause), JetBrains annotations, zstd-kmp - **Apache-2.0**; ASM - **BSD-3-Clause**; apk-parser - **BSD-2-Clause**; jsoup - **MIT**; Rhino - **MPL-2.0**; NanoHTTPD - **BSD-3-Clause**; org.json - **Public Domain**.
+- **zstd** (`resources/apk-host/native/zstd-kmp.dll`, from zstd-kmp): Zstandard, **BSD-3-Clause**.
+- **riuplay-sandbox.exe**: RiuPlay's own launcher (`apk-host/sandbox/RiuPlaySandbox.cs`), GPL-3.0-only, built with the .NET Framework C# compiler that ships with Windows.
+
 ## npm dependencies
 The production dependencies are licensed under MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, BlueOak-1.0.0, or dual MIT/WTFPL and MIT/BSD/Apache. All of these are compatible with GPL-3.0. Generate the full list with:
 

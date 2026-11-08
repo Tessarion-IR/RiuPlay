@@ -16,6 +16,15 @@ public class View {
 
     public void layout(int left, int top, int right, int bottom) {}
 
+    // RiuPlay: never attached, so no parent and no layout parameters that mean anything.
+    public ViewParent getParent() { return null; }
+
+    private ViewGroup.LayoutParams layoutParams;
+
+    public void setLayoutParams(ViewGroup.LayoutParams params) { layoutParams = params; }
+
+    public ViewGroup.LayoutParams getLayoutParams() { return layoutParams; }
+
     public static class MeasureSpec {
         public static final int UNSPECIFIED = 0, EXACTLY = 1 << 30, AT_MOST = 2 << 30;
 

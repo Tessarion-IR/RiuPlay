@@ -11,7 +11,19 @@ import { electronBrowser } from "./browser";
 import { electronDb } from "./db";
 import { electronDownloadTransfer } from "./downloadTransfer";
 import { ElectronExtensionHost } from "./extensionHost";
-import { readApkOptIn } from "./apkOptIn";
+import { apkRuntimeEnabled } from "./apkOptIn";
+import { netClient } from "../../main/net/state";
+import type { Caller } from "../../main/net/policy";
+
+/** Repository files for APK sources (Keiyoushi's repo.json, index.pb and signed jars), through NetClient. */
+async function fetchRepositoryBytes(url: string): Promise<Buffer> {
+  const response = await netClient.request({ url, caller: { kind: "app", purpose: "extension-repository" }, timeoutMs: 60_000 });
+  if (response.status < 200 || response.status >= 300) throw new Error(`Repository request failed: HTTP ${response.status}`);
+  return response.body;
+}
+
+/** Who the confined APK host's connections are checked as (an APK id: any public host, never private ones). */
+const APK_HOST_CALLER: Caller = { kind: "extension", sourceId: "apk:host" };
 import { SandboxedExtensionHost } from "../../main/extensions/sandbox/sandboxHost";
 import { fileURLToPath } from "node:url";
 
@@ -27,8 +39,11 @@ export function createElectronPlatform(getWindow: () => BrowserWindow | null): P
   // APK sources run in a JVM process of their own (see apkHost.ts); an install without the jars or
   // a Java to run them simply has none, and the rest of the app does not know the difference.
   const apkLocation = locateApkHost(systemLocateOptions(app.getAppPath(), app.isPackaged ? process.resourcesPath : null));
-  // RiuPlay M2: off unless the user opted in (apkOptIn.ts) - it runs with the user's full rights.
-  const apkHost = apkLocation && readApkOptIn(app.getPath("userData")) ? new ApkHostProcess(apkLocation, path.join(app.getPath("userData"), "apk-host")) : null;
+  // RiuPlay K4: the host runs confined (AppContainer + Job Object, network only through the broker), so it
+  // is available unless the person switched it off (apkOptIn.ts). Without confinement, locateApkHost is null.
+  const apkHost = apkLocation && apkRuntimeEnabled(app.getPath("userData"))
+    ? new ApkHostProcess(apkLocation, path.join(app.getPath("userData"), "apk-host"), (host, port, signal) => netClient.openTunnel(APK_HOST_CALLER, host, port, signal))
+    : null;
   setApkHost(apkHost);
   // The pages APK sources load (a player embed whose requests give away the video) run as hidden windows here.
   if (apkHost) new PageBridge(apkHost, createElectronPageDriver);
@@ -73,6 +88,6 @@ export function createElectronPlatform(getWindow: () => BrowserWindow | null): P
     appInstaller: electronAppInstaller,
     // Reaching another computer for device sync; this one also listens (main/sync.ts).
     syncTransport: electronSyncTransport,
-    apkSources: apkHost ? apkSourcesPort(apkHost) : undefined,
+    apkSources: apkHost ? apkSourcesPort(apkHost, fetchRepositoryBytes) : undefined,
   };
 }

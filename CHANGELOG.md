@@ -4,6 +4,15 @@ All notable changes to RiuPlay are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added
+- Extension-powered catalogue: a built-in RiuPlay repository (open films, Pepper&Carrot, LibriVox, open audio) and installed extensions as sources of the Video, Manga and Audio sections, with search, title pages, the native player and reader, and progress.
+- KikoFlu's audio source (asmr.one) as a built-in extension; adult works hidden unless turned on for that source.
+- Hibiki's anime sources as a one-click, clearly third-party repository.
+- **Keiyoushi manga extensions inside RiuPlay**, with no Suwayomi server and no Java to install: one-click repository (Keiyoushi's protobuf index), install of each extension's signed jar only when signed by the key the repository publishes, and its titles, chapters and pages in the Manga section and the native reader.
+
+### Security
+- APK extensions (Keiyoushi manga, Aniyomi anime) now run **confined**: RiuPlay's bundled Java runtime starts inside a Windows AppContainer with no capabilities and a Job Object, so it cannot reach the person's files, start programs or open network connections. Its connections go through RiuPlay's network rules (public websites on ports 80/443, the configured proxy, never private addresses). The "full user rights" opt-in is gone; the runtime can still be switched off in Settings.
+
 ## [0.1.0-alpha.1] - 2026-11-08
 
 First public pre-release. **Alpha: not stable or production-ready.** Windows x64 only; the builds are not code-signed. Known limitations are listed in the README and in `docs/releases/v0.1.0-alpha.1.md`.

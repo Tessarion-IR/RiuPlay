@@ -23,13 +23,25 @@ public class WebSettings {
 
     public void setBlockNetworkImage(boolean value) { blockNetworkImage = value; }
 
-    public void setDomStorageEnabled(boolean value) {}
+    private volatile boolean domStorage, wideViewPort, overviewMode;
+
+    public void setDomStorageEnabled(boolean value) { domStorage = value; }
+
+    public boolean getDomStorageEnabled() { return domStorage; }
+
+    public boolean getJavaScriptEnabled() { return javaScriptEnabled; }
+
+    public boolean getBlockNetworkImage() { return blockNetworkImage; }
+
+    public boolean getUseWideViewPort() { return wideViewPort; }
+
+    public boolean getLoadWithOverviewMode() { return overviewMode; }
 
     public void setDatabaseEnabled(boolean value) {}
 
-    public void setUseWideViewPort(boolean value) {}
+    public void setUseWideViewPort(boolean value) { wideViewPort = value; }
 
-    public void setLoadWithOverviewMode(boolean value) {}
+    public void setLoadWithOverviewMode(boolean value) { overviewMode = value; }
 
     public void setMixedContentMode(int mode) {}
 }
