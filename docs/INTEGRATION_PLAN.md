@@ -32,7 +32,7 @@ The domain stops being anime-only.
 - Navigation and Home become type-aware: Video, Manga and Audio sections, and Continue Watching/Reading/Listening rows.
 - **Done when:** a direct-URL video, a manual manga and a local audio file can each be added, opened, tracked in the library and resumed. The existing Hibiki library still works.
 
-### Phase 7: Source lifecycle, server connections, network *(Suwayomi + original RiuPlay + Hibiki)*
+### Phase 7: Source lifecycle, server connections, network *(Suwayomi + original RiuPlay + Hibiki)* - ✅ done (M0-M5; see `docs/PHASE7_STATUS.md`)
 - Repository store with metadata, status and errors. Persisted `hasUpdate`/`obsolete` flags on refresh. A `riuplayApi` compatibility window. Deferred deletion at startup. Per-file `sha256` checked before install. A per-install consent dialog with permissions.
 - Extension execution moves to an Electron `utilityProcess` with network brokered by the main process.
 - `core/net/guardedFetch` with SSRF protection. Proxy HTTP/HTTPS/SOCKS5 with authentication, global and per-source (ports the original RiuPlay settings model).

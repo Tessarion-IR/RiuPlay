@@ -35,6 +35,12 @@
 - Video plays in the built-in player. Audio has its own player page with auto-next and media keys. Manga has a continuous reader. All of them remember where you stopped.
 - **Home** with Continue Watching / Reading / Listening, a **Library** for every type, and **Collections** that mix your own titles with titles from sources.
 
+### Sources, servers and security (Phase 7)
+- **Your own servers:** connect a Suwayomi (manga) or Kikoeru (audio) server under Settings > Media servers, browse it from the Manga and Audio sections, and add titles to the same library. Passwords are encrypted on your PC and never shown again.
+- **Discover:** the Sources screen lists known places to start from, with license and maintenance facts and what was checked. Nothing is added, trusted or installed until you choose.
+- **Extensions:** each runs in its own Chromium-sandboxed window, with no access to your files, other programs or your local network, and a Windows-enforced memory limit. Before installing, you see what an extension may do. Repositories start "not reviewed", and APK (Java) sources are off unless you turn them on.
+- **Networking:** every request from extensions, downloads and the app goes through one path. Your computer and local network are blocked, every address is checked, and a configured HTTP, HTTPS or SOCKS5 proxy is never bypassed (DNS goes through it too). The proxy password can be stored encrypted.
+
 ### Inherited from the hibiki foundation
 These features come with the imported codebase. On Windows 11 so far, startup, database creation and the full automated test suite have been verified. Each feature will be checked by hand in the next phases.
 - Install, update and remove scripted source extensions from HTTPS repositories.
@@ -48,9 +54,8 @@ These features come with the imported codebase. On Windows 11 so far, startup, d
 
 ### Planned (see [INTEGRATION_PLAN.md](docs/INTEGRATION_PLAN.md))
 - Manga reader modes (single page, right-to-left, zoom) and the KikoFlu audio experience (queue, synced lyrics, session restore, mini player).
-- A versioned **RiuPlay extension spec** with declared permissions, integrity hashes, a consent prompt and an out-of-process sandbox.
-- Hardened networking: SSRF protection, and HTTP, HTTPS and SOCKS5 proxies, globally or per source.
-- Generic providers: direct URLs, local files, RSS/Atom, JSON-LD/OpenGraph, and a Suwayomi server connection.
+- Integrity hashes and signed repositories for extensions; per-source proxies.
+- Generic providers: RSS/Atom, JSON-LD/OpenGraph.
 - Subtitle library and matching, an audio queue with session restore, and an optional mpv playback engine.
 
 ## Install (users)

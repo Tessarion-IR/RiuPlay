@@ -292,14 +292,16 @@ New threats considered in M3:
 |---|---|---|
 | Extension `fetch()`, downloads, HLS playlists, app requests (updates, repositories, AniList, skip times) | **Controlled path** | `main/net/client.ts` |
 | Player redirect probe | **Controlled path** (`app:player`) | `main/playerStream.ts` |
-| Discord poster reachability check | **Controlled path** (`app:discord`) | `main/discordRpc.ts`. Discord RPC itself is a local named pipe, not network |
+| Discord poster reachability check | **Controlled path** (`app:discord`) | `main/discordRpc.ts`. Discord RPC itself is a local named pipe, not network. RiuPlay no longer uses hibiki's Discord application id (build secret `RIUPLAY_DISCORD_CLIENT_ID`) |
 | Source stream URLs (stream, separate audio, subtitles) before Chromium plays them | **Preflight-checked**: scheme, DNS (through the proxy when one is set), address rules, attributed to the source; refused links are dropped and logged | `core/extensions/runtime.ts` `withoutBlockedDestinations`, `NetClient.preflight` |
 | Chromium traffic (player, posters, challenge, login and resolver windows) | **Same effective proxy**, fail-closed, proxy authentication from memory, auth cache cleared on change | §6.3 |
 | Chromium address pinning (segments, later redirects, a DNS answer changing after the preflight) | **Not covered.** Chromium resolves and connects itself; only the preflight runs. Fixing this needs a desktop stream proxy (a custom protocol that pipes through the controlled client, like Android's) | Deferred: a residual risk |
 | Shared GET cache (`netFetch`) | **Partitioned by caller**: no answer, in-flight request or disk entry is shared between sources | `core/extensions/netFetch.ts` |
 | APK sources (JVM `apk-host/`) | **Outside the controlled path.** Off by default; runs only after the user installs an APK source with Java present | Phase 7 R4; see `docs/M2_SANDBOX.md` |
 | Proxy host names | Resolved by the system resolver (the proxy you chose) | Use an IP literal to avoid even that lookup |
-| No per-extension host lists yet | Every extension gets "any public host" | Manifest permissions (M1/M2) |
+| Per-extension host lists | Declared `permissions.hosts` enforced by the broker; legacy manifests get "any public host" | M1 |
+| Suwayomi / Kikoeru servers | **Controlled path** as `connection:<id>`; a local server only through its exact approved allowance; credentials only to its own origin | M4/M5, `docs/M4_M5_SERVERS.md` |
+| Extension challenge/browser-fetch/resolver windows | Per-source partition; every page and in-page fetch target preflighted | M2 |
 
 ## 10. Tests and results
 

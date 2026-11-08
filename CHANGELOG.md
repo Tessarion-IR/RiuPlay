@@ -4,6 +4,22 @@ All notable changes to RiuPlay are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Phase 7 completion: M1, M2, M4, M5, product identity
+
+#### Added
+- **M1, extension lifecycle and trust.** Repositories start "not reviewed"; trusting and enabling them are separate choices. Compatibility is checked before download. An install dialog lists permissions, and the main process enforces the consent. Extensions can be disabled. Migration 0025 is additive. See `docs/M1_EXTENSION_LIFECYCLE.md`.
+- **M2, sandboxed extensions.** Each extension runs in its own Chromium-sandboxed window with no Node or Electron access, with all its traffic through the network broker and a Windows Job Object memory cap. Challenge and browser windows get a per-source partition and a check of every URL. APK (Java) sources are off by default. See `docs/M2_SANDBOX.md`.
+- **M4 and M5, Suwayomi and Kikoeru servers.** Settings > Media servers, browsing in the Manga and Audio sections, and server titles in the unified library. Credentials stay in the main process. Migration 0026 is additive. See `docs/M4_M5_SERVERS.md`.
+- **M3 follow-up.** A user-started encrypted proxy migration, Chromium proxy parity with proxy authentication, new backups without the proxy password, a check of stream URLs before playback, and a per-source request cache.
+- **Discover catalog** of known repositories and servers (anime, manga, audio), with verified facts and no automatic trust.
+- **Unified search and activity.** Search includes your own library; Profile and History show video, manga and audio activity.
+
+#### Changed
+- **Branding.** No visible hibiki branding remains: the Profile default name, Discord texts and device names now say RiuPlay. Discord presence needs RiuPlay's own Discord application id (build secret `RIUPLAY_DISCORD_CLIENT_ID`) and is otherwise unavailable.
+- **Onboarding** explains video, manga and audio; online sources are optional.
+- **New backups** are `.riuplaybackup`; `.hibikibackup` files still restore.
+- **`RIUPLAY_USER_DATA_DIR`** runs the app on a separate profile (tests).
+
 ### M3: Networking
 
 #### Added

@@ -14,7 +14,7 @@ const check = (name, ok, detail) => {
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const logFile = path.join(process.env.APPDATA, "RiuPlay", "logs", "riuplay.log");
+const logFile = path.join(process.env.RIUPLAY_USER_DATA_DIR || path.join(process.env.APPDATA, "RiuPlay"), "logs", "riuplay.log");
 const app = spawn(exe, [`--remote-debugging-port=${PORT}`], { stdio: "ignore" });
 let target;
 for (let i = 0; i < 80 && !target; i++) {
@@ -46,6 +46,12 @@ try {
   check("database (better-sqlite3 N-API) answers over IPC", list.ok === true, list);
   const lib = await evaluate("hibiki.library.list().then((r) => ({ ok: Array.isArray(r) }), (e) => ({ error: String(e) }))");
   check("hibiki's library API answers", lib.ok === true, lib);
+  // A fresh (isolated) profile shows the first-run onboarding: go through it as a user would.
+  for (let i = 0; i < 6; i++) {
+    const clicked = await evaluate(`(() => { const want = ["Get started", "Next", "Done", "Skip for now", "Continue"]; const b = [...document.querySelectorAll("button")].find((el) => want.includes(el.innerText.trim()) && !el.disabled); if (b) { b.click(); return true; } return false; })()`);
+    if (!clicked) break;
+    await sleep(1000);
+  }
   await evaluate('location.hash = "#/"');
   await sleep(1500);
   const home = await evaluate("document.body.innerText");

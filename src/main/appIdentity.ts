@@ -15,4 +15,7 @@ export const APP_USER_MODEL_ID = "io.github.tessarion.riuplay";
 app.setName(APP_NAME);
 // Keep the taskbar identity independent from Electron's development executable name.
 app.setAppUserModelId(APP_USER_MODEL_ID);
-app.setPath("userData", path.join(app.getPath("appData"), APP_NAME));
+// RIUPLAY_USER_DATA_DIR (an absolute path) runs the app on a separate, disposable profile - for tests
+// and verification runs that must not touch the user's real profile. Never set by the app itself.
+const isolatedProfile = process.env.RIUPLAY_USER_DATA_DIR;
+app.setPath("userData", isolatedProfile && path.isAbsolute(isolatedProfile) ? isolatedProfile : path.join(app.getPath("appData"), APP_NAME));

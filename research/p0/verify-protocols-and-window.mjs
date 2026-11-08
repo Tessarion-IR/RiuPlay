@@ -13,7 +13,7 @@ import { DatabaseSync } from "node:sqlite";
 import zlib from "node:zlib";
 
 const repo = process.argv[2];
-const userData = path.join(process.env.APPDATA, "RiuPlay");
+const userData = process.env.RIUPLAY_USER_DATA_DIR || path.join(process.env.APPDATA, "RiuPlay");
 const dbFile = path.join(userData, "riuplay.db");
 const results = [];
 const check = (name, ok, detail) => {
@@ -50,6 +50,24 @@ fs.writeFileSync(downloadFile, "WEBVTT\n\n00:00.000 --> 00:01.000\nP0\n");
 
 // --- temporary title (app closed) --------------------------------------------------------------
 const now = Date.now();
+// A fresh, isolated profile (RIUPLAY_USER_DATA_DIR) has no database yet: start the app once so it
+// creates and migrates one, then stop it.
+const hasTables = () => {
+  try {
+    const probe = new DatabaseSync(dbFile, { readOnly: true });
+    const ok = probe.prepare("SELECT 1 FROM sqlite_master WHERE name = 'local_media'").get() !== undefined;
+    probe.close();
+    return ok;
+  } catch {
+    return false;
+  }
+};
+if (!hasTables()) {
+  const first = spawn(path.join(repo, "node_modules/electron/dist/electron.exe"), ["."], { cwd: repo, stdio: "ignore" });
+  for (let i = 0; i < 120 && !hasTables(); i++) await new Promise((r) => setTimeout(r, 250));
+  first.kill();
+  await new Promise((r) => setTimeout(r, 1500));
+}
 let db = new DatabaseSync(dbFile);
 const media = db.prepare("INSERT INTO local_media (content_type, title, origin, origin_ref, cover, created_at, updated_at) VALUES ('audio', 'P0 protocol check', 'file', ?, ?, ?, ?)").run(tmp, coverFile, now, now);
 const mediaId = Number(media.lastInsertRowid);
@@ -101,6 +119,12 @@ try {
   const profile = await evaluate(probe("hibiki-profile://local/riuplay-p0-missing.png"));
   check("hibiki-profile:// answers (404 for a missing banner)", profile.status === 404, profile);
 
+  // A fresh (isolated) profile shows the first-run onboarding over every page: go through it first.
+  for (let i = 0; i < 6; i++) {
+    const clicked = await evaluate(`(() => { const want = ["Get started", "Next", "Done", "Skip for now", "Continue"]; const b = [...document.querySelectorAll("button")].find((el) => want.includes(el.innerText.trim()) && !el.disabled); if (b) { b.click(); return true; } return false; })()`);
+    if (!clicked) break;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
   await evaluate(`location.hash = "#/listen/${mediaId}/${unitId}"`);
   await sleep(1500);
   await evaluate(`(() => { const a = document.querySelector("audio"); if (a && a.paused) a.play(); return !!a; })()`);

@@ -54,8 +54,8 @@ The **Unified as** column says how each row fits RiuPlay's single model, so noth
 | Feature | Orig. RiuPlay | Hibiki | KikoFlu | Suwayomi | Decision | Unified as | Status |
 |---|---|---|---|---|---|---|---|
 | Video and anime titles with episodes | ✅ model | ✅ `AnimeTitle`/`PlaybackGroup` | – | – | **Port** RiuPlay model for local/URL video. Source anime keep hibiki's types but meet the model in every shared view (Home, Video section, Library, Collections) | `MediaItem{type:'video'}` + `Unit{kind:'episode'}`; source anime via `MediaRef` | 🟡 local/URL video ✅; extension sources still use `AnimeTitle` internally |
-| Manga and manhwa with chapters and pages | ✅ model (`chapters.pages`) | – | – | ✅ Manga/Chapter/Page | **Port** RiuPlay model, **reimplement** Suwayomi chapter/page semantics | `type:'manga'`, `Unit{kind:'chapter', pages}` | ✅ local folders + page URLs (Phase 6). Extension/server manga: Phase 7 |
-| Audio and ASMR works with tracks | ✅ model (`tracks`) | – | ✅ Work/Track tree | – | **Port** RiuPlay model; KikoFlu's folder tree → nested folders (2 levels) on import | `type:'audio'`, `Unit{kind:'track'}`; `.lrc` lyrics kept per track | ✅ local files/folders + track URLs (Phase 6). Kikoeru server: Phase 7 |
+| Manga and manhwa with chapters and pages | ✅ model (`chapters.pages`) | – | – | ✅ Manga/Chapter/Page | **Port** RiuPlay model, **reimplement** Suwayomi chapter/page semantics | `type:'manga'`, `Unit{kind:'chapter', pages}` | ✅ local folders + page URLs (Phase 6); ✅ Suwayomi server titles (M4, `docs/M4_M5_SERVERS.md`) |
+| Audio and ASMR works with tracks | ✅ model (`tracks`) | – | ✅ Work/Track tree | – | **Port** RiuPlay model; KikoFlu's folder tree → nested folders (2 levels) on import | `type:'audio'`, `Unit{kind:'track'}`; `.lrc` lyrics kept per track | ✅ local files/folders + track URLs (Phase 6); ✅ Kikoeru server works (M5) |
 | Direct URL / manual / local-file media | ✅ AddMediaModal, upload | – | ✅ local import + metadata scan | local source | **Port** RiuPlay (dialog, dedupe), adapted: files referenced in place, picker-only paths, `riuplay-media://` protocol | Add Media dialog in every section | ✅ (Phase 6; tests + e2e). Metadata scan from tags: later |
 | Same title from several sources, duplicate detection | ✅ unique `(source, id)` | per-source | – | per-source | RiuPlay original | `(origin, originRef)` unique ✅; cross-source `media_source_links` 🔴 | 🟡 same-origin dedupe only |
 | Universal metadata (title, alt titles, genres, cover, status, year) | ✅ | ✅ | ✅ tags, VA, rating | ✅ | **Unify** | `MediaItem` fields, editable on the title page | ✅ for local titles |
@@ -67,19 +67,19 @@ The **Unified as** column says how each row fits RiuPlay's single model, so noth
 | Scripted source extensions (JS) | – | ✅ manifest + js, worker runtime | – | – | **Reuse** Hibiki | Provider type `script` | ✅ |
 | Aniyomi / Tachiyomi APK extensions | index parsing only | ✅ JVM apk-host (anime) | – | ✅ dex2jar (manga) | **Reuse** Hibiki apk-host. Manga APKs through **Service** (Suwayomi) first | Provider type `apk` | 🟡 (anime, needs Java 17+) |
 | Repository index parsing, strict validation | ✅ zod schemas | ✅ | – | ✅ | **Port** RiuPlay zod validation into Hibiki marketplace | `core/marketplace` | 🟡 |
-| Repository store table (one row per repo, metadata) | ✅ `repositories` | URL list | – | ✅ `ExtensionStoreTable` | **Reimplement** Suwayomi design | `source_repositories` + name, status, error, lastRefreshed | 🔴 |
+| Repository store table (one row per repo, metadata) | ✅ `repositories` | URL list | – | ✅ `ExtensionStoreTable` | **Reimplement** Suwayomi design | `source_repositories` + `repository_state` (enabled, trust, last check/error) | ✅ M1 |
 | Update detection (`hasUpdate`) | – | ✅ in renderer | – | ✅ in DB, on refresh | **Reimplement** Suwayomi (core, persisted) | Extension record flags | 🟡 |
 | Obsolete detection (gone from repo) | – | – | – | ✅ `isObsolete` | **Reimplement** Suwayomi | Same | 🔴 |
 | API compatibility window | – | ✅ host-API gate | – | ✅ lib version min..max | **Reimplement** Suwayomi window on top of Hibiki gate | `riuplayApi: ">=1 <2"` in manifest | 🟡 |
 | Integrity hash and signature | – | – | – | – | RiuPlay original (new) | `sha256` per file in index | 🔴 |
 | Install consent showing permissions | trust copy | ✅ trust prompt on repo add | – | – | **Extend** Hibiki prompt to per-install permissions | Consent dialog | 🟡 |
-| Out-of-process isolation | – | `worker_threads` + `vm` (not a sandbox) | – | separate JVM | RiuPlay original (new) | Electron `utilityProcess`, brokered network | 🔴 |
+| Out-of-process isolation | – | `worker_threads` + `vm` (not a sandbox) | – | separate JVM | RiuPlay original (new) | Chromium-sandboxed host window per extension, brokered network, Job Object memory cap (`docs/M2_SANDBOX.md`) | ✅ M2 |
 | Deferred deletion and safe uninstall | – | immediate | – | ✅ delete-on-startup | **Reimplement** Suwayomi | Pending-delete list at startup | 🔴 |
 | Per-source settings, login windows | – | ✅ | – | ✅ source prefs | **Reuse** Hibiki | Source settings dialog | ✅ |
-| Remote media servers: Suwayomi (manga) | ✅ REST client | – | – | the server | **Port** RiuPlay client + **Service** | Provider type `server:suwayomi` | 🔴 (legacy only) |
-| Remote media servers: Kikoeru (audio) | – | – | ✅ client (official + self-hosted) | – | **Reimplement** KikoFlu client (self-hosted first) | Provider type `server:kikoeru` | 🔴 |
+| Remote media servers: Suwayomi (manga) | ✅ REST client | – | – | the server | **Port** RiuPlay client + **Service** | Settings > Media servers; titles as `origin:"server"` MediaItems | ✅ M4 (not run against a live server) |
+| Remote media servers: Kikoeru (audio) | – | – | ✅ client (official + self-hosted) | – | **Reimplement** KikoFlu client (self-hosted first) | Settings > Media servers; works as `origin:"server"` MediaItems | ✅ M5 (not run against a live server) |
 | Generic feeds: RSS/Atom, JSON-LD, OpenGraph | planned | – | – | – | RiuPlay original | Provider type `feed` | 🔴 |
-| No preinstalled third-party repository | – | seeded | – | – | RiuPlay decision | Empty list + trust prompt | ✅ |
+| No preinstalled third-party repository | – | seeded | – | – | RiuPlay decision | Empty list + discovery catalog (`shared/sourceCatalog.ts`) + trust state | ✅ |
 
 ## 4. Consumption: watch, read, listen
 

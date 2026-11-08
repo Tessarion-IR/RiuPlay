@@ -1,5 +1,7 @@
 # Phase 7 Design: Sources, Extension Security, Networking, Suwayomi and Kikoeru
 
+> **Implemented** (M0-M5). This is the original design; what was built, and where it differs, is in `docs/PHASE7_STATUS.md`, `docs/M3_NETWORKING.md`, `docs/M1_EXTENSION_LIFECYCLE.md`, `docs/M2_SANDBOX.md` and `docs/M4_M5_SERVERS.md`.
+
 Status: **proposal; M0 research spikes done (see [`M0_RESULTS.md`](M0_RESULTS.md) for evidence, limitations, the recommended architecture and the revised estimate). M1–M5 await owner approval. No application code has been changed for Phase 7.**
 Basis: the code at commit `2e544bb`, plus the actual source of Suwayomi-Server @ `7b061be` and KikoFlu @ `d8a8c61`.
 
