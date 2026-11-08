@@ -25,3 +25,15 @@ describe("invokeProvider getTitleExtras", () => {
     expect(invokeProvider({}, "src", "getTitleExtras", ["7"])).toBeNull();
   });
 });
+
+describe("invokeProvider getPages (RiuPlay host API 2)", () => {
+  it("calls the script's getPages with title, group and chapter", () => {
+    const getPages = vi.fn(() => ["https://img.example/1.jpg"]);
+    expect(invokeProvider({ getPages }, "src", "getPages", ["t", "g", "c"])).toEqual(["https://img.example/1.jpg"]);
+    expect(getPages).toHaveBeenCalledWith("t", "g", "c");
+  });
+
+  it("fails loudly for a manga source without getPages", () => {
+    expect(() => invokeProvider({}, "src", "getPages", ["t", "g", "c"])).toThrow(/getPages/);
+  });
+});

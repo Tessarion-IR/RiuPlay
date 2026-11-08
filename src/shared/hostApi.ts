@@ -13,7 +13,9 @@
 //   1  everything scripts had when this was introduced: fetch, fetchAll, storage, challenge,
 //      browserFetch, Jsoup, Gzip, Url, AnimeTitle, console, preferredLanguage; the `dataSaver`
 //      flag on a resolver's link.
-export const HOST_API = 1;
+//  2  RiuPlay: manifest `contentType` (video | manga | audio), Provider.getPages for manga, the
+//     DIRECT_AUDIO link type and Episode.durationMs.
+export const HOST_API = 2;
 
 /** The `hostApi` a manifest asks for, or null when it asks for nothing (or nothing readable). */
 export function requiredHostApi(manifest: { hostApi?: unknown } | null | undefined): number | null {

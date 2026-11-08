@@ -10,6 +10,8 @@ export type ExtensionMethod =
   | "getSettings"
   | "resolve"
   | "browserScript"
+  // RiuPlay host API 2: the page images of one manga chapter.
+  | "getPages"
   // Account and the things an account unlocks. Every one of these is optional on the script side:
   // a source that declares none of the matching capabilities never gets asked, and one that
   // declares them but lacks the function fails loudly rather than silently doing nothing.

@@ -84,6 +84,24 @@ export interface Episode {
   id: string;
   number: number;
   title?: string | null;
+  /** RiuPlay host API 2: a track's or episode's length, when the source knows it. */
+  durationMs?: number | null;
+}
+
+/** RiuPlay host API 2: what an extension provides. Absent in a manifest means "video" (every
+ * hibiki-format anime source), so existing extensions keep working unchanged. */
+export const EXTENSION_CONTENT_TYPES = ["video", "manga", "audio"] as const;
+export type ExtensionContentType = (typeof EXTENSION_CONTENT_TYPES)[number];
+
+export function contentTypeOf(manifest: { contentType?: unknown } | null | undefined): ExtensionContentType {
+  const value = manifest?.contentType;
+  return typeof value === "string" && (EXTENSION_CONTENT_TYPES as readonly string[]).includes(value) ? (value as ExtensionContentType) : "video";
+}
+
+/** RiuPlay host API 2: one page of a manga chapter, from Provider.getPages. */
+export interface ChapterPage {
+  url: string;
+  headers?: Record<string, string> | null;
 }
 
 export interface PlaybackGroup {
@@ -100,7 +118,8 @@ export interface PlaybackGroup {
 // runtime.ts's resolveEmbedLinks), so the same distinction is made here instead: "DIRECT_DASH"
 // only ever appears on a link a resolver produced (e.g. extractors/aksor.js), never one a source's
 // own getPlayerLinks() returns.
-export type PlayerLinkType = "DIRECT_HLS" | "DIRECT_MP4" | "DIRECT_DASH" | "EMBED";
+// "DIRECT_AUDIO" (RiuPlay host API 2): an audio file or stream for the audio player.
+export type PlayerLinkType = "DIRECT_HLS" | "DIRECT_MP4" | "DIRECT_DASH" | "DIRECT_AUDIO" | "EMBED";
 
 // `type`, not `kind` - matches what every source/resolver actually emits (yummy-anime.js,
 // kodik.js, ...) and Android's own PlaybackSegment (WatchModels.kt) - confirmed live against a
@@ -411,6 +430,8 @@ export interface SourceInfo {
   iconUrl?: string | null;
   lang?: string | null;
   /** Whether this installed source is marked 18+ by its manifest. */
+  /** RiuPlay host API 2: video (default), manga or audio. */
+  contentType?: ExtensionContentType;
   isNsfw: boolean;
   capabilities: SourceCapability[];
   runtime?: "NODE" | "BROWSER";

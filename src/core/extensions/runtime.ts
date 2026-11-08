@@ -22,6 +22,7 @@ import type {
   SourceReview,
   TitleExtras,
 } from "@shared/types";
+import { contentTypeOf, type ChapterPage, type ExtensionContentType } from "@shared/types";
 import type { ExtensionMethod } from "./methods";
 import type { BridgeHandler } from "../../platform/types";
 import { getPlatform } from "../platform";
@@ -80,6 +81,7 @@ interface Manifest {
   resolverDependencies?: string[];
   settings?: SourceInfo["settings"];
   website?: string;
+  contentType?: string;
 }
 
 export interface InstalledResolverRequirement {
@@ -279,6 +281,21 @@ function throughSnapshot(forward: BridgeHandler, session: SnapshotSession): Brid
   };
 }
 
+/** Host API 2: getPages' answer, kept to http(s) URLs with string headers only (at most 2000 pages). */
+export function normalisePages(raw: unknown): ChapterPage[] {
+  if (!Array.isArray(raw)) return [];
+  const pages: ChapterPage[] = [];
+  for (const entry of raw.slice(0, 2000)) {
+    const url = typeof entry === "string" ? entry : entry && typeof entry === "object" ? (entry as { url?: unknown }).url : null;
+    if (typeof url !== "string" || !/^https?:\/\//i.test(url)) continue;
+    const rawHeaders = entry && typeof entry === "object" ? (entry as { headers?: unknown }).headers : null;
+    const headers: Record<string, string> = {};
+    if (rawHeaders && typeof rawHeaders === "object") for (const [k, v] of Object.entries(rawHeaders)) if (typeof v === "string") headers[k] = v;
+    pages.push(Object.keys(headers).length ? { url, headers } : { url });
+  }
+  return pages;
+}
+
 export function isApkSource(sourceId: string): boolean {
   return sourceId.startsWith("apk:");
 }
@@ -435,6 +452,7 @@ export class ExtensionRuntime {
       runtime: "NODE",
       settings: manifest.settings ?? [],
       website: manifest.website ?? null,
+      contentType: contentTypeOf(manifest),
     }));
   }
 
@@ -762,6 +780,18 @@ export class ExtensionRuntime {
   getTitleExtras(sourceId: string, id: string): Promise<TitleExtras | null> {
     if (isApkSource(sourceId)) return Promise.resolve(null);
     return this.shareRead("getTitleExtras", sourceId, [id], () => this.run<TitleExtras | null>("getTitleExtras", sourceId, [id]));
+  }
+
+  /** RiuPlay host API 2: what an installed source provides (video when it doesn't say). */
+  contentTypeOf(sourceId: string): ExtensionContentType {
+    return contentTypeOf(this.extensions.get(sourceId)?.manifest);
+  }
+
+  /** RiuPlay host API 2: the pages of one manga chapter, as validated http(s) URLs. */
+  async getPages(sourceId: string, titleId: string, groupId: string, chapterId: string): Promise<ChapterPage[]> {
+    if (this.contentTypeOf(sourceId) !== "manga") throw new Error(`Source "${sourceId}" does not provide manga`);
+    const raw = await this.shareRead("getPages", sourceId, [titleId, groupId, chapterId], () => this.run<unknown[]>("getPages", sourceId, [titleId, groupId, chapterId]));
+    return normalisePages(raw);
   }
 
   getPlaybackGroups(sourceId: string, titleId: string): Promise<PlaybackGroup[]> {

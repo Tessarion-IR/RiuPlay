@@ -75,6 +75,12 @@ export function invokeProvider(provider: Record<string, unknown>, sourceId: stri
       const argument = args.length > 0 ? JSON.stringify(args[0]) : undefined;
       return fn.call(provider, argument) ?? null;
     }
+    case "getPages": {
+      // RiuPlay host API 2 (manga): (titleId, groupId, chapterId) -> pages, as URLs or {url, headers}.
+      const fn = provider.getPages as ((titleId: string, groupId: string, chapterId: string) => unknown[]) | undefined;
+      if (typeof fn !== "function") throw new Error(`Source "${sourceId}" provides manga but has no getPages`);
+      return fn.call(provider, args[0] as string, args[1] as string, args[2] as string) ?? [];
+    }
     case "browserScript": {
       // BROWSER-runtime resolvers (extractors/alloha.js and similar) expose this instead of
       // resolve() - it's a plain string of JS meant to run *inside* the embed page's own browser
