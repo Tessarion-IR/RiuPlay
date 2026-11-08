@@ -12,7 +12,12 @@ import { logger } from "../core/logger";
 // Unlike Android's DiscordRpcManager (which spoofs presence over the gateway using the user's own
 // account token, since a phone has no local Discord process to talk to), this uses Discord's
 // actual sanctioned local RPC IPC - the same mechanism Spotify/VS Code/games use.
-const DISCORD_CLIENT_ID = "1527613923338096764";
+// RiuPlay: the Discord application decides the name Discord shows ("Playing <app>"). hibiki's own
+// application id would make Discord show "hibiki", so RiuPlay ships none: a build gets one only
+// from the RIUPLAY_DISCORD_CLIENT_ID build secret (scripts/buildSecret.ts), registered by whoever
+// builds RiuPlay. Without it, Rich Presence is simply unavailable in that build.
+declare const __DISCORD_CLIENT_ID__: string | undefined;
+const DISCORD_CLIENT_ID = typeof __DISCORD_CLIENT_ID__ === "string" ? __DISCORD_CLIENT_ID__.trim() : "";
 
 const EPISODE_LABEL = "Эп."; // Localizing this would need the renderer's own i18n state piped
 // over IPC just for one word - not worth it for a label only shown on a Discord profile card.
@@ -21,13 +26,15 @@ const WATCH_BUTTON_LABEL = "Смотреть"; // Same reasoning as EPISODE_LABE
 // Discord fetches image URLs itself, so this has to be a real public host, not a bundled local
 // file - reusing the icon already published in the project's own public GitHub repo. A raster
 // format (not the sibling .svg) since Discord's Rich Presence image pipeline expects one.
-const HIBIKI_ICON_URL = "https://raw.githubusercontent.com/akkirrai1337/hibiki/main/docs/hibiki.jpg";
+// RiuPlay: no hibiki-hosted image. Without a poster the card shows the application's own icon
+// (configured in the Discord application) - an empty key.
+const APP_ICON_KEY = "";
 
 // What to show outside the player - deliberately just "using hibiki" with an elapsed timer, not
 // per-page text ("Просматривает каталог", "В профиле", ...). Per-page presence was tried and
 // rejected as noisy/low-value; a single steady line reads better and needs no upkeep as pages get
 // added or renamed.
-const IDLE_DETAILS = "hibiki";
+const IDLE_DETAILS = "RiuPlay";
 
 type PendingState = { kind: "watching"; presence: DiscordPresence } | { kind: "idle" } | null;
 
@@ -91,8 +98,8 @@ function scheduleReachabilityCheck(url: string): void {
 // The large image key to actually send: the poster, unless it is already known to fail for Discord
 // - in which case this also kicks off the check that will correct a still-optimistic send above.
 function resolveLargeImage(posterUrl: string | null): string {
-  if (!posterUrl) return HIBIKI_ICON_URL;
-  if (posterReachability.get(posterUrl) === false) return HIBIKI_ICON_URL;
+  if (!posterUrl) return APP_ICON_KEY;
+  if (posterReachability.get(posterUrl) === false) return APP_ICON_KEY;
   if (!posterReachability.has(posterUrl)) scheduleReachabilityCheck(posterUrl);
   return posterUrl;
 }
@@ -196,7 +203,7 @@ function applyWatchingPresence(presence: DiscordPresence): void {
     .join(" · ");
 
   const largeImage = resolveLargeImage(presence.posterUrl);
-  const usingPoster = largeImage !== HIBIKI_ICON_URL;
+  const usingPoster = largeImage !== APP_ICON_KEY;
 
   client.user
     .setActivity({
@@ -210,10 +217,10 @@ function applyWatchingPresence(presence: DiscordPresence): void {
       // is what @xhayper/discord-rpc maps straight onto that field (its separate `largeImageUrl`
       // option maps onto `assets.large_url` instead, which Discord's client doesn't render from at
       // all - that's the dead end the OAuth/External-Assets detour upstream of this was chasing).
-      largeImageKey: largeImage,
-      largeImageText: usingPoster ? presence.animeTitle : "hibiki",
-      smallImageKey: usingPoster ? HIBIKI_ICON_URL : undefined,
-      smallImageText: usingPoster ? "hibiki" : undefined,
+      largeImageKey: largeImage || undefined,
+      largeImageText: usingPoster ? presence.animeTitle : "RiuPlay",
+      smallImageKey: usingPoster && APP_ICON_KEY ? APP_ICON_KEY : undefined,
+      smallImageText: usingPoster ? "RiuPlay" : undefined,
       // Discord only shows this to someone else viewing the activity, never on the user's own
       // client - a known limitation of Rich Presence buttons, not a bug here. Clicking it hands the
       // link to their OS, which opens this app via the "hibiki" protocol handler (see
@@ -233,8 +240,8 @@ function applyIdlePresence(): void {
       type: ActivityType.Watching,
       details: IDLE_DETAILS,
       startTimestamp: idleSinceMs,
-      largeImageKey: HIBIKI_ICON_URL,
-      largeImageText: "hibiki",
+      largeImageKey: APP_ICON_KEY || undefined,
+      largeImageText: "RiuPlay",
       instance: false,
     })
     .then(() => console.log("[discord] activity set: idle"))

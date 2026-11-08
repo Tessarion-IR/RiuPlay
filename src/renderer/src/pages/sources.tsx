@@ -39,6 +39,7 @@ import { Modal } from "@/components/Modal";
 import { BottomSheet, SheetOption } from "@/components/BottomSheet";
 import type { MarketplaceExtension, RepositoryFetchResult, SourceCapability } from "@shared/types";
 import { isRepositoryAlreadyAdded } from "@shared/repositoryErrors";
+import { SourceCatalog } from "@/features/sources/SourceCatalog";
 import { DisableExtensionButton, InstalledExtensionsPanel, PermissionConsentDialog, RepositoryTrustBar, useRepositoryDetails } from "@/features/sources/ExtensionTrust";
 
 type Tab = "extensions" | "repositories";
@@ -997,8 +998,17 @@ function RepositoriesTab({
   onRemove: (url: string) => void;
 }) {
   const { t } = useTranslation();
-  if (urls.length === 0) return <CenteredMessage text={t("sources.repositoriesEmpty")} />;
+  // RiuPlay: the discovery catalog sits above the user's own repositories, so a fresh install has
+  // somewhere to start without knowing an address.
+  if (urls.length === 0) return (
+    <>
+      <SourceCatalog addedUrls={urls} />
+      <CenteredMessage text={t("sources.repositoriesEmpty")} />
+    </>
+  );
   return (
+    <>
+    <SourceCatalog addedUrls={urls} />
     <div className="flex max-w-2xl flex-col gap-2">
       <AnimatePresence initial={false}>
         {urls.map((url) => (
@@ -1006,6 +1016,7 @@ function RepositoriesTab({
         ))}
       </AnimatePresence>
     </div>
+    </>
   );
 }
 

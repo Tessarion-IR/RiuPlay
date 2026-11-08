@@ -35,7 +35,7 @@ const CONTINUE_LIMIT = 4;
 // constant - same query key, so react-query serves both from one shared cache entry rather than
 // fetching it twice.
 const LIFETIME_ACTIVITY_DAYS = 3650;
-const DEFAULT_NAME = "Hibiki";
+const DEFAULT_NAME = "RiuPlay";
 
 function shortDayLabel(dateKey: string, locale: string): string {
   const [y, m, d] = dateKey.split("-").map(Number);

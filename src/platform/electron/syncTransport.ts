@@ -67,7 +67,7 @@ export const electronSyncTransport: SyncTransportPort = {
           const answer = JSON.parse(message.toString("utf-8")) as { app?: string; deviceId?: string; name?: string; port?: number; kind?: string };
           if (answer.app !== "hibiki" || !answer.deviceId) return;
           const kind = answer.kind === "phone" ? "phone" : "computer";
-          found.set(answer.deviceId, { deviceId: answer.deviceId, name: answer.name ?? "hibiki", host: remote.address, port: answer.port ?? 47652, kind });
+          found.set(answer.deviceId, { deviceId: answer.deviceId, name: answer.name ?? "RiuPlay", host: remote.address, port: answer.port ?? 47652, kind });
         } catch {
           // Not ours.
         }
@@ -80,5 +80,5 @@ export const electronSyncTransport: SyncTransportPort = {
     });
   },
 
-  deviceName: async () => os.hostname() || "hibiki",
+  deviceName: async () => os.hostname() || "RiuPlay",
 };

@@ -17,15 +17,15 @@
     "done": "Done",
     "welcome": {
       "title": "Welcome to RiuPlay",
-      "description": "Let's set up the app in a couple of steps so you can start watching right away.",
+      "description": "Video, manga and audio in one library. Let's get you started.",
       "kicker": "Welcome",
-      "lead": "A catalog, a player and a library that remembers where you stopped. The anime comes from sources you add.",
-      "note": "RiuPlay doesn't host or share any content: sources are installed from outside repositories."
+      "lead": "Watch video, read manga and listen to audio (music, audiobooks, ASMR) in one library that remembers where you stopped. Add your own files, links, your Suwayomi or Kikoeru server, or online sources from repositories you choose.",
+      "note": "RiuPlay doesn't host or share any content. Online sources come from outside repositories you add yourself; nothing is installed or run without your say."
     },
     "sources": {
-      "title": "Add sources",
-      "description": "Install at least one source and pick it as active - without one there's nothing to work with.",
-      "mobileDescription": "Install at least one: the catalog starts from it. You can add more later in Settings."
+      "title": "Add sources (optional)",
+      "description": "Online sources are optional: you can also add your own files and links from the Video, Manga and Audio sections, or connect your own server in Settings > Media servers. The Sources screen lists known repositories to start from.",
+      "mobileDescription": "Optional: online sources come from repositories you add. You can also add your own files and links any time."
     },
     "skip": "Skip for now",
     "continue": "Continue"
@@ -445,7 +445,7 @@
     "uninstall": "Uninstall",
     "noResults": "No sources match your search",
     "install": "Install",
-    "noInstalled": "No sources installed yet. Open a repository on the Repositories tab to add some.",
+    "noInstalled": "No sources installed yet. Open the Repositories tab: Discover lists places to start from, or add a repository you know.",
     "installedSection": "Installed · {{count}}",
     "updatesSection": "Updates",
     "updateAll": "Update all",
@@ -461,7 +461,7 @@
     "repositoriesRemove": "Remove",
     "repositoriesRemoveConfirmTitle": "Remove repository?",
     "repositoriesRemoveConfirmMessage": "Remove {{name}} from the repository list? Installed extensions will remain available.",
-    "repositoriesEmpty": "No repositories added yet. RiuPlay doesn't include or endorse any extension repository. Add one you trust with \"Add repository\".",
+    "repositoriesEmpty": "No repositories added yet. Discover above lists places to start from; none is added or trusted until you choose. You can also add any repository address with \"Add repository\".",
     "repositoriesExtensionCount": "{{count}} extensions",
     "openInBrowser": "Open in browser",
     "copyUrl": "Copy link",

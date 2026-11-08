@@ -11,7 +11,7 @@ import { answerProbe, handleSyncRequest } from "../core/sync/server";
 const CONNECTION_TIMEOUT_MS = 60_000;
 
 function computerName(): string {
-  return os.hostname() || "hibiki";
+  return os.hostname() || "RiuPlay";
 }
 
 /** One connection: a framed request in, a framed answer out. Exported for tests, which run it on a port of their own. */

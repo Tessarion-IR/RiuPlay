@@ -11,6 +11,8 @@ const root = fileURLToPath(new URL(".", import.meta.url));
 // (see scripts/buildSecret.ts). Not a secret - it is in every sign-in URL - but it belongs to
 // whoever registered it, so it stays out of the repository.
 const anilistClientId = buildSecret("ANILIST_CLIENT_ID", root);
+// RiuPlay: the Discord application id for Rich Presence (see main/discordRpc.ts); none by default.
+const discordClientId = buildSecret("RIUPLAY_DISCORD_CLIENT_ID", root);
 
 // RiuPlay M2: the code that runs inside each sandboxed extension host (a Web Worker in a sandboxed
 // window) - hibiki's host API bundled for the browser. Node built-ins it reached for become browser
@@ -80,7 +82,7 @@ export default defineConfig({
           extensionWorker: path.join(root, "src/main/extensions/worker.ts"),
         },
         vite: {
-          define: { __ANILIST_CLIENT_ID__: JSON.stringify(anilistClientId) },
+          define: { __ANILIST_CLIENT_ID__: JSON.stringify(anilistClientId), __DISCORD_CLIENT_ID__: JSON.stringify(discordClientId) },
           resolve: {
             alias: {
               "@shared": fileURLToPath(new URL("./src/shared", import.meta.url)),
