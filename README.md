@@ -186,6 +186,10 @@ docs/         Architecture, security, decisions and status reports
 
 Start with [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/M2_SANDBOX.md](docs/M2_SANDBOX.md), [docs/M3_NETWORKING.md](docs/M3_NETWORKING.md) and [docs/M4_M5_SERVERS.md](docs/M4_M5_SERVERS.md).
 
+## Creator and maintainer
+
+RiuPlay is created and maintained by **[Tessarion-IR](https://github.com/Tessarion-IR)**.
+
 ## Contributing
 
 Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first. By contributing, you agree that your work is licensed under GPL-3.0-only.

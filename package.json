@@ -5,7 +5,10 @@
   "private": true,
   "type": "module",
   "main": "dist-electron/main/index.js",
-  "author": "RiuPlay contributors",
+  "author": {
+    "name": "Tessarion-IR",
+    "url": "https://github.com/Tessarion-IR"
+  },
   "license": "GPL-3.0-only",
   "homepage": "https://github.com/Tessarion-IR/RiuPlay",
   "repository": {
