@@ -37,6 +37,12 @@ async function upsertRepositoryState(url: string, patch: Partial<typeof reposito
     .run();
 }
 
+/** RiuPlay M7: the stored state of one repository (the built-in one has no source_repositories row). */
+export async function repositoryStateOf(url: string): Promise<{ enabled: boolean; trust: "untrusted" | "trusted"; trustedAt: number | null; lastCheckedAt: number | null; lastError: string | null } | null> {
+  const row = await db().select().from(repositoryState).where(eq(repositoryState.url, url)).get();
+  return row ? { enabled: row.enabled, trust: row.trust as "untrusted" | "trusted", trustedAt: row.trustedAt ?? null, lastCheckedAt: row.lastCheckedAt ?? null, lastError: row.lastError ?? null } : null;
+}
+
 export async function isRepositoryEnabled(url: string): Promise<boolean> {
   const row = await db().select().from(repositoryState).where(eq(repositoryState.url, url)).get();
   return row?.enabled ?? true;

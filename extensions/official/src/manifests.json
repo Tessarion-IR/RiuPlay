@@ -1,0 +1,58 @@
+[
+  {
+    "id": "riuplay.ia-video",
+    "name": "Internet Archive: Open Films & Animation",
+    "version": "1.0.0",
+    "lang": "en",
+    "contentType": "video",
+    "hostApi": 2,
+    "isNsfw": false,
+    "capabilities": ["LATEST_RELEASES", "PLAYBACK"],
+    "website": "https://archive.org",
+    "description": "Public-domain and Creative Commons films and cartoons from the Internet Archive. Items without an open license are not offered.",
+    "contentLicense": "Public domain or Creative Commons, per item",
+    "permissions": { "hosts": ["archive.org", "*.archive.org"], "browser": false }
+  },
+  {
+    "id": "riuplay.peppercarrot",
+    "name": "Pepper&Carrot",
+    "version": "1.0.0",
+    "lang": "en",
+    "contentType": "manga",
+    "hostApi": 2,
+    "isNsfw": false,
+    "capabilities": ["LATEST_RELEASES"],
+    "website": "https://www.peppercarrot.com",
+    "description": "The open webcomic by David Revoy, in your language where a translation exists.",
+    "contentLicense": "CC BY 4.0 (David Revoy)",
+    "permissions": { "hosts": ["www.peppercarrot.com"], "browser": false }
+  },
+  {
+    "id": "riuplay.librivox",
+    "name": "LibriVox Audiobooks",
+    "version": "1.0.0",
+    "lang": "en",
+    "contentType": "audio",
+    "hostApi": 2,
+    "isNsfw": false,
+    "capabilities": ["LATEST_RELEASES", "PLAYBACK"],
+    "website": "https://librivox.org",
+    "description": "Free public-domain audiobooks read by LibriVox volunteers.",
+    "contentLicense": "Public domain",
+    "permissions": { "hosts": ["librivox.org", "archive.org", "*.archive.org"], "browser": false }
+  },
+  {
+    "id": "riuplay.ia-audio",
+    "name": "Internet Archive: Open ASMR & Audio",
+    "version": "1.0.0",
+    "lang": "en",
+    "contentType": "audio",
+    "hostApi": 2,
+    "isNsfw": false,
+    "capabilities": ["LATEST_RELEASES", "PLAYBACK"],
+    "website": "https://archive.org",
+    "description": "ASMR, relaxation, sleep stories, spoken word and audio drama from the Internet Archive, with a Creative Commons or public-domain license.",
+    "contentLicense": "Public domain or Creative Commons, per item",
+    "permissions": { "hosts": ["archive.org", "*.archive.org"], "browser": false }
+  }
+]

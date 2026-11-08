@@ -1,0 +1,21 @@
+{
+  "id": "riuplay.peppercarrot",
+  "name": "Pepper&Carrot",
+  "version": "1.0.0",
+  "lang": "en",
+  "contentType": "manga",
+  "hostApi": 2,
+  "isNsfw": false,
+  "capabilities": [
+    "LATEST_RELEASES"
+  ],
+  "website": "https://www.peppercarrot.com",
+  "description": "The open webcomic by David Revoy, in your language where a translation exists.",
+  "contentLicense": "CC BY 4.0 (David Revoy)",
+  "permissions": {
+    "hosts": [
+      "www.peppercarrot.com"
+    ],
+    "browser": false
+  }
+}

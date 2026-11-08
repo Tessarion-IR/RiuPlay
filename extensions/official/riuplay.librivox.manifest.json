@@ -1,0 +1,24 @@
+{
+  "id": "riuplay.librivox",
+  "name": "LibriVox Audiobooks",
+  "version": "1.0.0",
+  "lang": "en",
+  "contentType": "audio",
+  "hostApi": 2,
+  "isNsfw": false,
+  "capabilities": [
+    "LATEST_RELEASES",
+    "PLAYBACK"
+  ],
+  "website": "https://librivox.org",
+  "description": "Free public-domain audiobooks read by LibriVox volunteers.",
+  "contentLicense": "Public domain",
+  "permissions": {
+    "hosts": [
+      "librivox.org",
+      "archive.org",
+      "*.archive.org"
+    ],
+    "browser": false
+  }
+}

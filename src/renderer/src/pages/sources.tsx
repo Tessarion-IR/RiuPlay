@@ -116,7 +116,12 @@ function languageBadge(lang: string): string {
   return lang.toLowerCase() === "uk" ? "UA" : lang.toUpperCase();
 }
 
+/** RiuPlay M7: the bundled repository's address (core/marketplace.ts BUILTIN_REPOSITORY_URL). */
+const BUILTIN_REPOSITORY_URL = "riuplay-builtin://official/index.json";
+const isBuiltinRepository = (url: string) => url === BUILTIN_REPOSITORY_URL;
+
 function repositoryDisplayName(url: string): string {
+  if (isBuiltinRepository(url)) return "RiuPlay (built-in)";
   const match = url.match(/^https?:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\//);
   return match ? `${match[1]}/${match[2]}` : url;
 }
@@ -895,6 +900,10 @@ function ExtensionCard({
                 {languageBadge(extension.lang)} · {versionLabel}
                 {extension.isNsfw && <span className="ml-1 font-bold text-rose-400">· {t("sources.nsfwBadge")}</span>}
               </p>
+              {/* RiuPlay host API 2: which section the extension fills. */}
+              <span data-testid="extension-content-type" className="shrink-0 rounded bg-accent/15 px-1 py-px text-[9.5px] font-bold tracking-wide text-accent-text">
+                {t(`sources.contentType.${extension.contentType ?? "video"}`)}
+              </span>
               {/* An Aniyomi extension (Android): runs natively, installed as one package with its sibling sources. */}
               {extension.apkPackage && <span title={extension.apkPackage} className="shrink-0 rounded bg-text/[.08] px-1 py-px text-[9.5px] font-bold tracking-wide text-muted">APK</span>}
               {extension.capabilities.length > 0 && (
@@ -1049,6 +1058,10 @@ function RepositoryCard({ url, result, onOpen, onRemove }: { url: string; result
       </div>
       <div onClick={(e) => e.stopPropagation()} className="mt-3 flex items-center justify-end gap-1">
         <RepositoryTrustBar url={url} />
+        {isBuiltinRepository(url) ? (
+          <span className="px-2 text-[11px] text-muted">{t("sources.builtinRepositoryNote")}</span>
+        ) : (
+        <>
         <a href={url} target="_blank" rel="noreferrer" title={t("sources.openInBrowser")} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-text/[.06] hover:text-text">
           <Globe className="h-4 w-4" strokeWidth={2} />
         </a>
@@ -1062,6 +1075,8 @@ function RepositoryCard({ url, result, onOpen, onRemove }: { url: string; result
         <button onClick={onRemove} title={t("sources.repositoriesRemove")} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-rose-400/10 hover:text-rose-400">
           <Trash2 className="h-4 w-4" strokeWidth={2} />
         </button>
+        </>
+        )}
       </div>
     </motion.div>
   );

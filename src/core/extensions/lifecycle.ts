@@ -58,7 +58,7 @@ export function compatibilityOf(extension: Pick<MarketplaceExtension, "type" | "
   const required = requiredHostApi(extension);
   if (required !== null && required > HOST_API) return { compatible: false, reason: `needs a newer RiuPlay (extension API ${required}, this build has ${HOST_API})` };
   try {
-    if (new URL(extension.manifestUrl).protocol !== "https:") return { compatible: false, reason: "its files are not served over HTTPS" };
+    if (new URL(extension.manifestUrl).protocol !== "https:" && !extension.manifestUrl.startsWith("riuplay-builtin://official/")) return { compatible: false, reason: "its files are not served over HTTPS" };
   } catch {
     return { compatible: false, reason: "invalid manifest address" };
   }

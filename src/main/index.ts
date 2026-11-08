@@ -2,7 +2,7 @@
 import "./appIdentity";
 import path from "node:path";
 import fs from "node:fs/promises";
-import { createReadStream } from "node:fs";
+import { createReadStream, existsSync } from "node:fs";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, ipcMain, Menu, protocol, session, shell } from "electron";
@@ -27,6 +27,7 @@ import { handleMediaRequest, MEDIA_SCHEME, MEDIA_SCHEME_PRIVILEGES } from "./med
 import { handleTrackingRedirect } from "../core/api/tracking";
 import { registerXpEventHandlers } from "./ipc/xpEvents";
 import { registerMarketplaceHandlers } from "./ipc/marketplace";
+import { setBuiltinRepositoryReader } from "../core/marketplace";
 import { repairMissingResolverDependencies } from "../core/api/extensions";
 import { registerDownloadHandlers } from "./ipc/downloads";
 import { registerProfileBannerHandlers } from "./ipc/profileBanner";
@@ -283,6 +284,12 @@ app.whenReady().then(async () => {
   const connections = new ConnectionsService(netClient, asyncSafeStorageCipher, setLocalServerAllowances);
   void connections.store.publishAllowances().catch(() => undefined);
   registerConnectionHandlers(connections);
+  // RiuPlay M7: the built-in repository's files - bundled next to the app (extraResources) or, in a
+  // development run, extensions/official/ in the checkout. Only bare file names of that folder.
+  const builtinRepositoryDir = app.isPackaged ? path.join(process.resourcesPath, "builtin-extensions") : path.join(app.getAppPath(), "extensions", "official");
+  if (existsSync(path.join(builtinRepositoryDir, "index.json"))) {
+    setBuiltinRepositoryReader((file) => fs.readFile(path.join(builtinRepositoryDir, path.basename(file)), "utf8"));
+  }
   protocol.handle(MEDIA_SCHEME, (request) => {
     const host = new URL(request.url).hostname;
     return host === "remote" || host === "remote-cover" || host === "remote-thumb" ? connections.handleRemote(request) : handleMediaRequest(request);

@@ -1,0 +1,23 @@
+{
+  "id": "riuplay.ia-video",
+  "name": "Internet Archive: Open Films & Animation",
+  "version": "1.0.0",
+  "lang": "en",
+  "contentType": "video",
+  "hostApi": 2,
+  "isNsfw": false,
+  "capabilities": [
+    "LATEST_RELEASES",
+    "PLAYBACK"
+  ],
+  "website": "https://archive.org",
+  "description": "Public-domain and Creative Commons films and cartoons from the Internet Archive. Items without an open license are not offered.",
+  "contentLicense": "Public domain or Creative Commons, per item",
+  "permissions": {
+    "hosts": [
+      "archive.org",
+      "*.archive.org"
+    ],
+    "browser": false
+  }
+}

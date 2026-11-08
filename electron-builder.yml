@@ -27,6 +27,12 @@ extraResources:
     to: apk-host
   - from: src/core/db/migrations
     to: migrations
+  # RiuPlay M7: the built-in repository (scripts/build-official-repo.mjs writes it).
+  - from: extensions/official
+    to: builtin-extensions
+    filter:
+      - "*.json"
+      - "*.js"
 # Lets the installer itself register the "riuplay://" scheme (a Discord Rich Presence "Watch"
 # button opens one - see main/deepLink.ts) instead of relying only on the runtime
 # app.setAsDefaultProtocolClient call in main/index.ts, which a packaged NSIS/AppImage/dmg install

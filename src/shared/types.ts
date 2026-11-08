@@ -508,6 +508,13 @@ export interface MarketplaceExtension {
   apkPackage?: string;
   /** RiuPlay M1: what the manifest asks for (validated by core/extensions/lifecycle.ts); absent = the legacy grant. */
   permissions?: { hosts?: string[]; browser?: boolean };
+  /** RiuPlay host API 2: what the extension provides (absent = video). */
+  contentType?: ExtensionContentType;
+  /** RiuPlay: a short description, and the license of the content it serves (built-in repository). */
+  description?: string | null;
+  contentLicense?: string | null;
+  /** RiuPlay M7: SHA-256 (hex) of the manifest and script files, checked before install. */
+  sha256?: { manifest: string; script: string };
   /** RiuPlay M1, filled in by the main process when listing: can this build install it, and if not, why. */
   compatibility?: { compatible: boolean; reason: string | null };
   /** RiuPlay M1, filled in by the main process: what the install dialog shows (and consent is checked against). */
@@ -539,6 +546,8 @@ export interface RepositoryInfo {
   name: string | null;
   lastCheckedAt: number | null;
   lastError: string | null;
+  /** RiuPlay M7: the bundled RiuPlay repository (always listed, cannot be removed). */
+  builtin?: boolean;
 }
 
 /** RiuPlay M1: per-extension state beyond its files. */

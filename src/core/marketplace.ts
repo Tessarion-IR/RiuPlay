@@ -8,6 +8,42 @@
 import type { MarketplaceExtension, RepositoryFetchResult } from "@shared/types";
 import { getPlatform } from "./platform";
 
+// --- RiuPlay M7: the built-in repository --------------------------------------------------------
+// RiuPlay's own extensions (extensions/official/, GPL-3.0) ship inside the app and are read from
+// there, so the user needs no address and no network to see or install them. Their index carries a
+// SHA-256 for every file, and an install from it is refused unless both files match.
+
+export const BUILTIN_REPOSITORY_URL = "riuplay-builtin://official/index.json";
+const BUILTIN_PREFIX = "riuplay-builtin://official/";
+const BUILTIN_FILE = /^[a-z0-9][\w.-]*\.(json|js)$/i;
+
+let builtinReader: ((file: string) => Promise<string>) | null = null;
+
+/** Set by the platform at startup: reads one file of the bundled repository by its bare name. */
+export function setBuiltinRepositoryReader(reader: ((file: string) => Promise<string>) | null): void {
+  builtinReader = reader;
+}
+
+export function hasBuiltinRepository(): boolean {
+  return builtinReader !== null;
+}
+
+export function isBuiltinRepositoryUrl(url: string): boolean {
+  return url.startsWith(BUILTIN_PREFIX);
+}
+
+async function readBuiltin(url: string): Promise<string> {
+  const file = url.slice(BUILTIN_PREFIX.length);
+  if (!builtinReader) throw new Error("The built-in repository is not available in this build");
+  if (!BUILTIN_FILE.test(file)) throw new Error("Not a file of the built-in repository");
+  return builtinReader(file);
+}
+
+export async function sha256Hex(text: string): Promise<string> {
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export const DEFAULT_REPOSITORY_URL =
   "https://raw.githubusercontent.com/akkirrai1337/hibiki-sources/main/repository/index.json";
 
@@ -34,6 +70,7 @@ function stableUrl(url: string): string {
 }
 
 async function getText(url: string, label: string): Promise<string> {
+  if (isBuiltinRepositoryUrl(url)) return readBuiltin(url);
   if (!isHttpsRepositoryUrl(url)) throw new Error(`${label} URL must use HTTPS`);
   const response = await getPlatform().http.request({
     url: stableUrl(url),
@@ -197,8 +234,20 @@ function payloadUrlFor(manifestUrl: string): string {
 export async function fetchExtensionFiles(
   extension: MarketplaceExtension,
 ): Promise<{ manifestJson: string; jsPayload: string }> {
+  let expected = extension.sha256 ?? null;
+  if (isBuiltinRepositoryUrl(extension.manifestUrl)) {
+    // The entry comes back from the renderer: for the built-in repository the hashes (and the
+    // address) are taken from the bundled index itself, never from what was handed in.
+    const entry = (await fetchRepositoryIndex(BUILTIN_REPOSITORY_URL)).find((e) => e.id === extension.id);
+    if (!entry || entry.manifestUrl !== extension.manifestUrl || !entry.sha256) throw new Error(`'${extension.id}' is not in the built-in repository`);
+    expected = entry.sha256;
+  }
   const manifestJson = await getText(extension.manifestUrl, `manifest for '${extension.id}'`);
   const jsPayload = await getText(payloadUrlFor(extension.manifestUrl), `payload for '${extension.id}'`);
+  if (expected) {
+    if ((await sha256Hex(manifestJson)) !== String(expected.manifest).toLowerCase()) throw new Error(`The manifest of '${extension.id}' does not match its published SHA-256`);
+    if ((await sha256Hex(jsPayload)) !== String(expected.script).toLowerCase()) throw new Error(`The script of '${extension.id}' does not match its published SHA-256`);
+  }
   return { manifestJson, jsPayload };
 }
 

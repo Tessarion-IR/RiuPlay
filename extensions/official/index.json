@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "name": "RiuPlay (built-in)",
+  "license": "GPL-3.0-only",
+  "extensions": [
+    {
+      "id": "riuplay.ia-video",
+      "name": "Internet Archive: Open Films & Animation",
+      "version": "1.0.0",
+      "author": "RiuPlay",
+      "website": "https://archive.org",
+      "iconUrl": null,
+      "lang": "en",
+      "capabilities": [
+        "LATEST_RELEASES",
+        "PLAYBACK"
+      ],
+      "resolverDependencies": [],
+      "isNsfw": false,
+      "type": "source",
+      "hostApi": 2,
+      "contentType": "video",
+      "description": "Public-domain and Creative Commons films and cartoons from the Internet Archive. Items without an open license are not offered.",
+      "contentLicense": "Public domain or Creative Commons, per item",
+      "permissions": {
+        "hosts": [
+          "archive.org",
+          "*.archive.org"
+        ],
+        "browser": false
+      },
+      "manifestUrl": "riuplay-builtin://official/riuplay.ia-video.manifest.json",
+      "sha256": {
+        "manifest": "2d504241ed63751573190cd9d60a4fdae8aca1d24b45dd1b15145fd3633b0d6c",
+        "script": "850014a5c3acb6a36fff5cc3fbc63baac7ccd208e1bba624a7049d2c4b25c9d8"
+      }
+    },
+    {
+      "id": "riuplay.peppercarrot",
+      "name": "Pepper&Carrot",
+      "version": "1.0.0",
+      "author": "RiuPlay",
+      "website": "https://www.peppercarrot.com",
+      "iconUrl": null,
+      "lang": "en",
+      "capabilities": [
+        "LATEST_RELEASES"
+      ],
+      "resolverDependencies": [],
+      "isNsfw": false,
+      "type": "source",
+      "hostApi": 2,
+      "contentType": "manga",
+      "description": "The open webcomic by David Revoy, in your language where a translation exists.",
+      "contentLicense": "CC BY 4.0 (David Revoy)",
+      "permissions": {
+        "hosts": [
+          "www.peppercarrot.com"
+        ],
+        "browser": false
+      },
+      "manifestUrl": "riuplay-builtin://official/riuplay.peppercarrot.manifest.json",
+      "sha256": {
+        "manifest": "1f83a9ccf99fbe8a99c186004515ded9a8467d3dd768b479cecd6bb9e846b02e",
+        "script": "5ba10f1fef8ead0d5dc3f6b9466edbd8b01db9590017a6eb777e41a2f8c42594"
+      }
+    },
+    {
+      "id": "riuplay.librivox",
+      "name": "LibriVox Audiobooks",
+      "version": "1.0.0",
+      "author": "RiuPlay",
+      "website": "https://librivox.org",
+      "iconUrl": null,
+      "lang": "en",
+      "capabilities": [
+        "LATEST_RELEASES",
+        "PLAYBACK"
+      ],
+      "resolverDependencies": [],
+      "isNsfw": false,
+      "type": "source",
+      "hostApi": 2,
+      "contentType": "audio",
+      "description": "Free public-domain audiobooks read by LibriVox volunteers.",
+      "contentLicense": "Public domain",
+      "permissions": {
+        "hosts": [
+          "librivox.org",
+          "archive.org",
+          "*.archive.org"
+        ],
+        "browser": false
+      },
+      "manifestUrl": "riuplay-builtin://official/riuplay.librivox.manifest.json",
+      "sha256": {
+        "manifest": "d792b75c7f81267005b826c89eb49fc85653ddd79050c0b192a35e186658a6fd",
+        "script": "bc9e0aa86a8e51d443ee94ecec54720fa5531e706eb3fc8bc456f7e26dbb8eb1"
+      }
+    },
+    {
+      "id": "riuplay.ia-audio",
+      "name": "Internet Archive: Open ASMR & Audio",
+      "version": "1.0.0",
+      "author": "RiuPlay",
+      "website": "https://archive.org",
+      "iconUrl": null,
+      "lang": "en",
+      "capabilities": [
+        "LATEST_RELEASES",
+        "PLAYBACK"
+      ],
+      "resolverDependencies": [],
+      "isNsfw": false,
+      "type": "source",
+      "hostApi": 2,
+      "contentType": "audio",
+      "description": "ASMR, relaxation, sleep stories, spoken word and audio drama from the Internet Archive, with a Creative Commons or public-domain license.",
+      "contentLicense": "Public domain or Creative Commons, per item",
+      "permissions": {
+        "hosts": [
+          "archive.org",
+          "*.archive.org"
+        ],
+        "browser": false
+      },
+      "manifestUrl": "riuplay-builtin://official/riuplay.ia-audio.manifest.json",
+      "sha256": {
+        "manifest": "f36446b7c763ffd0c083c4ccfcf85cc36283ce5715688537870676b237e58c5c",
+        "script": "74c5b77e40bc2757abc9570b7978289c10b7a8858aa1a21a426ecb163205d17b"
+      }
+    }
+  ]
+}

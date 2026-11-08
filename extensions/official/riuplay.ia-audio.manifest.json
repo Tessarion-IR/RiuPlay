@@ -1,0 +1,23 @@
+{
+  "id": "riuplay.ia-audio",
+  "name": "Internet Archive: Open ASMR & Audio",
+  "version": "1.0.0",
+  "lang": "en",
+  "contentType": "audio",
+  "hostApi": 2,
+  "isNsfw": false,
+  "capabilities": [
+    "LATEST_RELEASES",
+    "PLAYBACK"
+  ],
+  "website": "https://archive.org",
+  "description": "ASMR, relaxation, sleep stories, spoken word and audio drama from the Internet Archive, with a Creative Commons or public-domain license.",
+  "contentLicense": "Public domain or Creative Commons, per item",
+  "permissions": {
+    "hosts": [
+      "archive.org",
+      "*.archive.org"
+    ],
+    "browser": false
+  }
+}

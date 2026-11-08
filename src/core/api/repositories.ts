@@ -1,11 +1,11 @@
 import { eq } from "drizzle-orm";
 import type { HibikiApi } from "@shared/hibikiApi";
-import type { MarketplaceExtension, RepositoryFetchResult } from "@shared/types";
+import type { MarketplaceExtension, RepositoryFetchResult, RepositoryInfo } from "@shared/types";
 import { compatibilityOf, describePermissions } from "../extensions/lifecycle";
-import { forgetRepositoryState, isRepositoryEnabled, recordRepositoryCheck, repositoryInfos, setRepositoryEnabled, setRepositoryTrust } from "./extensionState";
+import { forgetRepositoryState, isRepositoryEnabled, recordRepositoryCheck, repositoryInfos, repositoryStateOf, setRepositoryEnabled, setRepositoryTrust } from "./extensionState";
 import { sourceRepositories } from "../db/schema";
 import { repositoryAlreadyAddedError } from "@shared/repositoryErrors";
-import { fetchRepositoryResult, repositoryIndexCandidates, repositoryKey, resolveRepositoryUrl } from "../marketplace";
+import { BUILTIN_REPOSITORY_URL, fetchRepositoryResult, hasBuiltinRepository, isBuiltinRepositoryUrl, repositoryIndexCandidates, repositoryKey, resolveRepositoryUrl } from "../marketplace";
 import { logger } from "../logger";
 import { getPlatform } from "../platform";
 
@@ -20,7 +20,14 @@ const getDb = () => getPlatform().db.get();
 // marketplace.ts keeps DEFAULT_REPOSITORY_URL / DEFAULT_APK_REPOSITORY_URL only as known addresses
 // (legacy import on Android matches against the APK one); they are never added automatically.
 
+// RiuPlay M7: the built-in repository (RiuPlay's own, bundled, hash-checked extensions) is always
+// listed first. It is not a row in source_repositories: it can be disabled, but not removed.
 async function listRepositoryUrls(): Promise<string[]> {
+  const builtin = hasBuiltinRepository() ? [BUILTIN_REPOSITORY_URL] : [];
+  return [...builtin, ...(await listStoredRepositoryUrls())];
+}
+
+async function listStoredRepositoryUrls(): Promise<string[]> {
   const rows = await getDb().select().from(sourceRepositories).all();
   // One URL per repository: copies saved before add() compared addresses (another spelling of the
   // same index) go, the earliest-added one stays.
@@ -57,6 +64,29 @@ export function annotateEntry(extension: MarketplaceExtension): MarketplaceExten
   };
 }
 
+/** The repository details, the built-in repository first: reviewed (it is RiuPlay's own) unless the
+ * user changed that, enabled unless the user disabled it. */
+async function builtinFirst(): Promise<RepositoryInfo[]> {
+  await listStoredRepositoryUrls(); // drops duplicate spellings first
+  const infos = await repositoryInfos();
+  if (!hasBuiltinRepository()) return infos;
+  const state = await repositoryStateOf(BUILTIN_REPOSITORY_URL);
+  return [
+    {
+      url: BUILTIN_REPOSITORY_URL,
+      addedAt: 0,
+      enabled: state?.enabled ?? true,
+      trust: state?.trust ?? "trusted",
+      trustedAt: state?.trustedAt ?? null,
+      name: "RiuPlay (built-in)",
+      lastCheckedAt: state?.lastCheckedAt ?? null,
+      lastError: state?.lastError ?? null,
+      builtin: true,
+    },
+    ...infos,
+  ];
+}
+
 export function createRepositoriesApi(): Pick<HibikiApi["sources"], "repositories" | "marketplace"> {
   return {
     repositories: {
@@ -66,6 +96,7 @@ export function createRepositoriesApi(): Pick<HibikiApi["sources"], "repositorie
       // repository itself - is saved as the raw index URL it resolves to, checked to be an index.
       async add(input: string): Promise<string[]> {
         let url: string;
+        if (isBuiltinRepositoryUrl(input.trim())) throw repositoryAlreadyAddedError(BUILTIN_REPOSITORY_URL);
         try {
           // A direct index address is checked before anything is fetched: re-adding one needs no network.
           const candidates = repositoryIndexCandidates(input);
@@ -82,6 +113,7 @@ export function createRepositoriesApi(): Pick<HibikiApi["sources"], "repositorie
       },
 
       async remove(url: string): Promise<string[]> {
+        if (isBuiltinRepositoryUrl(url)) throw new Error("The built-in RiuPlay repository can't be removed; you can disable it instead");
         // Only the repository entry and its state go: installed extensions stay installed (and
         // keep working) - removing them is a separate choice. No media, library or history row
         // refers to a repository.
@@ -91,21 +123,18 @@ export function createRepositoriesApi(): Pick<HibikiApi["sources"], "repositorie
         return listRepositoryUrls();
       },
 
-      details: async () => {
-        await listRepositoryUrls(); // drops duplicate spellings first
-        return repositoryInfos();
-      },
+      details: async () => builtinFirst(),
       async setEnabled(url: string, enabled: boolean) {
         if (typeof enabled !== "boolean") throw new TypeError("enabled must be a boolean");
         await setRepositoryEnabled(url, enabled);
         logger.info("sources", `repository ${enabled ? "enabled" : "disabled"}: ${url}`);
-        return repositoryInfos();
+        return builtinFirst();
       },
       async setTrust(url: string, trust: "untrusted" | "trusted") {
         if (trust !== "trusted" && trust !== "untrusted") throw new TypeError("trust must be trusted or untrusted");
         await setRepositoryTrust(url, trust);
         logger.info("sources", `repository marked ${trust}: ${url}`);
-        return repositoryInfos();
+        return builtinFirst();
       },
     },
 

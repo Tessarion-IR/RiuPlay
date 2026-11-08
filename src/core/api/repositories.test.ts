@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from "vitest";
 import * as schema from "../db/schema";
 import { sourceRepositories } from "../db/schema";
 import { applyMigrations, type MigrationJournal } from "../db/migrate";
-import { DEFAULT_APK_REPOSITORY_URL, DEFAULT_REPOSITORY_URL, repositoryIndexCandidates, repositoryKey } from "../marketplace";
+import { BUILTIN_REPOSITORY_URL, DEFAULT_APK_REPOSITORY_URL, DEFAULT_REPOSITORY_URL, fetchExtensionFiles, fetchRepositoryIndex, repositoryIndexCandidates, repositoryKey, setBuiltinRepositoryReader } from "../marketplace";
 import { getPlatform, installPlatform } from "../platform";
 import type { Platform } from "../../platform/types";
 import { createRepositoriesApi } from "./repositories";
@@ -123,5 +123,66 @@ describe("the same repository twice", () => {
     const repositories = await install({ apk: false, markers: ["default-repository-seeded"], repositories: [DEFAULT_REPOSITORY_URL, longForm] });
     expect(await repositories.list()).toEqual([DEFAULT_REPOSITORY_URL]);
     expect(await repositories.remove(DEFAULT_REPOSITORY_URL)).toEqual([]);
+  });
+});
+
+// RiuPlay M7: the built-in repository (extensions/official/, bundled with the app).
+describe("the built-in repository", () => {
+  const officialDir = fileURLToPath(new URL("../../../extensions/official", import.meta.url));
+  const readOfficial = async (file: string) => readFileSync(`${officialDir}/${file}`, "utf-8");
+
+  it("is listed first and cannot be removed, but can be disabled", async () => {
+    const repositories = await install({ apk: false, repositories: ["https://example.org/index.json"] });
+    setBuiltinRepositoryReader(readOfficial);
+    try {
+      expect(await repositories.list()).toEqual([BUILTIN_REPOSITORY_URL, "https://example.org/index.json"]);
+      await expect(repositories.remove(BUILTIN_REPOSITORY_URL)).rejects.toThrow(/can't be removed/);
+      await expect(repositories.add(BUILTIN_REPOSITORY_URL)).rejects.toThrow();
+      const [builtin] = await repositories.details!();
+      expect(builtin).toMatchObject({ url: BUILTIN_REPOSITORY_URL, builtin: true, enabled: true, trust: "trusted", name: "RiuPlay (built-in)" });
+      const [disabled] = await repositories.setEnabled!(BUILTIN_REPOSITORY_URL, false);
+      expect(disabled.enabled).toBe(false);
+    } finally {
+      setBuiltinRepositoryReader(null);
+    }
+  });
+
+  it("lists RiuPlay's video, manga and audio extensions, each with SHA-256 hashes", async () => {
+    setBuiltinRepositoryReader(readOfficial);
+    try {
+      const entries = await fetchRepositoryIndex(BUILTIN_REPOSITORY_URL);
+      expect(new Set(entries.map((e) => e.contentType))).toEqual(new Set(["video", "manga", "audio"]));
+      for (const entry of entries) {
+        expect(entry.sha256?.manifest).toMatch(/^[0-9a-f]{64}$/);
+        expect(entry.permissions?.hosts?.length).toBeGreaterThan(0);
+        expect(entry.permissions?.browser).toBe(false);
+        const files = await fetchExtensionFiles(entry);
+        expect(JSON.parse(files.manifestJson).id).toBe(entry.id);
+      }
+    } finally {
+      setBuiltinRepositoryReader(null);
+    }
+  });
+
+  it("refuses a file that does not match its hash, and ignores hashes handed in from outside", async () => {
+    setBuiltinRepositoryReader(async (file) => (file.endsWith(".js") ? `${await readOfficial(file)}\n// tampered` : readOfficial(file)));
+    try {
+      const [entry] = await fetchRepositoryIndex(BUILTIN_REPOSITORY_URL);
+      await expect(fetchExtensionFiles(entry)).rejects.toThrow(/SHA-256/);
+      const forged = { ...entry, sha256: { manifest: "0".repeat(64), script: "0".repeat(64) } };
+      await expect(fetchExtensionFiles(forged)).rejects.toThrow(/SHA-256/);
+      await expect(fetchExtensionFiles({ ...entry, id: "riuplay.not-there" })).rejects.toThrow(/not in the built-in repository/);
+    } finally {
+      setBuiltinRepositoryReader(null);
+    }
+  });
+
+  it("reads bare file names of its own folder only", async () => {
+    setBuiltinRepositoryReader(readOfficial);
+    try {
+      await expect(fetchRepositoryIndex("riuplay-builtin://official/../../package.json")).rejects.toThrow(/Not a file/);
+    } finally {
+      setBuiltinRepositoryReader(null);
+    }
   });
 });

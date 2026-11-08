@@ -513,7 +513,13 @@
     },
     "repositoriesTrustTitle": "Do you trust this repository?",
     "repositoriesTrustMessage": "Its sources run inside the app with the same rights as the app: they can see your data and your sign-ins to other sources. Only add repositories you trust.",
-    "repositoriesTrustConfirm": "I trust it, add"
+    "repositoriesTrustConfirm": "I trust it, add",
+    "builtinRepositoryNote": "Included with RiuPlay · files checked by SHA-256",
+    "contentType": {
+      "video": "VIDEO",
+      "manga": "MANGA",
+      "audio": "AUDIO"
+    }
   },
   "achievements": {
     "unlockedToast": "Achievement unlocked"
