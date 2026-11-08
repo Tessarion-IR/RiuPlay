@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { ApkHostError, ApkHostProcess, apkIconUrl, apkSourcesPort, confinedCommand, locateApkHost, systemLocateOptions, type LocateOptions } from "./apkHost";
+import { ApkHostError, ApkHostProcess, apkIconUrl, apkSourcesPort, confinedCommand, locateApkHost, redactQueries, systemLocateOptions, type LocateOptions } from "./apkHost";
 
 const options = (existing: string[], overrides: Partial<LocateOptions> = {}): LocateOptions => ({
   resourcesPath: null,
@@ -61,6 +61,14 @@ describe("confinedCommand", () => {
     expect(options[options.indexOf("--name") + 1]).toBe("RiuPlay.ApkHost");
     expect(args[separator + 1]).toBe(location.java);
     expect(args.slice(-3)).toEqual(["Main", "--x", "1"]);
+  });
+});
+
+describe("redactQueries", () => {
+  it("keeps addresses but drops their query strings and fragments from the host's log lines", () => {
+    expect(redactQueries("GET https://api.example/a/b?token=SECRET&x=1 failed")).toBe("GET https://api.example/a/b?<redacted> failed");
+    expect(redactQueries("see http://x.test/p#access_token=abc")).toBe("see http://x.test/p?<redacted>");
+    expect(redactQueries("no address here")).toBe("no address here");
   });
 });
 

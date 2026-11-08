@@ -108,6 +108,14 @@ export function confinedCommand(location: ApkHostLocation, dataDir: string, main
   };
 }
 
+/**
+ * The host's stderr carries what extensions log, which can include addresses with tokens in their query
+ * strings or fragments: only the address up to them is kept in RiuPlay's log.
+ */
+export function redactQueries(line: string): string {
+  return line.replace(/\b(https?:\/\/[^\s?#"']+)[?#][^\s"']*/gi, "$1?<redacted>");
+}
+
 /** What the host answers a failed call with. */
 export class ApkHostError extends Error {}
 
@@ -167,7 +175,7 @@ export class ApkHostProcess {
       });
       child.stderr!.setEncoding("utf8");
       child.stderr!.on("data", (chunk: string) => {
-        for (const line of chunk.split(/\r?\n/)) if (line.trim()) logger.debug("apk-host", line);
+        for (const line of chunk.split(/\r?\n/)) if (line.trim()) logger.debug("apk-host", redactQueries(line));
       });
       child.on("error", (error) => fail(`The APK source host could not be started: ${error.message}`));
       child.on("exit", (code) => {

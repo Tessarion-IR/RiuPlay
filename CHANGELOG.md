@@ -4,6 +4,10 @@ All notable changes to RiuPlay are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2] - 2026-11-08
+
+Second public pre-release. **Alpha: not stable or production-ready.** Windows x64 only; builds are not code-signed. Release notes and known limitations: `docs/releases/v0.1.0-alpha.2.md`.
+
 ### Added
 - Extension-powered catalogue: a built-in RiuPlay repository (open films, Pepper&Carrot, LibriVox, open audio) and installed extensions as sources of the Video, Manga and Audio sections, with search, title pages, the native player and reader, and progress.
 - KikoFlu's audio source (asmr.one) as a built-in extension; adult works hidden unless turned on for that source.
@@ -12,6 +16,13 @@ All notable changes to RiuPlay are documented here. The format follows [Keep a C
 
 ### Security
 - APK extensions (Keiyoushi manga, Aniyomi anime) now run **confined**: RiuPlay's bundled Java runtime starts inside a Windows AppContainer with no capabilities and a Job Object, so it cannot reach the person's files, start programs or open network connections. Its connections go through RiuPlay's network rules (public websites on ports 80/443, the configured proxy, never private addresses). The "full user rights" opt-in is gone; the runtime can still be switched off in Settings.
+- The Java host's log lines keep addresses but drop their query strings and fragments (an extension's own log could carry a token there).
+- The sandbox launcher no longer fails on a per-machine install when it cannot add a read grant to the program folder (those folders already allow sandboxed read access).
+
+### Tests
+- A release gate for anime playback through Hibiki's pipeline (`research/k6/verify-anime-playback.mjs`): play, pause, seek, mute, saved progress, Continue Watching, resume after a restart.
+- asmr.one: R18 works stay hidden by default (each result's flag checked against the site's API).
+- The install-script tests get a 30-second limit: they start dozens of processes each and passed 5 s only when run alone; no assertion changed.
 
 ## [0.1.0-alpha.1] - 2026-11-08
 

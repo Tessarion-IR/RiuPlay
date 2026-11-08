@@ -74,7 +74,14 @@ internal static class RiuPlaySandbox
 
         IntPtr sid = AppContainerSid(name);
         var identity = new SecurityIdentifier(sid);
-        foreach (string dir in reads) Grant(dir, identity, FileSystemRights.ReadAndExecute);
+        foreach (string dir in reads)
+        {
+            // A per-machine install (Program Files) cannot be re-ACL'd without admin rights; those folders
+            // already grant ALL APPLICATION PACKAGES read and execute, so a refused read grant is not fatal.
+            // The program then fails to start if it really cannot read its files. Write grants must succeed.
+            try { Grant(dir, identity, FileSystemRights.ReadAndExecute); }
+            catch (UnauthorizedAccessException) { Console.Error.WriteLine("riuplay-sandbox: could not add a read grant to " + dir + "; relying on its inherited access"); }
+        }
         foreach (string dir in writes)
         {
             Directory.CreateDirectory(dir);

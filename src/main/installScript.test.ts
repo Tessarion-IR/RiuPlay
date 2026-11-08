@@ -22,7 +22,11 @@ const have = (command: string) => {
   }
 };
 
-describe.skipIf(!have("curl") || !have("awk"))("install.sh", () => {
+// Each test runs install.sh, which starts dozens of short-lived processes (sh, curl, awk, sed, ...). Alone a test
+// takes 0.1-3 s on Windows; with the whole suite (and the JVM and Electron tests) running in parallel, process
+// creation slows down enough to pass vitest's 5 s default without any assertion failing. The assertions are
+// unchanged; the time limit is the one that fits process-spawning tests.
+describe.skipIf(!have("curl") || !have("awk"))("install.sh", { timeout: 30_000 }, () => {
   let dir: string;
   let release: string;
   let prefix: string;

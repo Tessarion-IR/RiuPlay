@@ -1,6 +1,6 @@
 {
   "name": "riuplay",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "RiuPlay - local-first media app for video, manga and audio",
   "private": true,
   "type": "module",

@@ -10,9 +10,11 @@
 // (Internet Archive, Pepper&Carrot, LibriVox), then the mandatory ecosystems (KikoFlu's asmr.one, Hibiki,
 // Keiyoushi) - this needs network access.
 //
-// Usage: set RIUPLAY_USER_DATA_DIR=<empty temp dir> & node research/m8/verify-extension-slices.mjs <repoDir> [outDir]
+// Usage: set RIUPLAY_USER_DATA_DIR=<empty temp dir> & node research/m8/verify-extension-slices.mjs <repoDir> [outDir] [packaged RiuPlay.exe]
 // (refuses to run without RIUPLAY_USER_DATA_DIR, so a real profile is never used).
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+// The whole tree: a portable build's launcher stub exits on its own and leaves the app running.
+const killTree = (child) => { if (process.platform === "win32" && child?.pid) spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { stdio: "ignore" }); else child?.kill(); };
 import fs from "node:fs";
 import path from "node:path";
 
@@ -32,7 +34,11 @@ const check = (name, ok, detail) => {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const PORT = 9352;
-const app = spawn(path.join(repo, "node_modules/electron/dist/electron.exe"), [".", `--remote-debugging-port=${PORT}`], { cwd: repo, stdio: "ignore" });
+// argv[4]: a packaged RiuPlay.exe to test instead of the repo's Electron (the same checks on the real package).
+const appExe = process.argv[4] ?? null;
+const app = appExe
+  ? spawn(appExe, [`--remote-debugging-port=${PORT}`], { stdio: "ignore", env: process.env })
+  : spawn(path.join(repo, "node_modules/electron/dist/electron.exe"), [".", `--remote-debugging-port=${PORT}`], { cwd: repo, stdio: "ignore" });
 let target;
 for (let i = 0; i < 80 && !target; i++) {
   await sleep(500);
@@ -41,7 +47,7 @@ for (let i = 0; i < 80 && !target; i++) {
     target = list.find((t) => t.type === "page" && t.url.includes("index.html"));
   } catch { /* not up yet */ }
 }
-if (!target) { console.log("FAIL could not reach the app"); app.kill(); process.exit(1); }
+if (!target) { console.log("FAIL could not reach the app"); killTree(app); process.exit(1); }
 const ws = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise((r) => ws.addEventListener("open", r));
 let seq = 0;
@@ -181,6 +187,22 @@ try {
 
   for (const slice of SLICES.filter((x) => !ONLY || ONLY.some((o) => x.name.toLowerCase().includes(o.toLowerCase())))) await runSlice(slice);
 
+  // asmr.one: R18 works stay hidden unless the source's own setting is turned on. Each result's nsfw flag is
+  // read from the site's API (outside the app), with the setting off and then on.
+  if (!ONLY || ONLY.some((o) => "asmr".includes(o.toLowerCase()))) {
+    const nsfwOf = async (id) => { const r = await fetch(`https://api.asmr-200.com/api/workInfo/${encodeURIComponent(id)}`); return r.ok ? (await r.json()).nsfw === true : null; };
+    const browse = (q) => evaluate(`hibiki.mediaProviders.browse("audio", "riuplay.asmr-one", ${JSON.stringify(q)}, 0).then((l) => l.map((t) => t.id))`);
+    const before = [...(await browse("")), ...(await browse("耳かき"))];
+    const flagsOff = await Promise.all(before.slice(0, 40).map(nsfwOf));
+    check("Audio [asmr.one] R18a. With the default setting no result is an adult work", before.length > 0 && flagsOff.every((f) => f === false), `${before.length} results, ${flagsOff.filter((f) => f === true).length} adult, ${flagsOff.filter((f) => f === null).length} unknown`);
+    const defaults = await evaluate(`hibiki.sources.settings.read("riuplay.asmr-one")`);
+    await evaluate(`hibiki.sources.settings.write("riuplay.asmr-one", "adult", "true")`);
+    const after = await browse("");
+    const flagsOn = await Promise.all(after.slice(0, 30).map(nsfwOf));
+    check("Audio [asmr.one] R18b. Adult works appear only after the user turns the setting on", (defaults?.adult ?? "false") !== "true" && flagsOn.some((f) => f === true), `default adult=${defaults?.adult ?? "(unset)"}; with it on, ${flagsOn.filter((f) => f === true).length}/${flagsOn.length} adult`);
+    await evaluate(`hibiki.sources.settings.write("riuplay.asmr-one", "adult", "false")`);
+  }
+
   // Phase 8 mandatory ecosystem: Hibiki's anime sources - one click from the catalog, no address typed.
   if (!ONLY || ONLY.includes("hibiki")) {
     const label = "Anime [Hibiki]";
@@ -204,6 +226,9 @@ try {
       if (!ok) continue;
       await go("#/video", 2500);
       await evaluate(`${VIS}('[data-testid="provider-chip"]').find((c) => c.innerText.trim() === ${JSON.stringify(name)})?.click()`);
+      // The section keeps its search term across sources; an earlier slice's term must not decide this one.
+      await evaluate(`(() => { const input = ${VIS}('[data-testid="provider-search"]')[0]; if (!input || !input.value) return; const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set; set.call(input, ""); input.dispatchEvent(new Event("input", { bubbles: true })); input.form.requestSubmit(); })()`);
+      await sleep(1000);
       const count = await waitFor(`${VIS}('[data-testid="from-extensions"]').length === 1 && ${VIS}('[data-testid="provider-title"]').length`, 60_000);
       if (!count) { console.log(`  (${name}: no titles, trying the next source)`); continue; }
       check(`${label} 3. Video section shows titles from "${name}"`, true, `${count} titles`);
@@ -235,7 +260,7 @@ try {
   check("run completed without an exception", false, String(error?.stack ?? error).slice(0, 400));
 } finally {
   ws.close();
-  app.kill();
+  killTree(app);
 }
 const failed = results.filter((r) => !r.ok).length;
 console.log(`\n${results.length - failed}/${results.length} checks passed`);
