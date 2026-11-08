@@ -305,6 +305,7 @@ const api: HibikiApi = {
     saveProgress: (unitId, position, duration) => ipcRenderer.invoke(IPC.mediaSaveProgress, unitId, position, duration),
     setUnitCompleted: (unitId, completed) => ipcRenderer.invoke(IPC.mediaSetUnitCompleted, unitId, completed),
     continueList: (type, limit) => ipcRenderer.invoke(IPC.mediaContinue, type, limit),
+    stats: () => ipcRenderer.invoke(IPC.mediaStats),
     recentlyAdded: (limit) => ipcRenderer.invoke(IPC.mediaRecent, limit),
     collections: {
       list: () => ipcRenderer.invoke(IPC.collectionsList),

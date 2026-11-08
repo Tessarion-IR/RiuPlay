@@ -2,7 +2,7 @@
 // need the operating system (native file picker, reading folders), which main/ipc/media.ts adds.
 import type { MediaApi } from "@shared/media";
 import { addToCollection, collectionItemsOf, collectionsOf, createCollection, listCollections, removeCollection, removeFromCollection, updateCollection } from "./collections";
-import { addMedia, addUnit, continueList, getMedia, listMedia, recentlyAdded, removeMedia, removeUnit, saveProgress, setFavorite, setLibrary, setUnitCompleted, updateMedia } from "./media";
+import { addMedia, addUnit, continueList, getMedia, listMedia, mediaStats, recentlyAdded, removeMedia, removeUnit, saveProgress, setFavorite, setLibrary, setUnitCompleted, updateMedia } from "./media";
 
 export type CoreMediaApi = Omit<MediaApi, "addFiles" | "pickFiles">;
 
@@ -20,6 +20,7 @@ export function createMediaApi(): CoreMediaApi {
     saveProgress: (unitId, position, duration) => saveProgress(unitId, position, duration),
     setUnitCompleted: (unitId, completed) => setUnitCompleted(unitId, completed),
     continueList: (type, limit) => continueList(type, limit),
+    stats: () => mediaStats(),
     recentlyAdded: (limit) => recentlyAdded(limit),
     collections: {
       list: () => listCollections(),

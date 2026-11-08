@@ -31,6 +31,7 @@ export async function addFromFiles(input: AddFilesInput) {
 export function registerMediaHandlers(): void {
   const media = createMediaApi();
 
+  ipcMain.handle(IPC.mediaStats, () => media.stats!());
   ipcMain.handle(IPC.mediaList, (_e, filter?: { type?: MediaType; search?: string; inLibrary?: boolean }) => media.list(filter ?? {}));
   ipcMain.handle(IPC.mediaGet, (_e, id: unknown) => media.get(intId(id)));
   ipcMain.handle(IPC.mediaAdd, (_e, input: AddMediaInput) => media.add(input));

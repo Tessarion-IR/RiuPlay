@@ -173,6 +173,11 @@ export interface MediaPatch {
 }
 
 /** The part of `window.hibiki` for RiuPlay's own media (src/preload). */
+/** RiuPlay: activity in the unified library, per type (counts only - progress units differ by type). */
+export interface MediaStats {
+  byType: Record<MediaType, { titles: number; inLibrary: number; favorites: number; unitsStarted: number; unitsCompleted: number }>;
+}
+
 export interface MediaApi {
   list(filter?: { type?: MediaType; search?: string; inLibrary?: boolean }): Promise<MediaSummary[]>;
   get(id: number): Promise<MediaDetails | null>;
@@ -190,6 +195,8 @@ export interface MediaApi {
   setUnitCompleted(unitId: number, completed: boolean): Promise<UnitProgress>;
   continueList(type: MediaType, limit?: number): Promise<ContinueEntry[]>;
   recentlyAdded(limit?: number): Promise<MediaSummary[]>;
+  /** RiuPlay: per-type counts of the unified library and its progress. */
+  stats?(): Promise<MediaStats>;
   collections: {
     list(): Promise<Collection[]>;
     create(name: string, description?: string): Promise<Collection>;

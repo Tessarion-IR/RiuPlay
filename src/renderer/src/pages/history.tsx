@@ -1,3 +1,4 @@
+import { MediaActivityCard } from "@/features/media/MediaActivityCard";
 import { useMemo } from "react";
 import { isMobile } from "@/lib/mobile";
 import { LibrarySegments } from "@/components/MobilePageHeader";
@@ -33,6 +34,8 @@ export function HistoryPage() {
   return (
     <div className="min-h-full bg-app-bg px-8 py-8 pb-16 mobile:px-4 mobile:pb-6 mobile:pt-4">
       {isMobile ? <LibrarySegments active="/history" /> : <h1 className="mb-6 text-xl font-bold tracking-[-.02em] text-text">{t("history.title")}</h1>}
+      {/* RiuPlay: the history below is episodes watched through sources; this is everything else. */}
+      <div className="mb-6"><MediaActivityCard title="Your library activity (files, links, servers)" /></div>
       {loading ? null : entries.length === 0 ? (
         <div className="flex min-h-[calc(100vh-220px)] items-center justify-center">
           <div className="max-w-sm text-center">

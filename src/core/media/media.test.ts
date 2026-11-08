@@ -262,3 +262,20 @@ describe("collections", () => {
     await expect(media.collections.addItem(999, { sourceId: "s", titleId: "x" })).rejects.toThrow(/not-found/);
   });
 });
+
+describe("RiuPlay: media stats across types", () => {
+  it("counts titles, library, favourites and units per type", async () => {
+    const api = createMediaApi();
+    const v = await insertMedia({ type: "video", title: "V", origin: "manual", originRef: "v", units: [{ number: 1, url: "https://e.org/1.mp4" }, { number: 2, url: "https://e.org/2.mp4" }], libraryStatus: "active" });
+    const a = await insertMedia({ type: "audio", title: "A", origin: "server", originRef: "kikoeru:1:2", units: [{ number: 1, url: "remote:kikoeru-track:/api/media/stream/x" }] });
+    await insertMedia({ type: "manga", title: "M", origin: "manual", originRef: "m", units: [] });
+    const vUnits = (await api.get(v.item.id))!.units;
+    await api.saveProgress(vUnits[0].id, 1000, 1000);
+    await api.saveProgress(vUnits[1].id, 10, 1000);
+    await api.setFavorite(a.item.id, true);
+    const { byType } = await api.stats!();
+    expect(byType.video).toEqual({ titles: 1, inLibrary: 1, favorites: 0, unitsStarted: 2, unitsCompleted: 1 });
+    expect(byType.audio).toMatchObject({ titles: 1, favorites: 1, unitsStarted: 0 });
+    expect(byType.manga).toMatchObject({ titles: 1, inLibrary: 0 });
+  });
+});

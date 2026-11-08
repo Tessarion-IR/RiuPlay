@@ -1,3 +1,4 @@
+import { MediaActivityCard } from "@/features/media/MediaActivityCard";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -197,6 +198,11 @@ export function ProfilePage() {
       {/* A 4th column only kicks in once the window is wide enough to actually give it room
           (2xl, 1536px+) - below that, XP history just stacks under achievements inside their
           shared column instead of squeezing into its own sliver. */}
+      {/* RiuPlay: the unified library's video, manga and audio activity; the statistics below
+          come from episodes watched through sources. */}
+      <div className="max-w-6xl px-8 pt-8 2xl:max-w-[1600px]">
+        <MediaActivityCard />
+      </div>
       <div className="grid max-w-6xl grid-cols-1 gap-8 px-8 pt-8 lg:grid-cols-3 2xl:max-w-[1600px] 2xl:grid-cols-4">
         <div className="space-y-8 lg:col-span-2">
           {/* The streak card moved up next to the name (see StreakBadge in ProfileHeader) - this

@@ -203,6 +203,7 @@ export const IPC = {
   mediaSaveProgress: "media:saveProgress",
   mediaSetUnitCompleted: "media:setUnitCompleted",
   mediaContinue: "media:continue",
+  mediaStats: "media:stats",
   mediaRecent: "media:recent",
   collectionsList: "collections:list",
   collectionsCreate: "collections:create",

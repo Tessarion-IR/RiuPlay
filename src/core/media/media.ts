@@ -13,6 +13,7 @@ import {
   type AddMediaInput,
   type AddMediaResult,
   type ContinueEntry,
+  type MediaStats,
   type LibraryStatus,
   type MediaDetails,
   type MediaItem,
@@ -489,3 +490,28 @@ export async function continueList(type: MediaType, limit = 12): Promise<Continu
   return entries;
 }
 
+
+/** RiuPlay: per-type activity of the unified library (local files, links, server titles). */
+export async function mediaStats(): Promise<MediaStats> {
+  const db = getDb();
+  const items = await db.select({ id: localMedia.id, type: localMedia.contentType }).from(localMedia).all();
+  const library = await db.select().from(localLibrary).all();
+  const progress = await db.select({ mediaId: localProgress.mediaId, completed: localProgress.completed }).from(localProgress).all();
+  const typeOf = new Map(items.map((i) => [i.id, i.type as MediaType]));
+  const empty = () => ({ titles: 0, inLibrary: 0, favorites: 0, unitsStarted: 0, unitsCompleted: 0 });
+  const byType: MediaStats["byType"] = { video: empty(), manga: empty(), audio: empty() };
+  for (const item of items) if (byType[item.type as MediaType]) byType[item.type as MediaType].titles++;
+  for (const row of library) {
+    const type = typeOf.get(row.mediaId);
+    if (!type) continue;
+    byType[type].inLibrary++;
+    if (row.favorite) byType[type].favorites++;
+  }
+  for (const row of progress) {
+    const type = typeOf.get(row.mediaId);
+    if (!type) continue;
+    byType[type].unitsStarted++;
+    if (row.completed) byType[type].unitsCompleted++;
+  }
+  return { byType };
+}
