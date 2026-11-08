@@ -28,6 +28,8 @@ import { handleTrackingRedirect } from "../core/api/tracking";
 import { registerXpEventHandlers } from "./ipc/xpEvents";
 import { registerMarketplaceHandlers } from "./ipc/marketplace";
 import { setBuiltinRepositoryReader } from "../core/marketplace";
+import { ExtensionMediaService } from "./extensions/mediaProvider";
+import { registerMediaProviderHandlers } from "./ipc/mediaProviders";
 import { repairMissingResolverDependencies } from "../core/api/extensions";
 import { registerDownloadHandlers } from "./ipc/downloads";
 import { registerProfileBannerHandlers } from "./ipc/profileBanner";
@@ -61,6 +63,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // from `file://` and blocks it. A custom scheme works the same way regardless of how the renderer
 // itself was loaded, so playback behaves identically in dev and packaged builds. Must be
 // registered before the app is ready.
+/** RiuPlay M8: set once the extension runtime exists (riuplay-media://ext/... and the provider IPC). */
+let extensionMedia: ExtensionMediaService | null = null;
 const DOWNLOAD_FILE_SCHEME = "hibiki-download";
 // Serves the profile banner (see ipc/profileBanner.ts) the same way - its own scheme rather than
 // reusing hibiki-download's, so this one can stay scoped to a folder that has nothing to do with
@@ -284,6 +288,7 @@ app.whenReady().then(async () => {
   const connections = new ConnectionsService(netClient, asyncSafeStorageCipher, setLocalServerAllowances);
   void connections.store.publishAllowances().catch(() => undefined);
   registerConnectionHandlers(connections);
+  registerMediaProviderHandlers(() => extensionMedia);
   // RiuPlay M7: the built-in repository's files - bundled next to the app (extraResources) or, in a
   // development run, extensions/official/ in the checkout. Only bare file names of that folder.
   const builtinRepositoryDir = app.isPackaged ? path.join(process.resourcesPath, "builtin-extensions") : path.join(app.getAppPath(), "extensions", "official");
@@ -292,6 +297,7 @@ app.whenReady().then(async () => {
   }
   protocol.handle(MEDIA_SCHEME, (request) => {
     const host = new URL(request.url).hostname;
+    if (host === "ext") return extensionMedia ? extensionMedia.handle(request) : Promise.resolve(new Response("Extensions are still loading", { status: 503 }));
     return host === "remote" || host === "remote-cover" || host === "remote-thumb" ? connections.handleRemote(request) : handleMediaRequest(request);
   });
 
@@ -388,6 +394,7 @@ app.whenReady().then(async () => {
   });
 
   const runtime = new ExtensionRuntime(EXTENSIONS_DIR);
+  extensionMedia = new ExtensionMediaService(runtime, netClient);
   // Before any handler exists: a renderer call must never see an empty source list just because
   // the manifests were still being read.
   await runtime.reload();

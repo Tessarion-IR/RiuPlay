@@ -1100,7 +1100,9 @@
     "origin": {
       "direct": "From URL",
       "file": "Local files",
-      "manual": "Added by hand"
+      "manual": "Added by hand",
+      "server": "Your server",
+      "extension": "From a source"
     },
     "status": {
       "active": {
@@ -1340,6 +1342,23 @@
       "loadingPages": "Loading the chapter from your server...",
       "unreachable": "Your server could not be reached: {{error}}",
       "retry": "Try again"
+    },
+    "providers": {
+      "title": {
+        "video": "From your sources",
+        "manga": "From your sources",
+        "audio": "From your sources"
+      },
+      "none": {
+        "video": "No video source is installed yet. RiuPlay's built-in repository has open films and cartoons you can add in one click.",
+        "manga": "No manga source is installed yet. RiuPlay's built-in repository has open comics you can add in one click.",
+        "audio": "No audio source is installed yet. RiuPlay's built-in repository has audiobooks, ASMR and radio drama you can add in one click."
+      },
+      "install": "Browse sources",
+      "search": "Search this source",
+      "searchPlaceholder": "Search {{source}}",
+      "noResults": "Nothing found.",
+      "error": "This source didn't answer: {{error}}"
     }
   },
   "servers": {

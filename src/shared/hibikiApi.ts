@@ -1,7 +1,7 @@
 // The contract of `window.hibiki`: what the renderer may ask of the backend. Shared so the
 // Electron preload (src/preload/index.ts) is checked against it, and so another platform can
 // implement the same surface without going through Electron IPC.
-import type { AddMediaResult, MediaUnit } from "./media";
+import type { AddMediaResult, MediaType, MediaUnit, ProviderDetail, ProviderSource, ProviderTitle } from "./media";
 import type {
   NetworkConfig,
   RemotePage,
@@ -352,6 +352,18 @@ export interface HibikiApi {
     kikoeruBrowse(id: number, page: number, query?: string): Promise<RemotePage>;
     addToLibrary(id: number, ref: string): Promise<AddMediaResult>;
     /** A server chapter's pages, fetched the first time it is opened. */
+    loadPages(unitId: number): Promise<MediaUnit>;
+  };
+  /** Desktop only (RiuPlay M8): installed extensions as providers of the Video, Manga and Audio
+   * sections. open() stores a title as an ordinary MediaItem (origin "extension"), so everything
+   * in window.hibiki.media works for it; its streams and pages load from riuplay-media://ext/...,
+   * fetched by the main process as that extension. */
+  mediaProviders?: {
+    sources(type: MediaType): Promise<ProviderSource[]>;
+    browse(type: MediaType, sourceId: string, query: string, offset: number): Promise<ProviderTitle[]>;
+    detail(sourceId: string, titleId: string): Promise<ProviderDetail>;
+    open(sourceId: string, titleId: string): Promise<AddMediaResult>;
+    /** An extension chapter's pages, asked for the first time it is opened. */
     loadPages(unitId: number): Promise<MediaUnit>;
   };
   network: {

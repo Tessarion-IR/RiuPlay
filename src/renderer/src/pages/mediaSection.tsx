@@ -4,6 +4,7 @@
 // what the user is watching from extension sources (hibiki), so anime from sources and local video
 // live in one place rather than in two apps.
 import { FromServers } from "@/features/servers/FromServers";
+import { FromExtensions } from "@/features/media/FromExtensions";
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -84,6 +85,7 @@ export function MediaSectionPage({ type }: { type: MediaType }) {
         </section>
       )}
 
+      <FromExtensions type={type} />
       {type === "video" && <FromSources />}
       {type !== "video" && <FromServers type={type} />}
 

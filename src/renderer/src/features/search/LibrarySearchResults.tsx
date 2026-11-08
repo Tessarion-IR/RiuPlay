@@ -11,6 +11,7 @@ import { MediaCard } from "@/components/media/MediaCard";
 export function originLabel(item: MediaItem): string {
   if (item.origin === "file") return "Your files";
   if (item.origin === "server") return item.originRef.startsWith("suwayomi:") ? "Your Suwayomi server" : "Your Kikoeru server";
+  if (item.origin === "extension") return "From a source";
   if (item.origin === "direct") return "Link";
   return "Added by you";
 }

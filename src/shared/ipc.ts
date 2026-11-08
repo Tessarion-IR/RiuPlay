@@ -149,6 +149,12 @@ export const IPC = {
   connectionsKikoeruBrowse: "connections:kikoeru:browse",
   connectionsAddToLibrary: "connections:addToLibrary",
   connectionsLoadPages: "connections:loadPages",
+  // RiuPlay M8: installed extensions as media providers.
+  mediaProvidersSources: "mediaProviders:sources",
+  mediaProvidersBrowse: "mediaProviders:browse",
+  mediaProvidersDetail: "mediaProviders:detail",
+  mediaProvidersOpen: "mediaProviders:open",
+  mediaProvidersLoadPages: "mediaProviders:loadPages",
   extensionsApkRuntimeGet: "extensions:apkRuntime:get",
   extensionsApkRuntimeSet: "extensions:apkRuntime:set",
   networkSecureProxyStatus: "network:secureProxy:status",

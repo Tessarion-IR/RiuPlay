@@ -365,6 +365,13 @@ const api: HibikiApi = {
     addToLibrary: (id: number, ref: string) => ipcRenderer.invoke(IPC.connectionsAddToLibrary, id, ref),
     loadPages: (unitId: number) => ipcRenderer.invoke(IPC.connectionsLoadPages, unitId),
   },
+  mediaProviders: {
+    sources: (type) => ipcRenderer.invoke(IPC.mediaProvidersSources, type),
+    browse: (type, sourceId, query, offset) => ipcRenderer.invoke(IPC.mediaProvidersBrowse, type, sourceId, query, offset),
+    detail: (sourceId, titleId) => ipcRenderer.invoke(IPC.mediaProvidersDetail, sourceId, titleId),
+    open: (sourceId, titleId) => ipcRenderer.invoke(IPC.mediaProvidersOpen, sourceId, titleId),
+    loadPages: (unitId) => ipcRenderer.invoke(IPC.mediaProvidersLoadPages, unitId),
+  },
   network: {
     configure: (config: NetworkConfig): Promise<void> => ipcRenderer.invoke(IPC.networkConfigure, config),
     resetCloudflare: (): Promise<void> => ipcRenderer.invoke(IPC.networkResetCloudflare),

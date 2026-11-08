@@ -23,15 +23,18 @@ export function MangaReaderPage({ mediaId, unitId }: { mediaId: number; unitId: 
   const pageRefs = useRef<Array<HTMLDivElement | null>>([]);
   const kindLabel = t(unitLabelKey("manga"));
   const pages = unit?.pages ?? [];
-  // RiuPlay M4: a chapter on the user's Suwayomi server learns its pages the first time it is opened.
-  const remote = Boolean(unit && unit.url.startsWith("riuplay-media://remote/") && pages.length === 0);
+  // RiuPlay M4/M8: a chapter on the user's Suwayomi server, or from an installed extension, learns
+  // its pages the first time it is opened.
+  const fromExtension = Boolean(unit && unit.url.startsWith("riuplay-media://ext/"));
+  const remote = Boolean(unit && (unit.url.startsWith("riuplay-media://remote/") || fromExtension) && pages.length === 0);
   const [remoteError, setRemoteError] = useState<string | null>(null);
   const [remoteAttempt, setRemoteAttempt] = useState(0);
   useEffect(() => {
-    if (!remote || !unit || !hibiki.connections) return;
+    const load = fromExtension ? hibiki.mediaProviders?.loadPages : hibiki.connections?.loadPages;
+    if (!remote || !unit || !load) return;
     let cancelled = false;
     setRemoteError(null);
-    hibiki.connections.loadPages(unit.id).then(
+    load(unit.id).then(
       () => !cancelled && void query.refetch(),
       (error: unknown) => !cancelled && setRemoteError(error instanceof Error ? error.message.replace(/^Error invoking remote method '[^']+': (\w*Error: )?/, "") : "error"),
     );

@@ -17,7 +17,8 @@ export const UNIT_KIND_FOR: Record<MediaType, UnitKind> = { video: "episode", ma
 
 /** Where a locally added title came from. */
 // "server": a title on the user's Suwayomi/Kikoeru server (RiuPlay M4/M5); originRef "<kind>:<connectionId>:<ref>".
-export const MEDIA_ORIGINS = ["direct", "file", "manual", "server"] as const;
+// "extension": a title from an installed extension (RiuPlay M8); originRef "<sourceId>:<titleId>".
+export const MEDIA_ORIGINS = ["direct", "file", "manual", "server", "extension"] as const;
 export type MediaOrigin = (typeof MEDIA_ORIGINS)[number];
 
 /** Library statuses, shared by every type; the words differ per type (Watching / Reading / Listening). */
@@ -208,4 +209,37 @@ export interface MediaApi {
     /** Collections a title is in. */
     of(ref: MediaRef): Promise<number[]>;
   };
+}
+
+// --- RiuPlay M8: installed extensions as media providers --------------------------------------
+
+/** An installed, enabled extension that provides one media type. */
+export interface ProviderSource {
+  id: string;
+  name: string;
+  contentType: MediaType;
+  lang: string | null;
+}
+
+/** A title as a section's browse row shows it (straight from the extension, not stored). */
+export interface ProviderTitle {
+  sourceId: string;
+  id: string;
+  title: string;
+  cover: string;
+  year: number | null;
+  description: string;
+}
+
+export interface ProviderUnit {
+  groupId: string;
+  episodeId: string;
+  number: number;
+  title: string;
+  durationMs: number | null;
+}
+
+export interface ProviderDetail extends ProviderTitle {
+  genres: string[];
+  units: ProviderUnit[];
 }
