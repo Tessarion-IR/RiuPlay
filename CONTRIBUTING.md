@@ -9,7 +9,7 @@ Thanks for helping. RiuPlay aims to be a welcoming, community-driven project.
 - Never commit secrets, personal data or user databases.
 
 ## Getting started
-1. Install **Node.js 22 LTS** and **Git** on Windows 10/11.
+1. Install **Node.js 22 LTS or newer** and **Git** on Windows 10/11.
 2. Fork the repo, then run `git clone`, `npm ci` and `npm run dev`.
 3. Create a branch: `feat/<short-name>`, `fix/<short-name>` or `docs/<short-name>`.
 
@@ -29,4 +29,4 @@ npm run test:main
 Use the issue templates. For bugs, include your Windows version, the RiuPlay version, steps to reproduce, and relevant lines from `%APPDATA%\RiuPlay\logs\riuplay.log` with any personal data removed.
 
 ## Extensions
-Source extensions live in separate repositories, not in this one. See `docs/EXTENSION_DEVELOPMENT.md` (coming with the extension spec in Phase 7).
+Source extensions live in separate repositories, not in this one. See `docs/M1_EXTENSION_LIFECYCLE.md` (manifest, permissions and trust) and `docs/M2_SANDBOX.md` (what an extension can and cannot do at runtime).

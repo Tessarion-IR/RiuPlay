@@ -4,6 +4,17 @@ All notable changes to RiuPlay are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.1.0-alpha.1] - 2026-11-08
+
+First public pre-release. **Alpha: not stable or production-ready.** Windows x64 only; the builds are not code-signed. Known limitations are listed in the README and in `docs/releases/v0.1.0-alpha.1.md`.
+
+### Release preparation
+- Packaged builds now contain only the runtime bundles (`dist/`, `dist-electron/main`, `dist-electron/preload`). Compiled tests and build configs are no longer shipped. `LICENSE.txt` and `THIRD_PARTY_NOTICES.md` are placed next to `RiuPlay.exe`.
+- A portable build (`RiuPlay-v<version>-portable.exe`) alongside the installer.
+- Removed a leftover browser-preview stub (`preview-mock.js`) from the renderer.
+- Exported logs are named `riuplay-log-*.log` and say "RiuPlay".
+- README, SECURITY and third-party notices updated for the public alpha.
+
 ### Phase 7 completion: M1, M2, M4, M5, product identity
 
 #### Added

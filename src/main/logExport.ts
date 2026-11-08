@@ -28,7 +28,7 @@ async function installedSourceSummary(): Promise<string> {
 /** Resolves the written path, or null if the user cancelled the save dialog. */
 export async function exportLog(): Promise<string | null> {
   const window = BrowserWindow.getFocusedWindow();
-  const defaultName = `hibiki-log-${new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)}.log`;
+  const defaultName = `riuplay-log-${new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)}.log`;
   const options: Electron.SaveDialogOptions = {
     title: "Сохранить журнал",
     defaultPath: defaultName,
@@ -38,7 +38,7 @@ export async function exportLog(): Promise<string | null> {
   if (canceled || !filePath) return null;
 
   const contents = renderLog({
-    app: `hibiki ${app.getVersion()}`,
+    app: `RiuPlay ${app.getVersion()}`,
     electron: process.versions.electron,
     chrome: process.versions.chrome,
     node: process.versions.node,

@@ -4,7 +4,7 @@
     {
       "name": "plan never puts credentials in the Chromium rule",
       "ok": true,
-      "detail": "http://127.0.0.1:10603"
+      "detail": "http://127.0.0.1:3501"
     },
     {
       "name": "HTTP proxy with credentials: Chromium authenticates through the login handler",

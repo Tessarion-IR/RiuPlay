@@ -5,8 +5,7 @@ Scope was limited to folders that clearly relate to RiuPlay. Personal files, bro
 | Path | Related? | Notes |
 |---|---|---|
 | `E:\Projects\RiuPlay` | Yes | The project. See `EXISTING_PROJECT_AUDIT.md`. |
-| `E:\Projects\Barsan` | No | Two `.txt` files (names only inspected). Not opened. |
-| `E:\Projects\CD` | No | Empty directory. |
+| Other folders on the machine | No | Unrelated to RiuPlay; not opened. |
 
 ## Assets
 - The project ships **no** icons, logos, fonts or images. The sidebar logo is a `lucide-react` `PlaySquare` icon on the accent colour. A RiuPlay logo and `.ico` must be created during the Windows integration phase.

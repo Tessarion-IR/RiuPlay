@@ -1,7 +1,7 @@
 {
   "name": "riuplay",
-  "version": "0.1.0",
-  "description": "RiuPlay is a local-first, open-source Windows media application for video, manga and audio, with installable source extensions. Based on hibiki.",
+  "version": "0.1.0-alpha.1",
+  "description": "RiuPlay - local-first media app for video, manga and audio",
   "private": true,
   "type": "module",
   "main": "dist-electron/main/index.js",

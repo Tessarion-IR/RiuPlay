@@ -27,9 +27,10 @@ hibiki itself credits:
 |---|---|---|
 | [KikoFlu](https://github.com/pa-jesusf/KikoFlu) | GPL-3.0 | Ideas for the audio queue, subtitle and lyric matching, playback-session restore and stream caching, re-implemented in TypeScript. Where an implementation follows KikoFlu closely, the file header credits it. |
 | [Suwayomi-Server](https://github.com/Suwayomi/Suwayomi-Server) | MPL-2.0 | Extension lifecycle design (API-version compatibility window, update and obsolete detection, deferred deletion). RiuPlay can also talk to a user-run Suwayomi server over its public HTTP API. |
+| [kikoeru-express](https://github.com/kikoeru-project/kikoeru-express) | GPL-3.0 | No code. RiuPlay talks to a user-run Kikoeru server over its public HTTP API. |
 
 ## npm dependencies
-The production dependencies are licensed under MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, or dual MIT/WTFPL and MIT/BSD/Apache. All of these are compatible with GPL-3.0. Generate the full list with:
+The production dependencies are licensed under MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, BlueOak-1.0.0, or dual MIT/WTFPL and MIT/BSD/Apache. All of these are compatible with GPL-3.0. Generate the full list with:
 
 ```
 npx license-checker-rseidelsohn --production --summary

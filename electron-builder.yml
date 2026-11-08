@@ -5,9 +5,20 @@ directories:
 # better-sqlite3 (the only native module) ships an ABI-stable N-API prebuilt binary since v13, so
 # nothing needs compiling per Electron version - and this machine has no C++ toolchain to do it.
 npmRebuild: false
+# Only what the app runs: the renderer bundle and the main/preload/worker bundles. `tsc -b` also
+# writes per-file compiler output (including compiled tests and build configs) into dist-electron/;
+# none of it is loaded at runtime, so it is kept out of the package.
 files:
-  - dist
-  - dist-electron
+  - dist/**
+  - dist-electron/main/**
+  - dist-electron/preload/**
+  - package.json
+# The GPL text and the third-party notices travel with every build, next to RiuPlay.exe.
+extraFiles:
+  - from: LICENSE
+    to: LICENSE.txt
+  - from: THIRD_PARTY_NOTICES.md
+    to: THIRD_PARTY_NOTICES.md
 extraResources:
   # The APK source host (apk-host/): its jars and a trimmed Java to run them, one build per architecture
   # (`gradlew bundle -PbundleName=<arch>`, see release.yml). Absent in a build made without it, which
@@ -25,7 +36,9 @@ protocols:
   schemes:
     - riuplay
 win:
-  target: nsis
+  target:
+    - nsis
+    - portable
   icon: electron-builder-resources/riuplay.ico
 nsis:
   # Overrides the default "${productName} Setup ${version}.exe". Two reasons: a space-separated
@@ -39,6 +52,10 @@ nsis:
   # this title is "${productName} ${version}", which just repeats the version a second time right
   # next to those. Plain productName here keeps the title itself clean.
   uninstallDisplayName: ${productName}
+portable:
+  # A single self-extracting .exe that runs without installing. It uses the same %APPDATA%\RiuPlay
+  # profile as the installed app.
+  artifactName: ${productName}-v${version}-portable.${ext}
 mac:
   # Two builds, one per Mac architecture: the dmg is what a person downloads for a first install, the
   # zip is what the app updates itself from (see scripts/make-update-manifest.mjs). The name carries

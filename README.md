@@ -4,111 +4,205 @@
 
 # RiuPlay
 
-**A local-first, open-source media application for Windows: video, manga and audio from sources you choose.**
+**A local-first, open-source media application for Windows: video, anime, manga, audio and ASMR, from your own files, your own servers and sources you choose.**
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-![Platform: Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D6)
+[![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg)](LICENSE)
+![Platform: Windows 10/11 x64](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D6)
 ![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
 
 </div>
 
-> **Status: early alpha.** RiuPlay brings four projects together in one application:
-> - **the original RiuPlay**: one media model for anime, video, manga and audio, and its own features;
-> - **[hibiki](https://github.com/akkirrai1337/hibiki)**: desktop infrastructure, video playback and the extension runtime;
-> - **[KikoFlu](https://github.com/pa-jesusf/KikoFlu)**: the audio experience (queue, synced lyrics, session restore);
-> - **[Suwayomi](https://github.com/Suwayomi/Suwayomi-Server)**: source lifecycle and update management.
->
-> Today the running app is mostly the hibiki foundation. The integration work is planned phase by phase in the [roadmap](docs/INTEGRATION_PLAN.md) and tracked feature by feature in the [integration matrix](docs/FEATURE_INTEGRATION_MATRIX.md). This README separates what works today from what is planned.
+> [!WARNING]
+> **RiuPlay is alpha software.** This is an early public pre-release for testing and feedback. It is not stable or production-ready. Expect bugs, rough edges and changes that may need a fresh profile. The builds are **not code-signed**. Read [Known alpha limitations](#known-alpha-limitations) before you install, and keep a backup of anything you care about.
 
 ## What RiuPlay is
 
-- **Local-first.** There's no account and no cloud backend. Your library, history and settings live in a SQLite database on your PC.
-- **Bring your own sources.** RiuPlay doesn't host or distribute content. You add extension repositories, and installed extensions find and play media from the sites they target.
-- **Built for Windows.** It's a native installer and a native window, with Windows media controls.
+RiuPlay is one desktop app for the media you watch, read and listen to.
+
+- **Local-first.** No account and no cloud backend. Your library, progress, history and settings stay in a SQLite database on your PC.
+- **Bring your own media.** RiuPlay doesn't host or distribute content. It plays your local files and links, connects to servers you run yourself, and runs source extensions from repositories you add.
+- **One library for everything.** Video, manga and audio share one model: the same library statuses, favourites, collections, progress and search.
+- **Made for Windows.** It has a native installer, a portable build, Windows media keys and a `riuplay://` link handler.
+
+RiuPlay is derived from [hibiki](https://github.com/akkirrai1337/hibiki) (GPL-3.0-only). It also borrows ideas from [KikoFlu](https://github.com/pa-jesusf/KikoFlu) and [Suwayomi](https://github.com/Suwayomi/Suwayomi-Server). See [License and credits](#license-and-credits).
 
 ## Features
 
-### RiuPlay's own media (Phase 6, verified on Windows 11)
-- **Video, Manga and Audio** sections, one model for all three.
-- **Add media** by URL, from files on your PC (never copied), or by hand.
-- Title pages with library status, favourites, collections, and episodes, chapters or tracks.
-- Video plays in the built-in player. Audio has its own player page with auto-next and media keys. Manga has a continuous reader. All of them remember where you stopped.
-- **Home** with Continue Watching / Reading / Listening, a **Library** for every type, and **Collections** that mix your own titles with titles from sources.
+### Video and anime
+- Built-in player for HLS, DASH and MP4 streams and local video files. It has quality and speed controls, subtitles with delay adjustment, opening and ending skip, and resume.
+- Anime search, catalogs, title pages and episodes through installed source extensions.
+- Continue Watching, watch history and episode downloads for offline viewing.
 
-### Sources, servers and security (Phase 7)
-- **Your own servers:** connect a Suwayomi (manga) or Kikoeru (audio) server under Settings > Media servers, browse it from the Manga and Audio sections, and add titles to the same library. Passwords are encrypted on your PC and never shown again.
-- **Discover:** the Sources screen lists known places to start from, with license and maintenance facts and what was checked. Nothing is added, trusted or installed until you choose.
-- **Extensions:** each runs in its own Chromium-sandboxed window, with no access to your files, other programs or your local network, and a Windows-enforced memory limit. Before installing, you see what an extension may do. Repositories start "not reviewed", and APK (Java) sources are off unless you turn them on.
-- **Networking:** every request from extensions, downloads and the app goes through one path. Your computer and local network are blocked, every address is checked, and a configured HTTP, HTTPS or SOCKS5 proxy is never bypassed (DNS goes through it too). The proxy password can be stored encrypted.
+### Manga
+- A continuous reader for local folders of images, page URLs and chapters from your own Suwayomi server.
+- Continue Reading with remembered page position.
 
-### Inherited from the hibiki foundation
-These features come with the imported codebase. On Windows 11 so far, startup, database creation and the full automated test suite have been verified. Each feature will be checked by hand in the next phases.
-- Install, update and remove scripted source extensions from HTTPS repositories.
-- Run Aniyomi APK extensions through an optional Java host.
-- Search with filters, browse catalogs, open title details, related titles and episodes.
-- Built-in video player with HLS, DASH and MP4, quality and speed controls, subtitle delay, opening and ending skip, and resume.
-- Library (watching, planned, completed, dropped, on hold, favourites), Continue Watching, history and statistics.
-- Episode downloads for offline viewing.
-- Light and dark themes, an accent colour, and English, Russian and Ukrainian interface languages.
-- Backup and restore of the local database.
+### Audio and ASMR
+- An audio player page with auto-next and Windows media keys.
+- Local files and folders, track URLs, and works from your own Kikoeru server.
+- Continue Listening with remembered position.
 
-### Planned (see [INTEGRATION_PLAN.md](docs/INTEGRATION_PLAN.md))
-- Manga reader modes (single page, right-to-left, zoom) and the KikoFlu audio experience (queue, synced lyrics, session restore, mini player).
-- Integrity hashes and signed repositories for extensions; per-source proxies.
-- Generic providers: RSS/Atom, JSON-LD/OpenGraph.
-- Subtitle library and matching, an audio queue with session restore, and an optional mpv playback engine.
+### Unified library
+- **Add media** by URL, from files on your PC (they are never copied), or by hand.
+- Library statuses (watching or reading, planned, completed, on hold, dropped), favourites and **collections** that mix your own titles with titles from sources.
+- **Search** covers both your sources and your own library, with each result labelled by where it comes from.
+- Profile and History show your video, manga and audio activity.
+- Backup and restore of the local database, plus English, Russian and Ukrainian interface languages (some newer screens are English only).
 
-## Install (users)
+### Extensions and sources
+- Install, update, disable and remove scripted source extensions from HTTPS repositories.
+- A **Discover** catalog on the Sources screen lists known repositories and servers. For each one it shows the license, maintenance status and the date its facts were checked. Nothing in it is added, trusted or installed until you choose.
+- Repositories start as **not reviewed**. Trusting a repository and installing from it are separate choices.
+- Before you install an extension, RiuPlay shows the permissions it asks for, such as the hosts it may contact.
 
-There are no published releases yet. To try RiuPlay now, build it from source (below).
+### Your own servers: Suwayomi and Kikoeru
+- Connect a [Suwayomi-Server](https://github.com/Suwayomi/Suwayomi-Server) (manga) or a [Kikoeru](https://github.com/kikoeru-project/kikoeru-express) server (audio and ASMR) under **Settings → Network → Media servers**.
+- Browse the server from the Manga and Audio sections and add titles to your library. They then behave like any other title.
+- Passwords are encrypted with Windows DPAPI and never shown again. They are sent only to the server they belong to.
+- A server on your own PC or local network only works after you confirm it in the connection form.
 
-## Build from source (Windows)
+## Installation (Windows)
 
-Requirements: **Windows 10/11 x64**, **Node.js 22 LTS** and **Git**. No C++ toolchain is needed: the only native module (better-sqlite3) ships a prebuilt N-API binary, and Electron (45) downloads its own binary on first use (`npm run electron:install` fetches it up front).
+Requirements: **Windows 10 or 11, x64.**
+
+1. Open the [Releases page](https://github.com/Tessarion-IR/RiuPlay/releases) and pick the latest **pre-release**.
+2. Download one of these files:
+   - `RiuPlay-v<version>-setup.exe`: an installer for your user account. It needs no administrator rights and adds Start-menu and desktop shortcuts.
+   - `RiuPlay-v<version>-portable.exe`: a single file that runs without installing.
+3. Optionally, check the download against `SHA256SUMS.txt` from the same release:
+   ```powershell
+   Get-FileHash .\RiuPlay-v<version>-setup.exe -Algorithm SHA256
+   ```
+4. Run it. The builds are **not code-signed**, so Windows SmartScreen may say "Windows protected your PC". Choose **More info → Run anyway** only if the checksum matches.
+
+Both builds keep your data in `%APPDATA%\RiuPlay\`. That folder holds the database `riuplay.db`, plus `logs\`, `extensions\` and `backups\`. Uninstalling doesn't delete it.
+
+The in-app updater only offers **stable** releases, so it won't offer alpha pre-releases. Update an alpha by installing the next one from the Releases page.
+
+## First-run setup
+
+1. **Onboarding** explains the Video, Manga and Audio sections. Online sources are optional, and you can skip every step.
+2. **Add your own media:** in any section, choose **Add media** to add a link, a local file or a folder.
+3. **Connect a server (optional):** open **Settings → Network → Media servers**, choose Suwayomi or Kikoeru, enter the address and sign-in, and choose **Test**.
+4. **Set a proxy (optional):** set it under **Settings → Network**. HTTP, HTTPS and SOCKS5 proxies are supported, and the proxy password can be stored encrypted.
+
+## Discovering and adding repositories
+
+RiuPlay comes with **no repository installed** and endorses none.
+
+1. Open **Sources → Repositories**.
+2. **Discover** lists known starting points for anime, manga and audio. Each entry links to its project page and states its license and what was checked. Use these buttons:
+   - **Add repository** adds an extension repository to RiuPlay.
+   - **Copy address for Suwayomi** copies a manga repository address to add inside your own Suwayomi server.
+   - **Get the server** opens the project page of a server you can run yourself.
+3. You can also paste the HTTPS address of any repository you know.
+4. A new repository is **not reviewed**. Open it, check the permissions of the extension you want, and install it. You can disable or remove it at any time.
+
+No verified audio or ASMR source repository is known yet. For audio, use your own files or a Kikoeru server.
+
+## Security and privacy
+
+What RiuPlay does today (details in [SECURITY.md](SECURITY.md) and [docs/](docs)):
+
+- **No telemetry and no account.** RiuPlay contacts:
+  - the sources, servers and proxy you set up;
+  - GitHub, to check for stable updates;
+  - AniList (anonymously) and AniSkip, to look up opening and ending times when you play anime from a source;
+  - a DNS-over-HTTPS provider, only if you turn that on.
+- **Isolated renderer.** The UI runs with `contextIsolation`, `sandbox` and no Node integration. It can only reach a small typed API.
+- **Sandboxed extensions.** Each scripted extension runs in its own Chromium-sandboxed hidden window with an in-memory session. It has no Node or Electron access and no file access. It runs under a Windows Job Object memory limit.
+- **One controlled network path.** All requests from extensions, downloads and the app's own features go through one checked client:
+  - requests to your computer and local network are blocked unless you approved that exact server;
+  - every resolved address is checked;
+  - redirects are re-checked;
+  - a configured proxy is never bypassed, and DNS goes through it too.
+- **Credentials stay in the main process.** Server and proxy passwords are encrypted with Windows DPAPI and never reach the UI. New backups don't include the proxy password.
+- **LAN device sync is off by default.** While it's off, RiuPlay opens no listening socket.
+
+These are design goals backed by automated tests. **They have not been independently audited.** Extensions are third-party code, so only install them from repositories you are willing to trust.
+
+## Known alpha limitations
+
+These are known and not yet solved. They are not finished features.
+
+1. **Stream security.** Stream URLs are checked when playback starts. Later HLS/DASH segments, redirects during playback and DNS changes are **not yet continuously re-checked**. Full stream-proxy hardening on desktop is deferred to a later release.
+2. **Suwayomi and Kikoeru.** Both integrations have automated tests against disposable fake servers. They have **not yet been verified against real Suwayomi or Kikoeru servers**. Server titles don't pick up new chapters or tracks after you add them, and Kikoeru lyrics and subtitles are not imported.
+3. **UI verification.** The new Media servers screens, the Discover catalog and the extension permission dialog have **not yet had a full manual interactive test**. They were checked in automated tests and screenshots only.
+4. **APK (Java) sources.** They run outside the extension sandbox and the controlled network path. They are **off by default** and need an explicit opt-in. **This alpha build doesn't include the Java host**, so APK sources are not available in it.
+5. **Discord Rich Presence** needs a RiuPlay Discord application id at build time (`RIUPLAY_DISCORD_CLIENT_ID`). The release builds have none, so **Discord presence stays off**.
+6. **AniList sign-in** needs an AniList client id at build time (`ANILIST_CLIENT_ID`). The release builds have none, so AniList tracking isn't available.
+7. **Translations.** The newest screens (servers, Discover, permission dialogs) are English only. Russian and Ukrainian fall back to English there.
+8. **Unsigned builds.** The installer and the portable build are not code-signed.
+9. **Windows only.** macOS, Linux and Android builds exist in the code but are not part of this release and are untested.
+
+The full list of remaining work is in [docs/PHASE7_STATUS.md](docs/PHASE7_STATUS.md).
+
+## Reporting bugs
+
+- **Bugs and ideas:** open an issue with the [issue templates](https://github.com/Tessarion-IR/RiuPlay/issues/new/choose). Include:
+  - the RiuPlay version (Settings → About);
+  - your Windows version;
+  - steps to reproduce;
+  - relevant lines from `%APPDATA%\RiuPlay\logs\riuplay.log`.
+
+  **Remove personal data, server addresses and anything that looks like a password or token** before you post log lines.
+- **Security problems:** don't open a public issue. Report them privately through [GitHub security advisories](https://github.com/Tessarion-IR/RiuPlay/security/advisories/new), as described in [SECURITY.md](SECURITY.md).
+
+## Building from source
+
+Requirements: Windows 10/11 x64, **Node.js 22 LTS or newer** and **Git**. No C++ toolchain is needed.
 
 ```bat
 git clone https://github.com/Tessarion-IR/RiuPlay.git
 cd RiuPlay
-npm ci          :: no install scripts run (see .npmrc); nothing needs compiling
-npm run dev     :: starts the app with hot reload (Electron downloads itself on first use)
+npm ci
+npm run dev
 ```
 
 | Command | What it does |
 |---|---|
 | `npm run dev` | Run the app in development mode |
 | `npm test` | Renderer unit tests (Vitest) |
-| `npm run test:main` | Core and main-process tests (Vitest, Node 22) |
+| `npm run test:main` | Core and main-process tests (Vitest) |
 | `npm run typecheck` | TypeScript project check |
-| `npm run electron:install` | Download the Electron binary now (otherwise it happens on first use) |
-| `npm run build:win` | Build the NSIS installer and portable `.exe` into `release/` (see `docs/P0_ELECTRON_UPGRADE.md` for a Windows packaging note) |
+| `npm run build:win` | Build the NSIS installer and the portable `.exe` into `release/` |
 
-Your data lives in `%APPDATA%\RiuPlay\` (database `riuplay.db`, `logs\`, `extensions\`).
+Set the environment variable `RIUPLAY_USER_DATA_DIR` to an absolute path to run the app on a separate, disposable profile. This is useful for testing.
 
-## Architecture
+### Architecture
 
 ```
 src/
-  main/       Electron main process: window, IPC, database, extension host, downloads
-  preload/    The minimal, typed API exposed to the page (contextIsolation + sandbox)
-  core/       Platform-independent domain: db schema and migrations, library, extensions, sync
+  main/       Electron main process: window, IPC, database, network client, extension hosts, servers
+  preload/    The minimal typed API exposed to the page
+  core/       Platform-independent domain: database schema and migrations, library, extensions, sync
   platform/   Adapters (electron/, android/) behind the contracts in platform/types.ts
   renderer/   React 19 UI: TanStack Router and Query, Zustand, Tailwind
   shared/     Types and the IPC contract shared by every layer
-apk-host/     Optional JVM process that runs Aniyomi APK extensions
-legacy/       The original RiuPlay prototype (Next.js), kept while its features are ported
-docs/         Audits, architecture, decisions and plans
+apk-host/     Optional JVM process for Aniyomi APK extensions (not bundled in alpha builds)
+legacy/       The original RiuPlay prototype (Next.js), kept for reference
+docs/         Architecture, security, decisions and status reports
 ```
 
-Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/TECHNOLOGY_DECISION.md](docs/TECHNOLOGY_DECISION.md) for the design.
+Start with [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/M2_SANDBOX.md](docs/M2_SANDBOX.md), [docs/M3_NETWORKING.md](docs/M3_NETWORKING.md) and [docs/M4_M5_SERVERS.md](docs/M4_M5_SERVERS.md).
 
 ## Contributing
 
-Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Report security issues privately as described in [SECURITY.md](SECURITY.md).
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first. By contributing, you agree that your work is licensed under GPL-3.0-only.
 
 ## License and credits
 
-RiuPlay is licensed under the **GNU GPL v3.0 only**. It is derived from **[hibiki](https://github.com/akkirrai1337/hibiki)** by akkirrai1337 and contributors (GPL-3.0-only). Thanks to them for the foundation. Design ideas come from [KikoFlu](https://github.com/pa-jesusf/KikoFlu) and [Suwayomi-Server](https://github.com/Suwayomi/Suwayomi-Server). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+RiuPlay is free software, licensed under the **GNU General Public License v3.0 only** ([LICENSE](LICENSE)).
+
+- RiuPlay is derived from **[hibiki](https://github.com/akkirrai1337/hibiki)** v3.3.0 by akkirrai1337 and contributors (GPL-3.0-only). RiuPlay has modified it, and the changes are recorded in the Git history and in [CHANGELOG.md](CHANGELOG.md). Thanks to them for the foundation.
+- The APK extension compatibility code comes, through hibiki, from **Anikku** and **Yuzono anime-extensions** (Apache-2.0).
+- RiuPlay takes design ideas, but no copied code, from **[KikoFlu](https://github.com/pa-jesusf/KikoFlu)** (GPL-3.0) and **[Suwayomi-Server](https://github.com/Suwayomi/Suwayomi-Server)** (MPL-2.0). It talks to Suwayomi and Kikoeru servers only over their public HTTP APIs.
+- Packaged builds include Electron, Chromium, Node.js and FFmpeg under their own licenses (`LICENSE.electron.txt`, `LICENSES.chromium.html`).
+
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the full notices.
+
+RiuPlay is an independent project. It is not affiliated with or endorsed by hibiki, KikoFlu, Suwayomi, Kikoeru, AniList or Discord.
 
 ## Disclaimer
 
-RiuPlay does not host, store or distribute any media. It works like a specialised browser for sources the user adds. The developers have no affiliation with any content provider. Respect copyright law in your country, and only use sources you have the right to access.
+RiuPlay does not host, store or distribute any media. It works like a specialised browser and player for files, servers and sources that you add yourself. The developers have no affiliation with any content provider. Respect the copyright law of your country, and only use sources you have the right to access.

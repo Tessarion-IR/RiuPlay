@@ -62,3 +62,12 @@ Captured from a dev build on an isolated profile:
 6. **Discord presence** needs a RiuPlay Discord application id at build time (`RIUPLAY_DISCORD_CLIENT_ID`).
 7. **The automatic "carry-over" install** (Android legacy import) is now refused by the consent rule, by design.
 8. **The Phase 6 end-to-end onboarding check** only verifies that the welcome step was left behind. Completion was confirmed separately in the screenshot run.
+
+## Public alpha 0.1.0-alpha.1 (2026-11-08)
+
+The current state was published as a GitHub **pre-release**, with the limitations above disclosed in the README and in `docs/releases/v0.1.0-alpha.1.md`. Stream-proxy hardening (item 1) stays deferred. Release preparation:
+- the package was trimmed to the runtime bundles;
+- a portable build was added;
+- a leftover preview stub was removed;
+- the gates were re-run on isolated profiles: main 780 passed and 6 skipped, renderer 322, M0 95/95, M2 25/25, M3 9/9, Phase 6 25/25, protocols 11/11, packaged smoke 10/10 for both the installer build and the portable `.exe`;
+- `npm audit --omit=dev` found 0 vulnerabilities.
