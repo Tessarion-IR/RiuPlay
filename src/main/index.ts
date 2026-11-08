@@ -18,7 +18,10 @@ import { registerSyncHandlers, shutdownSync } from "./ipc/sync";
 import { registerNetworkHandlers } from "./ipc/network";
 import { EXTENSION_HOST_PRIVILEGES, EXTENSION_HOST_SCHEME } from "./extensions/sandbox/sandboxHost";
 import { disabledExtensionIds } from "../core/api/extensionState";
-import { setExtensionHostPermissions } from "./net/state";
+import { netClient, setExtensionHostPermissions, setLocalServerAllowances } from "./net/state";
+import { ConnectionsService } from "./connections/service";
+import { registerConnectionHandlers } from "./ipc/connections";
+import { asyncSafeStorageCipher } from "./net/electron";
 import { registerMediaHandlers } from "./ipc/media";
 import { handleMediaRequest, MEDIA_SCHEME, MEDIA_SCHEME_PRIVILEGES } from "./mediaProtocol";
 import { handleTrackingRedirect } from "../core/api/tracking";
@@ -275,7 +278,15 @@ app.whenReady().then(async () => {
   // for a large file rather than anything about Range specifically. Building the Response
   // ourselves removes that layer entirely instead of chasing exactly what about it was wrong.
   // RiuPlay: only files recorded in the database for imported titles (see mediaProtocol.ts).
-  protocol.handle(MEDIA_SCHEME, (request) => handleMediaRequest(request));
+  // RiuPlay M4/M5: the user's media servers. Their pages, covers and audio are served on the same
+  // scheme under remote*/ hosts, fetched by the main process with the connection's credentials.
+  const connections = new ConnectionsService(netClient, asyncSafeStorageCipher, setLocalServerAllowances);
+  void connections.store.publishAllowances().catch(() => undefined);
+  registerConnectionHandlers(connections);
+  protocol.handle(MEDIA_SCHEME, (request) => {
+    const host = new URL(request.url).hostname;
+    return host === "remote" || host === "remote-cover" || host === "remote-thumb" ? connections.handleRemote(request) : handleMediaRequest(request);
+  });
 
   protocol.handle(DOWNLOAD_FILE_SCHEME, async (request) => {
     const url = new URL(request.url);

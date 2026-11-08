@@ -32,13 +32,30 @@ export function normaliseBaseUrl(input: string): string {
 }
 
 /** Whether the address is on this computer or the local network (needs the user's confirmation). */
-export async function isLocalAddress(baseUrl: string, lookup: (host: string) => Promise<string[]> = async (h) => (await dns.lookup(h, { all: true })).map((a) => a.address)): Promise<boolean> {
+/**
+ * Whether the address is on this computer or the local network (needs the user's confirmation).
+ * Names are resolved by the network broker's own resolver first (so behind a proxy the lookup goes
+ * through the proxy, like every other request); only a name the public resolvers don't know - a
+ * LAN name such as "nas" - is asked of the system resolver, because only it can know such names.
+ */
+export async function isLocalAddress(
+  baseUrl: string,
+  options: { preflight?: (url: string) => Promise<{ ok: true } | { ok: false; code: string }>; lookup?: (host: string) => Promise<string[]> } = {},
+): Promise<boolean> {
   const url = new URL(baseUrl);
   let host = url.hostname.toLowerCase();
   if (host.startsWith("[") && host.endsWith("]")) host = host.slice(1, -1);
-  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) return true;
-  const addresses = net.isIP(host) ? [host] : await lookup(host).catch(() => []);
-  return addresses.some((a) => blockedReason(a) !== null);
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".lan") || host.endsWith(".home.arpa")) return true;
+  if (net.isIP(host)) return blockedReason(host) !== null;
+  if (options.preflight) {
+    const verdict = await options.preflight(baseUrl);
+    if (verdict.ok) return false;
+    if (verdict.code === "blocked-address") return true;
+    if (verdict.code !== "dns-failed") return false; // e.g. proxy unusable: not local, it will fail on its own
+  }
+  const lookup = options.lookup ?? (async (h: string) => (await dns.lookup(h, { all: true })).map((a) => a.address));
+  const addresses = await lookup(host).catch(() => [] as string[]);
+  return addresses.length > 0 && addresses.some((a) => blockedReason(a) !== null);
 }
 
 function toConnection(row: Row): ServerConnection {
@@ -89,7 +106,7 @@ export class ConnectionStore {
   }
 
   /** Adds a connection. A local address needs `localConfirmed: true` (the user's explicit consent). */
-  async add(input: ServerConnectionInput, isLocal: (baseUrl: string) => Promise<boolean> = isLocalAddress): Promise<ServerConnection> {
+  async add(input: ServerConnectionInput, isLocal: (baseUrl: string) => Promise<boolean> = (u) => isLocalAddress(u)): Promise<ServerConnection> {
     const kind: ServerKind = input.kind === "kikoeru" ? "kikoeru" : input.kind === "suwayomi" ? "suwayomi" : (() => { throw new Error("unknown server type"); })();
     const baseUrl = normaliseBaseUrl(input.baseUrl);
     const authMode = input.authMode ?? "none";
@@ -117,6 +134,39 @@ export class ConnectionStore {
     if (rows.length === 0) throw new Error("this server is already added");
     await this.publishAllowances();
     return toConnection(rows[0]);
+  }
+
+  /**
+   * Edits a connection. `password`: undefined keeps the stored one, null or "" removes it, a string
+   * replaces it. A changed address is classified again and, if local, needs `localConfirmed`.
+   */
+  async update(id: number, patch: Partial<ServerConnectionInput>, isLocal: (baseUrl: string) => Promise<boolean> = (u) => isLocalAddress(u)): Promise<ServerConnection> {
+    const row = await this.row(id);
+    const baseUrl = patch.baseUrl !== undefined ? normaliseBaseUrl(patch.baseUrl) : row.baseUrl;
+    const authMode = patch.authMode ?? row.authMode;
+    if (!["none", "basic", "ui_login", "token"].includes(authMode)) throw new Error("unknown sign-in mode");
+    const username = patch.username !== undefined ? patch.username || null : row.username;
+    if (authMode !== "none" && !username) throw new Error("this sign-in mode needs a user name");
+    let localApprovedAt = row.localApprovedAt;
+    if (baseUrl !== row.baseUrl) {
+      const local = await isLocal(baseUrl);
+      if (local && patch.localConfirmed !== true) throw new Error("this server is on your computer or local network; confirm that to allow RiuPlay to reach it");
+      localApprovedAt = local ? Date.now() : null;
+    }
+    const secretCiphertext = patch.password === undefined ? row.secretCiphertext : await this.encrypt(patch.password);
+    try {
+      const rows = await db()
+        .update(serverConnections)
+        .set({ name: patch.name !== undefined ? patch.name.trim().slice(0, 80) || new URL(baseUrl).host : row.name, baseUrl, authMode, username, secretCiphertext: authMode === "none" ? null : secretCiphertext, localApprovedAt, lastError: null, updatedAt: Date.now() })
+        .where(eq(serverConnections.id, id))
+        .returning()
+        .all();
+      await this.publishAllowances();
+      return toConnection(rows[0]);
+    } catch (error) {
+      if (/UNIQUE/i.test(String(error))) throw new Error("another connection already uses this address");
+      throw error;
+    }
   }
 
   /** Replaces the stored secret (a refreshed token, a corrected password). */

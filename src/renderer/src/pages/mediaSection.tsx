@@ -3,6 +3,7 @@
 // unified media model), what to continue, and lets them add more. The Video section also carries
 // what the user is watching from extension sources (hibiki), so anime from sources and local video
 // live in one place rather than in two apps.
+import { FromServers } from "@/features/servers/FromServers";
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -84,6 +85,7 @@ export function MediaSectionPage({ type }: { type: MediaType }) {
       )}
 
       {type === "video" && <FromSources />}
+      {type !== "video" && <FromServers type={type} />}
 
       <section>
         <div className="mb-4 flex flex-wrap items-center gap-2">

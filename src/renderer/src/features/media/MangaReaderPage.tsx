@@ -8,6 +8,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { unitLabelKey, unitName } from "@/lib/media";
 import { useProgressSaver, useUnit } from "./useUnit";
+import { hibiki } from "@/lib/hibiki";
 
 type Fit = "width" | "height";
 
@@ -22,6 +23,22 @@ export function MangaReaderPage({ mediaId, unitId }: { mediaId: number; unitId: 
   const pageRefs = useRef<Array<HTMLDivElement | null>>([]);
   const kindLabel = t(unitLabelKey("manga"));
   const pages = unit?.pages ?? [];
+  // RiuPlay M4: a chapter on the user's Suwayomi server learns its pages the first time it is opened.
+  const remote = Boolean(unit && unit.url.startsWith("riuplay-media://remote/") && pages.length === 0);
+  const [remoteError, setRemoteError] = useState<string | null>(null);
+  const [remoteAttempt, setRemoteAttempt] = useState(0);
+  useEffect(() => {
+    if (!remote || !unit || !hibiki.connections) return;
+    let cancelled = false;
+    setRemoteError(null);
+    hibiki.connections.loadPages(unit.id).then(
+      () => !cancelled && void query.refetch(),
+      (error: unknown) => !cancelled && setRemoteError(error instanceof Error ? error.message.replace(/^Error invoking remote method '[^']+': (\w*Error: )?/, "") : "error"),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [remote, unit?.id, remoteAttempt]); // eslint-disable-line react-hooks/exhaustive-deps
   const go = (id: number) => void navigate({ to: "/read/$mediaId/$unitId", params: { mediaId: String(mediaId), unitId: String(id) } });
 
   // Resume at the saved page once the pages are on screen.
@@ -81,6 +98,21 @@ export function MangaReaderPage({ mediaId, unitId }: { mediaId: number; unitId: 
       </header>
 
       <div className="mx-auto flex max-w-4xl flex-col items-center">
+        {remote && (
+          <div className="flex h-64 flex-col items-center justify-center gap-3 text-sm text-white/70" data-testid="remote-pages">
+            {remoteError ? (
+              <>
+                <ImageOff className="h-6 w-6" />
+                <span>{t("media.server.unreachable", { error: remoteError })}</span>
+                <button type="button" className="rounded-md border border-white/20 px-3 py-1 text-xs hover:bg-white/10" onClick={() => setRemoteAttempt((n) => n + 1)}>
+                  {t("media.server.retry")}
+                </button>
+              </>
+            ) : (
+              <span>{t("media.server.loadingPages")}</span>
+            )}
+          </div>
+        )}
         {pages.map((src, index) => (
           <div key={`${unit.id}-${index}`} ref={(el) => void (pageRefs.current[index] = el)} data-page={index} className="w-full">
             {failed.has(index) ? (

@@ -22,7 +22,7 @@ import type { NetClient } from "../net/client";
 import type { ProxyCipher } from "../net/secureProxyStore";
 import type { LocalServerAllowance } from "../net/policy";
 import { KikoeruClient, ServerError, SuwayomiClient, type SuwayomiBrowseType } from "./clients";
-import { ConnectionStore } from "./store";
+import { ConnectionStore, isLocalAddress } from "./store";
 
 const REMOTE_PAGE = "remote:page:";
 const SUWAYOMI_CHAPTER = "remote:suwayomi-chapter:";
@@ -67,9 +67,17 @@ export class ConnectionsService {
     return this.store.list();
   }
 
+  private isLocal = (baseUrl: string) => isLocalAddress(baseUrl, { preflight: (url) => this.http.preflight(url, { kind: "app", purpose: "server-setup" }) });
+
   async add(input: ServerConnectionInput): Promise<{ connection: ServerConnection; test: ServerTestResult }> {
-    const connection = await this.store.add(input);
+    const connection = await this.store.add(input, this.isLocal);
     return { connection, test: await this.test(connection.id) };
+  }
+
+  async update(id: number, patch: Partial<ServerConnectionInput>): Promise<{ connection: ServerConnection; test: ServerTestResult }> {
+    this.clients.delete(id); // new address or credentials: no cached sign-in
+    const connection = await this.store.update(id, patch, this.isLocal);
+    return { connection, test: await this.test(id) };
   }
 
   async remove(id: number): Promise<void> {

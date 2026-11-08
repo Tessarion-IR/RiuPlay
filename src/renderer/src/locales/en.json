@@ -1329,6 +1329,69 @@
       "discoverTitle": "Discover from your sources",
       "discoverText": "Browse and search the extension sources you've installed.",
       "seeAll": "See all"
+    },
+    "server": {
+      "loadingPages": "Loading the chapter from your server...",
+      "unreachable": "Your server could not be reached: {{error}}",
+      "retry": "Try again"
     }
+  },
+  "servers": {
+    "title": "Media servers",
+    "hint": "Your own Suwayomi (manga) and Kikoeru (audio) servers, optional. Passwords are encrypted on this computer and never shown again. RiuPlay installs nothing on the server.",
+    "suwayomi": "Suwayomi",
+    "kikoeru": "Kikoeru",
+    "type": "Server type",
+    "name": "Name",
+    "namePlaceholder": "Name (optional)",
+    "address": "Server address",
+    "signIn": "Sign-in",
+    "auth": {
+      "none": "No sign-in",
+      "basic": "User name and password (HTTP Basic)",
+      "ui_login": "Suwayomi login (user name and password)",
+      "token": "Kikoeru account (user name and password)"
+    },
+    "username": "User name",
+    "password": "Password",
+    "passwordUnchanged": "Password (unchanged)",
+    "forgetPassword": "Forget the stored password",
+    "localConfirm": "This server is mine, on this computer or my local network - allow RiuPlay to reach it (only this exact address and port).",
+    "checking": "Checking...",
+    "save": "Save and test",
+    "addAndTest": "Add and test",
+    "cancel": "Cancel",
+    "add": "Add a server...",
+    "test": "Test",
+    "edit": "Edit",
+    "remove": "Remove",
+    "removeHint": "Titles you added from this server stay in your library; they can't be opened until the server is added again.",
+    "localBadge": "Local network",
+    "reachable": "Reachable",
+    "connected": "Connected: {{version}}",
+    "notReachable": "Not reachable: {{error}}",
+    "savedNotReachable": "Saved, but the server is not reachable: {{error}}",
+    "from": {
+      "manga": "From your Suwayomi server",
+      "audio": "From your Kikoeru server"
+    },
+    "none": {
+      "manga": "Read manga from your own Suwayomi server: add it under Settings > Media servers.",
+      "audio": "Listen to works from your own Kikoeru server: add it under Settings > Media servers."
+    },
+    "openSettings": "Open Settings",
+    "source": "Source",
+    "mode": {
+      "POPULAR": "Popular",
+      "LATEST": "Latest"
+    },
+    "search": "Search the server",
+    "searchPlaceholder": "Search {{server}}",
+    "origin": "Results from {{server}} ({{address}}). Adding a title puts it in your RiuPlay library.",
+    "unreachableBrowse": "The server could not be browsed: {{error}}",
+    "noResults": "Nothing found.",
+    "addToLibrary": "Add",
+    "previous": "Previous",
+    "next": "Next"
   }
 }

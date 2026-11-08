@@ -4,6 +4,11 @@ import type { HibikiApi, LogEntry } from "@shared/hibikiApi";
 import type { MediaApi } from "@shared/media";
 import type {
   AnimeTitle,
+  RemotePage,
+  RemoteSource,
+  ServerConnection,
+  ServerConnectionInput,
+  ServerTestResult,
   NetworkConfig,
   ExtensionStateInfo,
   RepositoryInfo,
@@ -346,6 +351,19 @@ const api: HibikiApi = {
   },
   // Diagnostics: the renderer both writes into the shared log (its own playback/resolve failures,
   // which main never sees) and reads it back for the Settings preview / "Export log".
+  connections: {
+    list: (): Promise<ServerConnection[]> => ipcRenderer.invoke(IPC.connectionsList),
+    add: (input: ServerConnectionInput) => ipcRenderer.invoke(IPC.connectionsAdd, input),
+    update: (id: number, patch: Partial<ServerConnectionInput>) => ipcRenderer.invoke(IPC.connectionsUpdate, id, patch),
+    remove: (id: number): Promise<ServerConnection[]> => ipcRenderer.invoke(IPC.connectionsRemove, id),
+    test: (id: number): Promise<ServerTestResult> => ipcRenderer.invoke(IPC.connectionsTest, id),
+    suwayomiSources: (id: number): Promise<RemoteSource[]> => ipcRenderer.invoke(IPC.connectionsSuwayomiSources, id),
+    suwayomiBrowse: (id: number, sourceId: string, type: "POPULAR" | "LATEST" | "SEARCH", page: number, query?: string): Promise<RemotePage> =>
+      ipcRenderer.invoke(IPC.connectionsSuwayomiBrowse, id, sourceId, type, page, query),
+    kikoeruBrowse: (id: number, page: number, query?: string): Promise<RemotePage> => ipcRenderer.invoke(IPC.connectionsKikoeruBrowse, id, page, query),
+    addToLibrary: (id: number, ref: string) => ipcRenderer.invoke(IPC.connectionsAddToLibrary, id, ref),
+    loadPages: (unitId: number) => ipcRenderer.invoke(IPC.connectionsLoadPages, unitId),
+  },
   network: {
     configure: (config: NetworkConfig): Promise<void> => ipcRenderer.invoke(IPC.networkConfigure, config),
     resetCloudflare: (): Promise<void> => ipcRenderer.invoke(IPC.networkResetCloudflare),

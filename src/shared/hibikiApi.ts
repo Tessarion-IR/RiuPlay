@@ -1,8 +1,14 @@
 // The contract of `window.hibiki`: what the renderer may ask of the backend. Shared so the
 // Electron preload (src/preload/index.ts) is checked against it, and so another platform can
 // implement the same surface without going through Electron IPC.
+import type { AddMediaResult, MediaUnit } from "./media";
 import type {
   NetworkConfig,
+  RemotePage,
+  RemoteSource,
+  ServerConnection,
+  ServerConnectionInput,
+  ServerTestResult,
   ExtensionStateInfo,
   RepositoryInfo,
   LegacyProxyMigrationResult,
@@ -330,6 +336,23 @@ export interface HibikiApi {
     /** Takes effect on the next start. */
     setHardwareAcceleration(enabled: boolean): Promise<void>;
     onDeepLinkWatch(callback: (target: DeepLinkWatchTarget) => void): () => void;
+  };
+  /** Desktop only (RiuPlay M4/M5): the user's own Suwayomi (manga) and Kikoeru (audio) servers.
+   * Server titles become ordinary MediaItems (window.hibiki.media for progress, favourites,
+   * collections); their pages, covers and audio load from riuplay-media://remote..., which the
+   * main process serves with the credentials. Passwords go in and never come back. */
+  connections?: {
+    list(): Promise<ServerConnection[]>;
+    add(input: ServerConnectionInput): Promise<{ connection: ServerConnection; test: ServerTestResult }>;
+    update(id: number, patch: Partial<ServerConnectionInput>): Promise<{ connection: ServerConnection; test: ServerTestResult }>;
+    remove(id: number): Promise<ServerConnection[]>;
+    test(id: number): Promise<ServerTestResult>;
+    suwayomiSources(id: number): Promise<RemoteSource[]>;
+    suwayomiBrowse(id: number, sourceId: string, type: "POPULAR" | "LATEST" | "SEARCH", page: number, query?: string): Promise<RemotePage>;
+    kikoeruBrowse(id: number, page: number, query?: string): Promise<RemotePage>;
+    addToLibrary(id: number, ref: string): Promise<AddMediaResult>;
+    /** A server chapter's pages, fetched the first time it is opened. */
+    loadPages(unitId: number): Promise<MediaUnit>;
   };
   network: {
     /** Settings > Network, handed over at start and on every change. */

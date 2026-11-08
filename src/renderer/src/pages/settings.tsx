@@ -23,6 +23,7 @@ import { AniListLogo } from "@/components/AniListLogo";
 import { DeviceSyncSection } from "@/components/DeviceSync";
 import { SecureProxyPanel } from "@/features/network/SecureProxyPanel";
 import { ApkRuntimeRow } from "@/features/sources/ApkRuntimeRow";
+import { ServerConnectionsPanel } from "@/features/servers/ServerConnectionsPanel";
 import { TRACKING_KEY, useTrackerAccount } from "@/lib/tracking";
 import type { TrackerImportProgress, TrackerImportReport } from "@shared/types";
 import type { MemorySnapshot } from "@shared/types";
@@ -1143,6 +1144,7 @@ function NetworkSection() {
       {!isMobile && <ProxyRow />}
       {!isMobile && <SecureProxyPanel />}
       {!isMobile && <ApkRuntimeRow />}
+      {!isMobile && <ServerConnectionsPanel />}
       <CloudflareResetRow />
       <TrafficRow />
       <CacheRow />
