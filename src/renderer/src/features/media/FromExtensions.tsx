@@ -103,7 +103,13 @@ export function FromExtensions({ type }: { type: MediaType }) {
               type="button"
               data-testid="provider-title"
               disabled={open.isPending}
-              onClick={() => open.mutate(item.id)}
+              onClick={() =>
+                // A hibiki-format anime source opens in the anime pipeline (its resolvers, the HLS
+                // player, episode history); a host-API-2 source becomes a unified RiuPlay title.
+                active?.pipeline === "anime"
+                  ? void navigate({ to: "/anime/$sourceId/$animeId", params: { sourceId: item.sourceId, animeId: item.id } })
+                  : open.mutate(item.id)
+              }
               className="group text-left"
               title={item.title}
             >

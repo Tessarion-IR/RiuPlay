@@ -453,6 +453,7 @@ export class ExtensionRuntime {
       settings: manifest.settings ?? [],
       website: manifest.website ?? null,
       contentType: contentTypeOf(manifest),
+      pipeline: manifest.contentType ? "media" : "anime",
     }));
   }
 

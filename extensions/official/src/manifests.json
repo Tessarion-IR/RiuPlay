@@ -7,11 +7,20 @@
     "contentType": "video",
     "hostApi": 2,
     "isNsfw": false,
-    "capabilities": ["LATEST_RELEASES", "PLAYBACK"],
+    "capabilities": [
+      "LATEST_RELEASES",
+      "PLAYBACK"
+    ],
     "website": "https://archive.org",
     "description": "Public-domain and Creative Commons films and cartoons from the Internet Archive. Items without an open license are not offered.",
     "contentLicense": "Public domain or Creative Commons, per item",
-    "permissions": { "hosts": ["archive.org", "*.archive.org"], "browser": false }
+    "permissions": {
+      "hosts": [
+        "archive.org",
+        "*.archive.org"
+      ],
+      "browser": false
+    }
   },
   {
     "id": "riuplay.peppercarrot",
@@ -21,11 +30,18 @@
     "contentType": "manga",
     "hostApi": 2,
     "isNsfw": false,
-    "capabilities": ["LATEST_RELEASES"],
+    "capabilities": [
+      "LATEST_RELEASES"
+    ],
     "website": "https://www.peppercarrot.com",
     "description": "The open webcomic by David Revoy, in your language where a translation exists.",
     "contentLicense": "CC BY 4.0 (David Revoy)",
-    "permissions": { "hosts": ["www.peppercarrot.com"], "browser": false }
+    "permissions": {
+      "hosts": [
+        "www.peppercarrot.com"
+      ],
+      "browser": false
+    }
   },
   {
     "id": "riuplay.librivox",
@@ -35,11 +51,21 @@
     "contentType": "audio",
     "hostApi": 2,
     "isNsfw": false,
-    "capabilities": ["LATEST_RELEASES", "PLAYBACK"],
+    "capabilities": [
+      "LATEST_RELEASES",
+      "PLAYBACK"
+    ],
     "website": "https://librivox.org",
     "description": "Free public-domain audiobooks read by LibriVox volunteers.",
     "contentLicense": "Public domain",
-    "permissions": { "hosts": ["librivox.org", "archive.org", "*.archive.org"], "browser": false }
+    "permissions": {
+      "hosts": [
+        "librivox.org",
+        "archive.org",
+        "*.archive.org"
+      ],
+      "browser": false
+    }
   },
   {
     "id": "riuplay.ia-audio",
@@ -49,10 +75,53 @@
     "contentType": "audio",
     "hostApi": 2,
     "isNsfw": false,
-    "capabilities": ["LATEST_RELEASES", "PLAYBACK"],
+    "capabilities": [
+      "LATEST_RELEASES",
+      "PLAYBACK"
+    ],
     "website": "https://archive.org",
     "description": "ASMR, relaxation, sleep stories, spoken word and audio drama from the Internet Archive, with a Creative Commons or public-domain license.",
     "contentLicense": "Public domain or Creative Commons, per item",
-    "permissions": { "hosts": ["archive.org", "*.archive.org"], "browser": false }
+    "permissions": {
+      "hosts": [
+        "archive.org",
+        "*.archive.org"
+      ],
+      "browser": false
+    }
+  },
+  {
+    "id": "riuplay.asmr-one",
+    "name": "asmr.one (KikoFlu source)",
+    "version": "1.0.0",
+    "lang": "ja",
+    "contentType": "audio",
+    "hostApi": 2,
+    "isNsfw": true,
+    "capabilities": [
+      "LATEST_RELEASES",
+      "PLAYBACK"
+    ],
+    "website": "https://www.asmr.one",
+    "description": "Japanese voice and ASMR works from asmr.one, the source KikoFlu uses. All-ages and R15 works only, unless you turn on adult works in this source's settings.",
+    "contentLicense": "Third-party catalogue of commercial works; RiuPlay does not host or license it",
+    "settings": [
+      {
+        "key": "adult",
+        "type": "TOGGLE",
+        "title": "Show adult (R18) works",
+        "description": "Off by default. When on, R18 works appear in browsing and search.",
+        "default": false
+      }
+    ],
+    "permissions": {
+      "hosts": [
+        "api.asmr-200.com",
+        "api.asmr-100.com",
+        "api.asmr-300.com",
+        "*.kiko-play-niptan.one"
+      ],
+      "browser": false
+    }
   }
 ]

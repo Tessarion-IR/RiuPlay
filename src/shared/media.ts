@@ -219,6 +219,8 @@ export interface ProviderSource {
   name: string;
   contentType: MediaType;
   lang: string | null;
+  /** "anime": a hibiki-format source - its titles open in the anime pipeline (/anime/...). */
+  pipeline: "anime" | "media";
 }
 
 /** A title as a section's browse row shows it (straight from the extension, not stored). */

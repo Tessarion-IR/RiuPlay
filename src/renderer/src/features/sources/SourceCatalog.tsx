@@ -100,7 +100,7 @@ export function SourceCatalog({ addedUrls }: { addedUrls: string[] }) {
         ))}
       </ul>
       {gap && <p className="mt-3 text-xs text-muted">{gap}</p>}
-      {category === "all" && CATALOG_GAPS.audio && <p className="mt-3 text-xs text-muted">{CATALOG_GAPS.audio}</p>}
+
     </section>
   );
 }

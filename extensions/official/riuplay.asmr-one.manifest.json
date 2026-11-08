@@ -1,0 +1,34 @@
+{
+  "id": "riuplay.asmr-one",
+  "name": "asmr.one (KikoFlu source)",
+  "version": "1.0.0",
+  "lang": "ja",
+  "contentType": "audio",
+  "hostApi": 2,
+  "isNsfw": true,
+  "capabilities": [
+    "LATEST_RELEASES",
+    "PLAYBACK"
+  ],
+  "website": "https://www.asmr.one",
+  "description": "Japanese voice and ASMR works from asmr.one, the source KikoFlu uses. All-ages and R15 works only, unless you turn on adult works in this source's settings.",
+  "contentLicense": "Third-party catalogue of commercial works; RiuPlay does not host or license it",
+  "settings": [
+    {
+      "key": "adult",
+      "type": "TOGGLE",
+      "title": "Show adult (R18) works",
+      "description": "Off by default. When on, R18 works appear in browsing and search.",
+      "default": false
+    }
+  ],
+  "permissions": {
+    "hosts": [
+      "api.asmr-200.com",
+      "api.asmr-100.com",
+      "api.asmr-300.com",
+      "*.kiko-play-niptan.one"
+    ],
+    "browser": false
+  }
+}

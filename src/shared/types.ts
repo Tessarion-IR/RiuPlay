@@ -432,6 +432,10 @@ export interface SourceInfo {
   /** Whether this installed source is marked 18+ by its manifest. */
   /** RiuPlay host API 2: video (default), manga or audio. */
   contentType?: ExtensionContentType;
+  /** RiuPlay M12: "media" for host-API-2 sources (served through the unified media adapter),
+   * "anime" for hibiki-format sources (title pages, resolvers and the HLS player of the anime
+   * pipeline). */
+  pipeline?: "anime" | "media";
   isNsfw: boolean;
   capabilities: SourceCapability[];
   runtime?: "NODE" | "BROWSER";

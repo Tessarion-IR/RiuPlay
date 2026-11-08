@@ -70,7 +70,7 @@ export class ExtensionMediaService {
     return this.runtime
       .list()
       .filter((s: SourceInfo) => s.runtime !== undefined && !s.id.startsWith("apk:") && (s.contentType ?? "video") === type)
-      .map((s) => ({ id: s.id, name: s.name, contentType: (s.contentType ?? "video") as MediaType, lang: s.lang ?? null }));
+      .map((s) => ({ id: s.id, name: s.name, contentType: (s.contentType ?? "video") as MediaType, lang: s.lang ?? null, pipeline: s.pipeline ?? "anime" }));
   }
 
   private assertProvides(sourceId: string, type?: MediaType): ExtensionContentType {

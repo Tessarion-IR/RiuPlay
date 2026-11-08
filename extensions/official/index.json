@@ -129,6 +129,40 @@
         "manifest": "f36446b7c763ffd0c083c4ccfcf85cc36283ce5715688537870676b237e58c5c",
         "script": "74c5b77e40bc2757abc9570b7978289c10b7a8858aa1a21a426ecb163205d17b"
       }
+    },
+    {
+      "id": "riuplay.asmr-one",
+      "name": "asmr.one (KikoFlu source)",
+      "version": "1.0.0",
+      "author": "RiuPlay",
+      "website": "https://www.asmr.one",
+      "iconUrl": null,
+      "lang": "ja",
+      "capabilities": [
+        "LATEST_RELEASES",
+        "PLAYBACK"
+      ],
+      "resolverDependencies": [],
+      "isNsfw": true,
+      "type": "source",
+      "hostApi": 2,
+      "contentType": "audio",
+      "description": "Japanese voice and ASMR works from asmr.one, the source KikoFlu uses. All-ages and R15 works only, unless you turn on adult works in this source's settings.",
+      "contentLicense": "Third-party catalogue of commercial works; RiuPlay does not host or license it",
+      "permissions": {
+        "hosts": [
+          "api.asmr-200.com",
+          "api.asmr-100.com",
+          "api.asmr-300.com",
+          "*.kiko-play-niptan.one"
+        ],
+        "browser": false
+      },
+      "manifestUrl": "riuplay-builtin://official/riuplay.asmr-one.manifest.json",
+      "sha256": {
+        "manifest": "06ca108463c3ba0ceedaa5cf44329f1dab311585c895c0a4452f4e77fb799417",
+        "script": "cf2f417afae2876d7c4a2e9f75740c0b0dbd44974218aaf144651ee7403f958a"
+      }
     }
   ]
 }

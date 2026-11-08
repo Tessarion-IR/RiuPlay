@@ -85,7 +85,7 @@ export function MediaSectionPage({ type }: { type: MediaType }) {
         </section>
       )}
 
-      <FromExtensions type={type} />
+      <FromExtensions key={type} type={type} />
       {type === "video" && <FromSources />}
       {type !== "video" && <FromServers type={type} />}
 

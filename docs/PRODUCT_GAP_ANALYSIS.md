@@ -68,3 +68,30 @@ These are automated over CDP against the real app on an isolated profile:
 4. Search and the title page work.
 5. One item plays or opens in the native player or reader (from a local fixture of the provider's API; there is also an optional live run).
 6. Progress is saved and shows in Continue Watching, Reading or Listening.
+
+## 5. Mandatory ecosystems (owner decision, 2026-11-08): what the upstream code actually does
+
+The owner fixed the three ecosystems: **KikoFlu** for audio/ASMR, **Hibiki** for anime and **Keiyoushi** for manga. These findings come from the upstream source code, cloned read-only on 2026-11-08: KikoFlu `d8a8c61`, hibiki `132a71e`, keiyoushi/extensions-source `2c02d07b`.
+
+| Ecosystem | How it really gets content | Integration in RiuPlay |
+|---|---|---|
+| **KikoFlu** (GPL-3.0) | `KikoeruApiService` talks to **asmr.one's public Kikoeru-compatible API**: `ServerUtils.defaultRemoteHost` is `api.asmr-200.com`, with mirrors `api.asmr-100.com` and `api.asmr-300.com`. It uses `/api/works`, `/api/search/<kw>`, `/api/work/<id>` and `/api/tracks/<id>` (a folder tree whose `mediaStreamUrl` points at `*.kiko-play-niptan.one`). It works anonymously. Most of the catalogue is R18 commercial (DLsite) works. | **Done:** `riuplay.asmr-one`, a built-in host-API-2 audio extension speaking the same endpoints, with mirror fallback. It runs in the M2 sandbox, its hosts are limited to those four, and the format is chosen per recording. **R18 is off by default**: every query carries the API's own `$-age:adult$` filter, and each work's `nsfw` flag is checked again; a per-source setting turns R18 on. The extension is marked 18+ in Sources. Lyric/subtitle files (`.vtt`/`.lrc`) are matched to tracks; showing them in the audio player is still to do. |
+| **Hibiki** (GPL-3.0) | Two default repositories (`src/core/marketplace.ts`): **hibiki-sources**, a scripted JS index with 15 sources and 10 resolvers and no license, and **yuzono/anime-repo**, Aniyomi APKs that need the JVM host. | **Scripted sources: done.** They are a one-click, third-party Discover entry, never preinstalled or trusted, with their audit facts shown. Once added, their sources are listed under Extensions and install with one click (behind the permission dialog). They run in the M2 sandbox through the broker, appear in the Video section, and open in the native anime pipeline (title page, episodes, resolvers, HLS player, history). **Aniyomi APKs:** see K-milestones. |
+| **Keiyoushi** (Apache-2.0) | Tachiyomi/Mihon **APK** extensions (Kotlin compiled to dex). The repository index has moved to **protobuf** (`repo.json` points to `index.pb`; `index.min.json` now serves only an "Outdated App" placeholder), APKs are listed in `release-assets.json`, and `repo.json` publishes a signing-key fingerprint. | **Not yet possible in-app; needs the JVM host.** RiuPlay's APK host (inherited from Hibiki) loads Aniyomi `AnimeSource`s only. It has no Tachiyomi manga API, compiles against `android/` sources that were not imported into this repository, and needs JDK 21, which this machine doesn't have (JDK 8 only). |
+
+### Why Keiyoushi (and Hibiki's APK repository) can't be embedded directly
+1. **Format.** These are Android dex bytecode, not scripts. They only run on a JVM, through dex-to-jar translation plus an implementation of the Tachiyomi source API (`HttpSource`, `ParsedHttpSource`, `SManga`/`SChapter`/`Page`, `NetworkHelper`). That is the same approach Suwayomi (MPL-2.0) and Mihon (Apache-2.0) use.
+2. **Security.** A JVM process can't run inside the Chromium sandbox, and it has the user's full rights. Making it one-click without weakening M2/M3 needs a **confined JVM host**:
+   - a restricted token or AppContainer;
+   - a Job Object;
+   - network traffic forced through a broker proxy that applies each extension's hosts.
+3. **Build.** JDK 21 and Gradle dependencies have to be downloaded, plus a trimmed Java runtime (jlink) bundled per release.
+
+### K-milestones (Keiyoushi and Aniyomi APKs)
+| # | Milestone | Done when |
+|---|---|---|
+| K1 | Restore Hibiki's shared `android/…/eu/kanade/tachiyomi` sources (GPL-3.0) so `apk-host` builds; JDK 21 toolchain | `gradlew test` passes in `apk-host` |
+| K2 | Port the Tachiyomi **source API** from Mihon (Apache-2.0, notices kept) into `apk-host`, and add a manga loader beside the anime one | A Keiyoushi APK loads; popular, search, details, chapters and pages answer |
+| K3 | Keiyoushi index v2 (`index.pb`) and `release-assets.json` client; **APK signature checked against the published fingerprint** before install | Install, update and uninstall from Sources |
+| K4 | **Confined JVM:** AppContainer or restricted token plus a Job Object; egress only through a local broker proxy that applies per-extension hosts; escape tests like M2's | The escape tests pass. APK sources then lose the "full user rights" opt-in gate |
+| K5 | APK manga sources as host-API-2 manga providers (the M8 adapter), and Aniyomi APKs in the anime pipeline | Keiyoushi acceptance §4 passes in the real app |

@@ -40,6 +40,7 @@ import { BottomSheet, SheetOption } from "@/components/BottomSheet";
 import type { MarketplaceExtension, RepositoryFetchResult, SourceCapability } from "@shared/types";
 import { isRepositoryAlreadyAdded } from "@shared/repositoryErrors";
 import { SourceCatalog } from "@/features/sources/SourceCatalog";
+import { ECOSYSTEM_REPOSITORY_URLS } from "@shared/sourceCatalog";
 import { DisableExtensionButton, InstalledExtensionsPanel, PermissionConsentDialog, RepositoryTrustBar, useRepositoryDetails } from "@/features/sources/ExtensionTrust";
 
 type Tab = "extensions" | "repositories";
@@ -237,14 +238,18 @@ export function SourcesPage({ embedded = false }: { embedded?: boolean } = {}) {
     return names;
   }, [marketplace.data]);
 
-  // The Extensions tab lists only what is installed; everything a repository offers is under that
+  // The Extensions tab lists what is installed plus everything RiuPlay's built-in repository offers
+  // (one click to install, nothing to look up). Other repositories' offers stay under their own
   // repository, so many repositories don't pile into one list.
   const openRepositoryResult = openRepository ? resultByUrl.get(openRepository) : undefined;
   const pool = useMemo(
     () => openRepository
       ? (openRepositoryResult?.ok ? openRepositoryResult.extensions.filter((e) => e.type === "source") : [])
-      : sourceExtensions.filter((e) => installedVersions.has(e.id)),
-    [openRepository, openRepositoryResult, sourceExtensions, installedVersions],
+      : sourceExtensions.filter((e) => {
+          const origin = originByExtensionId.get(e.id) ?? "";
+          return installedVersions.has(e.id) || isBuiltinRepository(origin) || ECOSYSTEM_REPOSITORY_URLS.includes(origin);
+        }),
+    [openRepository, openRepositoryResult, sourceExtensions, installedVersions, originByExtensionId],
   );
   const languages = useMemo(() => [...new Set(pool.map((e) => e.lang).filter(Boolean))].sort(), [pool]);
   // One snapshot of everything installed, sources and resolvers together. They used to be two

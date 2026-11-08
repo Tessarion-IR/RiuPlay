@@ -63,6 +63,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // from `file://` and blocks it. A custom scheme works the same way regardless of how the renderer
 // itself was loaded, so playback behaves identically in dev and packaged builds. Must be
 // registered before the app is ready.
+// RiuPlay M7: the built-in repository's files - bundled next to the app (extraResources) or, in a
+// development run, extensions/official/ in the checkout. Set at load, before any IPC handler can be
+// asked for the repository list, so the renderer never sees (and caches) a list without it.
+{
+  const builtinRepositoryDir = app.isPackaged ? path.join(process.resourcesPath, "builtin-extensions") : path.join(app.getAppPath(), "extensions", "official");
+  if (existsSync(path.join(builtinRepositoryDir, "index.json"))) {
+    setBuiltinRepositoryReader((file) => fs.readFile(path.join(builtinRepositoryDir, path.basename(file)), "utf8"));
+  }
+}
+
 /** RiuPlay M8: set once the extension runtime exists (riuplay-media://ext/... and the provider IPC). */
 let extensionMedia: ExtensionMediaService | null = null;
 const DOWNLOAD_FILE_SCHEME = "hibiki-download";
@@ -289,12 +299,6 @@ app.whenReady().then(async () => {
   void connections.store.publishAllowances().catch(() => undefined);
   registerConnectionHandlers(connections);
   registerMediaProviderHandlers(() => extensionMedia);
-  // RiuPlay M7: the built-in repository's files - bundled next to the app (extraResources) or, in a
-  // development run, extensions/official/ in the checkout. Only bare file names of that folder.
-  const builtinRepositoryDir = app.isPackaged ? path.join(process.resourcesPath, "builtin-extensions") : path.join(app.getAppPath(), "extensions", "official");
-  if (existsSync(path.join(builtinRepositoryDir, "index.json"))) {
-    setBuiltinRepositoryReader((file) => fs.readFile(path.join(builtinRepositoryDir, path.basename(file)), "utf8"));
-  }
   protocol.handle(MEDIA_SCHEME, (request) => {
     const host = new URL(request.url).hostname;
     if (host === "ext") return extensionMedia ? extensionMedia.handle(request) : Promise.resolve(new Response("Extensions are still loading", { status: 503 }));

@@ -5,10 +5,12 @@
 //     from it is a second, separate choice with its own permission dialog;
 //   - every entry records what was checked, where, and when; nothing claims "safe" or "reviewed";
 //   - a category without a suitable verified option says so instead of being padded.
-// The old hibiki-sources repository is deliberately absent (no license, single-owner control,
-// unsigned scripts, NSFW content - docs/EXTENSION_REPOSITORY_AUDIT.md).
+// Phase 8 product decision (2026-11-08): the anime ecosystem is Hibiki's own source repository. It
+// is offered here as a one-click, clearly third-party entry - never preinstalled, never trusted by
+// default - with the audit's facts as cautions (docs/EXTENSION_REPOSITORY_AUDIT.md). Its scripts run
+// in RiuPlay's sandbox and network broker like any other extension (M2/M3).
 // To update: re-check each entry's page, then update `checked` and the facts. Tested by
-// sourceCatalog.test.ts (shape, HTTPS, no excluded repositories).
+// sourceCatalog.test.ts (shape, HTTPS, ecosystems present).
 
 export type CatalogCategory = "anime" | "manga" | "audio";
 
@@ -44,6 +46,23 @@ export interface CatalogEntry {
 export const CATALOG_CHECKED = "2026-11-08";
 
 export const SOURCE_CATALOG: readonly CatalogEntry[] = [
+  {
+    id: "hibiki-sources",
+    category: "anime",
+    name: "Hibiki anime sources",
+    description: "The scripted anime sources Hibiki itself uses (English, Russian and Ukrainian sites), with their video resolvers. Once added, its sources are listed under Extensions and install with one click.",
+    homepage: "https://github.com/akkirrai1337/hibiki-sources",
+    sourceCode: null,
+    license: null,
+    maintenance: "Maintained by the Hibiki author; 15 sources and 10 resolvers when checked, last change 2026-10-21.",
+    cautions: [
+      "Third party, not reviewed by RiuPlay. The repository states no license.",
+      "Its sources read unofficial streaming websites. One source is marked 18+.",
+      "Scripts are not signed; each runs in RiuPlay's sandbox with network access only through RiuPlay.",
+    ],
+    action: { kind: "add-repository", indexUrl: "https://raw.githubusercontent.com/akkirrai1337/hibiki-sources/main/repository/index.json", requires: null },
+    checked: CATALOG_CHECKED,
+  },
   {
     id: "yuzono-anime-extensions",
     category: "anime",
@@ -103,9 +122,8 @@ export const SOURCE_CATALOG: readonly CatalogEntry[] = [
 ];
 
 /** Shown for a category with no verified source repository. */
-export const CATALOG_GAPS: Partial<Record<CatalogCategory, string>> = {
-  audio: "No audio or ASMR source repository could be verified for RiuPlay. Your own files, links, and your own Kikoeru server work today.",
-};
+export const CATALOG_GAPS: Partial<Record<CatalogCategory, string>> = {};
 
-/** Repositories never offered by the catalog (and never added by default). */
-export const CATALOG_EXCLUDED_HOSTS: readonly string[] = ["raw.githubusercontent.com/akkirrai1337/hibiki-sources"];
+/** RiuPlay: repositories added from this catalog whose extensions are listed directly under
+ * Sources > Extensions (like the built-in repository), so they install with one click. */
+export const ECOSYSTEM_REPOSITORY_URLS: readonly string[] = SOURCE_CATALOG.flatMap((e) => (e.action.kind === "add-repository" && e.action.requires === null ? [e.action.indexUrl] : []));
